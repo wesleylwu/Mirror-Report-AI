@@ -1,53 +1,57 @@
-"""Extract a table from an image via OCR and emit it as JSON rows.
+"""Extract a table from an image using Claude and emit it as JSON rows.
 
 Usage:
     python ocr_to_json.py <image_path> [output.json]
 
+Requires the ANTHROPIC_API_KEY environment variable to be set.
 If no output path is given, JSON is printed to stdout.
 """
+import base64
 import json
+import mimetypes
 import sys
+from pathlib import Path
 
-import pytesseract
-from PIL import Image
+import anthropic
+
+from json_to_xlsx import json_to_xlsx
+
+MODEL = "claude-sonnet-4-6"
+
+PROMPT = (
+    "Read the table in this image and return ONLY a JSON array of objects, "
+    "one per data row, using the table's column headers as keys. "
+    "Do not include any explanation or markdown formatting, just the raw JSON array."
+)
 
 
 def extract_table(image_path: str) -> list[dict[str, str]]:
-    image = Image.open(image_path)
-    data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+    media_type = mimetypes.guess_type(image_path)[0] or "image/jpeg"
+    with open(image_path, "rb") as f:
+        image_data = base64.standard_b64encode(f.read()).decode("utf-8")
 
-    words = [
-        {"text": data["text"][i].strip(), "left": data["left"][i], "top": data["top"][i]}
-        for i in range(len(data["text"]))
-        if data["text"][i].strip()
-    ]
-    if not words:
-        return []
+    client = anthropic.Anthropic()
+    message = client.messages.create(
+        model=MODEL,
+        max_tokens=4096,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {"type": "base64", "media_type": media_type, "data": image_data},
+                    },
+                    {"type": "text", "text": PROMPT},
+                ],
+            }
+        ],
+    )
 
-    words.sort(key=lambda w: w["top"])
-    row_height = sum(image.size) // 200 or 10  # rough tolerance for row grouping
-
-    rows: list[list[dict]] = []
-    for word in words:
-        placed = False
-        for row in rows:
-            if abs(row[0]["top"] - word["top"]) <= row_height:
-                row.append(word)
-                placed = True
-                break
-        if not placed:
-            rows.append([word])
-
-    for row in rows:
-        row.sort(key=lambda w: w["left"])
-
-    header = [w["text"] for w in rows[0]]
-    records = []
-    for row in rows[1:]:
-        values = [w["text"] for w in row]
-        record = {header[i] if i < len(header) else f"col_{i}": v for i, v in enumerate(values)}
-        records.append(record)
-    return records
+    text = message.content[0].text.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+    return json.loads(text)
 
 
 def main():
@@ -60,8 +64,11 @@ def main():
     output = json.dumps(records, indent=2, ensure_ascii=False)
 
     if len(sys.argv) >= 3:
-        with open(sys.argv[2], "w", encoding="utf-8") as f:
+        json_path = sys.argv[2]
+        with open(json_path, "w", encoding="utf-8") as f:
             f.write(output)
+        xlsx_path = str(Path(json_path).with_suffix(".xlsx"))
+        json_to_xlsx(json_path, xlsx_path)
     else:
         print(output)
 
