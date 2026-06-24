@@ -1,0 +1,25 @@
+# Build and Dependencies
+node_modules
+.next
+out
+build
+package-lock.json
+
+# Environment and Security
+.env*
+*.pem
+.vercel
+
+# Testing and Logs
+coverage
+*.log
+
+# TypeScript and System
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+
+# Static Assets
+public
+*.svg
+*.ico
