@@ -7,12 +7,14 @@ Requires the ANTHROPIC_API_KEY environment variable to be set.
 If no output path is given, JSON is printed to stdout.
 """
 import base64
+import io
 import json
 import mimetypes
 import sys
 from pathlib import Path
 
 import anthropic
+from PIL import Image
 
 from XLSXgen import json_to_xlsx
 
@@ -86,13 +88,23 @@ TABLE SECTION:
 
 - HANDWRITING: Ignore any handwritten annotations, pen marks, stamps, or ink overlaid on the printed form. Only capture pre-printed text.
 
+- ITEM CODE ALIGNMENT: When a cell contains an item code (e.g. "GE0006280", "HA0002610", "H00001630") followed by a descriptor on the same line (e.g. "999 購入", "100 仕込"), use ASCII spaces (U+0020) only — never ideographic spaces (U+3000). Pad every code in that column with spaces so all descriptors start at the same character position across every row: find the longest code in the column, then pad shorter codes with trailing spaces to that length before the descriptor.
+
+- TITLE ROW HEIGHT: Any header row that is a single cell spanning the full width and contains only a document title (e.g. 製造指図書, 調合票) must use "height": 3.
+
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
 
+MAX_IMAGE_PX = 1568  # Claude's tile boundary — no accuracy gain above this
+
 def extract_table(image_path: str) -> dict:
-    media_type = mimetypes.guess_type(image_path)[0] or "image/jpeg"
-    with open(image_path, "rb") as f:
-        image_data = base64.standard_b64encode(f.read()).decode("utf-8")
+    img = Image.open(image_path).convert("RGB")
+    if max(img.size) > MAX_IMAGE_PX:
+        img.thumbnail((MAX_IMAGE_PX, MAX_IMAGE_PX), Image.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    image_data = base64.standard_b64encode(buf.getvalue()).decode("utf-8")
+    media_type = "image/jpeg"
 
     client = anthropic.Anthropic()
     # Mark the image and prompt with cache_control so that on continuation turns

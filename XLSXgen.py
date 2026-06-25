@@ -239,6 +239,7 @@ def json_to_xlsx(
     # Support both the legacy flat array format and the new structured format.
     if isinstance(raw, list):
         records = raw
+        table_row_height_mult = 1
     else:
         records = raw.get("table", {}).get("rows", [])
         if not column_widths:
@@ -247,6 +248,9 @@ def json_to_xlsx(
             blank_rows = raw.get("table", {}).get("blank_rows", 0)
         if header is None:
             header = raw.get("header")
+        # Table-level row_height is a minimum line-count per row (e.g. 2 means rows are at
+        # least 2 lines tall). Content can make rows taller; this only sets the floor.
+        table_row_height_mult = raw.get("table", {}).get("row_height", 1)
 
     # Normalise records: cell values may be plain strings or rich cell objects.
     # Strip internal keys before flattening so they don't become columns.
@@ -272,6 +276,42 @@ def json_to_xlsx(
     data_records      = [r for r in records
                          if r.get("_style") != "full_width" and not _is_dup_header(r)]
     fullwidth_records = [r for r in records if r.get("_style") == "full_width"]
+
+    # Normalize "CODE  spaces  DESCRIPTOR" alignment per column.
+    # Detects cells whose first line is an alphanumeric code followed by whitespace
+    # then a descriptor (e.g. "GE0006280   999 購入"). Right-aligns the descriptor
+    # to the column width so it sits at the far-right edge of the cell, with all
+    # codes left-padded to the same length so the descriptors form a vertical column.
+    _CODE_DESCRIPTOR = re.compile(r'^([A-Za-z0-9]+)([ 　]+)(\S.*)$')
+    for col_key in ({k for r in data_records for k in r if k not in INTERNAL_KEYS}):
+        matches = []
+        for rec in data_records:
+            cell_val = rec.get(col_key, "")
+            text = _cell_text(cell_val)
+            first_line = text.split('\n')[0] if text else ""
+            m = _CODE_DESCRIPTOR.match(first_line)
+            matches.append(m)
+        codes = [m.group(1) for m in matches if m]
+        if not codes:
+            continue
+        max_code_len = max(len(c) for c in codes)
+        for rec, m in zip(data_records, matches):
+            if not m:
+                continue
+            cell_val = rec.get(col_key, "")
+            text = _cell_text(cell_val)
+            lines = text.split('\n')
+            code, descriptor = m.group(1), m.group(3)
+            # Fixed gap: pad code to max_code_len then add 2 spaces before the
+            # descriptor. Consistent across sheets regardless of column width.
+            lines[0] = code + ' ' * (max_code_len - len(code) + 2) + descriptor
+            new_text = '\n'.join(lines)
+            if isinstance(cell_val, dict):
+                cell_val = dict(cell_val)
+                cell_val['text'] = new_text
+                rec[col_key] = cell_val
+            else:
+                rec[col_key] = new_text
 
     flat_records = []
     flag_keys: set = set()
@@ -332,6 +372,46 @@ def json_to_xlsx(
                     new_span = min(new_span, remaining - (len(all_spans) - i - 1))
                     cd[key] = new_span
                     remaining -= new_span
+
+        # Majority-vote group boundaries across rows with the same cell count.
+        # Rows with the same number of cells should share the same cumulative
+        # boundary positions (where one cell ends and the next begins). When one
+        # row is the outlier, snap its value_spans to match the majority while
+        # keeping label_spans fixed (label widths are small and usually correct).
+        from collections import Counter as _Counter
+        by_cell_count: dict[int, list[int]] = {}
+        for ri, row in enumerate(normalised_rows_pre):
+            n = len(row)
+            if n > 1:
+                by_cell_count.setdefault(n, []).append(ri)
+        for n_cells, row_indices in by_cell_count.items():
+            if len(row_indices) < 2:
+                continue
+            def _group_ends(row):
+                ends, cum = [], 0
+                for cell in row[:-1]:
+                    cum += cell.get("label_span", 1) + cell.get("value_span", 1)
+                    ends.append(cum)
+                return ends
+            all_ends = [_group_ends(normalised_rows_pre[ri]) for ri in row_indices]
+            majority_ends = [
+                _Counter(b[pos] for b in all_ends).most_common(1)[0][0]
+                for pos in range(n_cells - 1)
+            ]
+            for ri, ends in zip(row_indices, all_ends):
+                if ends == majority_ends:
+                    continue
+                row = normalised_rows_pre[ri]
+                cum = 0
+                for j, cell in enumerate(row):
+                    label_s = cell.get("label_span", 1)
+                    if j < n_cells - 1:
+                        value_s = max(0, majority_ends[j] - cum - label_s)
+                    else:
+                        value_s = max(0, max_total_span - cum - label_s)
+                    cell["label_span"] = label_s
+                    cell["value_span"] = value_s
+                    cum += label_s + value_s
 
         n_grid_cols = max(max_total_span, len(headers))
     else:
@@ -410,8 +490,11 @@ def json_to_xlsx(
             col_cursor     = 1
             remaining_cols = total_cols
             remaining_span = max_total_span
+            is_single_full_span = len(segments) == 1
             for i, (span, text, bold, fill, align, font_sz) in enumerate(segments):
                 is_last = (i == len(segments) - 1)
+                if is_single_full_span:
+                    align = "center"
                 if is_last:
                     col_count = remaining_cols
                 else:
@@ -426,8 +509,9 @@ def json_to_xlsx(
                 remaining_cols -= col_count
                 remaining_span -= span
 
-            if row_height_mult > 1:
-                ws.row_dimensions[header_row_offset + 1].height = row_height * row_height_mult
+            min_height = 3 if is_single_full_span else 2
+            effective_header_height = max(row_height_mult, min_height)
+            ws.row_dimensions[header_row_offset + 1].height = DEFAULT_ROW_HEIGHT * effective_header_height
             header_row_offset += 1
         # No blank separator — 調合票 title row (last header row) sits directly above the table.
 
@@ -461,12 +545,14 @@ def json_to_xlsx(
     last_col = n_grid_cols
     bottom_row = last_row + 1 if footer is not None else last_row
 
+    max_data_row_height = row_height
     for record_index, record in enumerate(flat_records, start=1):
         raw_record = data_records[record_index - 1]
         row_index = record_index + R + 2
         line_count = 1
         row_style = raw_record.get("_style", "data")
-        row_height_mult = raw_record.get("_height", 1)
+        # Per-row _height overrides the table default; table default overrides 1.
+        row_height_mult = raw_record.get("_height", table_row_height_mult)
         row_fill_color = row_fills.get(record_index)
 
         for col_index, header in enumerate(headers, start=1):
@@ -498,6 +584,7 @@ def json_to_xlsx(
                 if illegible:
                     value = None
                 elif isinstance(value, str):
+                    value = re.sub(r'\n{2,}', '\n', value)
                     value = _split_trailing_unit(value)
                 cell = ws.cell(row=row_index, column=gc_start, value=value)
 
@@ -546,6 +633,7 @@ def json_to_xlsx(
                 name=cell.font.name,
                 bold=font_bold,
                 color=cell_color or "000000",
+                size=10,
             )
             cell.border = _table_border(row_index, gc_start, last_col, bottom_row, table_start=R + 1)
             if gc_end > gc_start:
@@ -555,10 +643,12 @@ def json_to_xlsx(
                     ws.cell(row=row_index, column=c).border = _table_border(
                         row_index, c, last_col, bottom_row, table_start=R + 1)
 
-        # _height is relative to DEFAULT_ROW_HEIGHT so it doesn't stack with row_height.
-        # Always set explicitly so Excel doesn't fall back to its own default.
-        effective_height = max(row_height * line_count, DEFAULT_ROW_HEIGHT * row_height_mult * line_count)
+        # Row height = max(declared minimum lines, actual content lines) × DEFAULT_ROW_HEIGHT.
+        # row_height_mult is the minimum (from per-row _height or table-level row_height);
+        # content line count can push it higher but never below the declared minimum.
+        effective_height = DEFAULT_ROW_HEIGHT * max(row_height_mult, line_count)
         ws.row_dimensions[row_index].height = effective_height
+        max_data_row_height = max(max_data_row_height, effective_height)
 
     blank_start_row = R + 3 + len(flat_records)
     for row_index in range(blank_start_row, blank_start_row + blank_rows):
@@ -581,7 +671,7 @@ def json_to_xlsx(
                 for c in range(gc_start + 1, gc_end + 1):
                     ws.cell(row=row_index, column=c).border = _table_border(
                         row_index, c, last_col, bottom_row, table_start=R + 1)
-        ws.row_dimensions[row_index].height = row_height
+        ws.row_dimensions[row_index].height = max_data_row_height
 
     # Full-width rows always go at the very bottom, after all blank rows.
     fw_start_row = blank_start_row + blank_rows
