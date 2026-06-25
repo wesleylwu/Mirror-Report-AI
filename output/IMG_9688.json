@@ -2,16 +2,12 @@
   "header": [
     [
       {
-        "label": "製造指図書",
-        "value": "",
-        "label_span": 12,
-        "value_span": 0,
-        "label_bg": null,
-        "value_bg": null,
+        "label": "",
+        "value": "製造指図書",
+        "label_span": 0,
+        "value_span": 12,
         "font_size": 3,
         "bold": true,
-        "align": "center",
-        "value_align": "center",
         "height": 2
       }
     ],
@@ -20,26 +16,18 @@
         "label": "手配No.",
         "value": "0000056481",
         "label_span": 2,
-        "value_span": 2,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
+        "value_span": 3,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "center",
         "height": 1
       },
       {
         "label": "",
         "value": "1",
-        "label_span": 1,
+        "label_span": 0,
         "value_span": 1,
-        "label_bg": null,
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "center",
         "height": 1
       },
       {
@@ -47,12 +35,8 @@
         "value": "2018/12/05",
         "label_span": 2,
         "value_span": 4,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "center",
         "height": 1
       }
     ],
@@ -62,12 +46,8 @@
         "value": "S00000200 製造１課　倉庫",
         "label_span": 2,
         "value_span": 5,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
         "height": 1
       },
       {
@@ -75,12 +55,8 @@
         "value": "2018/12/14",
         "label_span": 2,
         "value_span": 3,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "center",
         "height": 1
       }
     ],
@@ -90,12 +66,8 @@
         "value": "HA0002610",
         "label_span": 2,
         "value_span": 3,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
         "height": 1
       },
       {
@@ -103,12 +75,8 @@
         "value": "100",
         "label_span": 1,
         "value_span": 1,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "center",
         "height": 1
       },
       {
@@ -116,27 +84,19 @@
         "value": "400.72 kg",
         "label_span": 2,
         "value_span": 3,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "right",
         "height": 1
       }
     ],
     [
       {
         "label": "品目名",
-        "value": "クレイジーマックスプロテイン（カフェオレ風味）造粒品",
+        "value": "グレイジーマックスプロテイン（カフェオレ風味）造粒品",
         "label_span": 2,
         "value_span": 5,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
         "height": 1
       },
       {
@@ -144,12 +104,8 @@
         "value": "0000051090",
         "label_span": 2,
         "value_span": 3,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "center",
         "height": 1
       }
     ],
@@ -159,25 +115,17 @@
         "value": "20　　仕込",
         "label_span": 2,
         "value_span": 5,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
         "height": 1
       },
       {
         "label": "完成入庫",
-        "value": "S00000200　製造１課　倉庫",
+        "value": "S00000200 製造１課　倉庫",
         "label_span": 2,
         "value_span": 3,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
         "height": 1
       }
     ],
@@ -187,12 +135,8 @@
         "value": "",
         "label_span": 2,
         "value_span": 5,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
         "height": 1
       },
       {
@@ -200,614 +144,351 @@
         "value": "",
         "label_span": 2,
         "value_span": 3,
-        "label_bg": "D9D9D9",
-        "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
         "height": 1
       }
     ],
     [
       {
-        "label": "調合票",
-        "value": "",
-        "label_span": 12,
-        "value_span": 0,
-        "label_bg": null,
-        "value_bg": null,
+        "label": "",
+        "value": "調合票",
+        "label_span": 0,
+        "value_span": 12,
         "font_size": 3,
         "bold": true,
-        "align": "center",
-        "value_align": "center",
         "height": 2
       }
     ]
   ],
   "table": {
     "column_widths": {
-      "成分名": 48,
-      "原単位": 14,
+      "成分名": 50,
+      "原単位": 12,
       "分量": 14,
       "秤量者": 12,
       "原料ロット": 20,
       "確認者": 12
     },
     "row_height": 2,
-    "blank_rows": 13,
+    "blank_rows": 14,
     "rows": [
-      {
-        "_style": "subheader",
-        "成分名": {
-          "text": "成分名",
-          "align": "center",
-          "valign": "middle",
-          "bold": true,
-          "font_size": 2,
-          "bg": "D9D9D9",
-          "text_color": null,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "原単位",
-          "align": "center",
-          "valign": "middle",
-          "bold": true,
-          "font_size": 2,
-          "bg": "D9D9D9",
-          "text_color": null,
-          "wrap": false
-        },
-        "分量": {
-          "text": "分量",
-          "align": "center",
-          "valign": "middle",
-          "bold": true,
-          "font_size": 2,
-          "bg": "D9D9D9",
-          "text_color": null,
-          "wrap": false
-        },
-        "秤量者": {
-          "text": "秤量者",
-          "align": "center",
-          "valign": "middle",
-          "bold": true,
-          "font_size": 2,
-          "bg": "D9D9D9",
-          "text_color": null,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "原料ロット",
-          "align": "center",
-          "valign": "middle",
-          "bold": true,
-          "font_size": 2,
-          "bg": "D9D9D9",
-          "text_color": null,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "確認者",
-          "align": "center",
-          "valign": "middle",
-          "bold": true,
-          "font_size": 2,
-          "bg": "D9D9D9",
-          "text_color": null,
-          "wrap": false
-        }
-      },
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0006280　　　　999 購入\nWheyco W80-パフォーマンスアカデミー",
-          "align": "left",
-          "valign": "middle",
+          "text": "GE0006280 999 購入\nWheyco W80-パフォーマンスアカデミー",
           "bold": false,
           "font_size": 1,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "原単位": {
           "text": "89.8383",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "分量": {
           "text": "360.00\nkg",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "秤量者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "原料ロット": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "確認者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         }
       },
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0005150　　　　999 購入\nTATA INSTANT COFFEE FR-2132（深煎り）",
-          "align": "left",
-          "valign": "middle",
+          "text": "GE0005150 999 購入\nTATA INSTANT COFFEE FR-2132（深煎り）",
           "bold": false,
           "font_size": 1,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "原単位": {
           "text": "5.9893",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "分量": {
           "text": "24.00\nkg",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "秤量者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "原料ロット": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "確認者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         }
       },
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0004220　　　　999 購入\n練乳パウダー",
-          "align": "left",
-          "valign": "middle",
+          "text": "GE0004220 999 購入\n練乳パウダー",
           "bold": false,
           "font_size": 1,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "原単位": {
           "text": "2.2959",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "分量": {
           "text": "9.20\nkg",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "秤量者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "原料ロット": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "確認者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         }
       },
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0003040　　　　999 購入\nステラロース200（大宮糧食）",
-          "align": "left",
-          "valign": "middle",
+          "text": "GE0003040 999 購入\nステラロース200（大宮糧食）",
           "bold": false,
           "font_size": 1,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "原単位": {
           "text": "0.2795",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "分量": {
           "text": "1.12\nkg",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "秤量者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "原料ロット": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "確認者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         }
       },
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0002070　　　　999 購入\nアレックK-EML",
-          "align": "left",
-          "valign": "middle",
+          "text": "GE0002070 999 購入\nアレック K-EML",
           "bold": false,
           "font_size": 1,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "原単位": {
           "text": "0.2995",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "分量": {
           "text": "1.20\nkg",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "秤量者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "原料ロット": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "確認者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         }
       },
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0003110　　　　999 購入\nポエムZL－3",
-          "align": "left",
-          "valign": "middle",
+          "text": "GE0003110 999 購入\nポエムＺＬ－３",
           "bold": false,
           "font_size": 1,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "原単位": {
           "text": "0.4991",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "分量": {
           "text": "2.00\nkg",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "秤量者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "原料ロット": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "確認者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         }
       },
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0006810　　　　999 購入\nバカダートミルクコーヒー SSH-181",
-          "align": "left",
-          "valign": "middle",
+          "text": "GE0006810 999 購入\nバカダートミルクコーヒー SSH-181",
           "bold": false,
           "font_size": 1,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "原単位": {
           "text": "0.4991",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "分量": {
           "text": "2.00\nkg",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "秤量者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "原料ロット": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "確認者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         }
       },
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0004800　　　　999 購入\nコーヒーパウダーフレーバー YM-5309",
-          "align": "left",
-          "valign": "middle",
+          "text": "GE0004800 999 購入\nコーヒーパウダーフレーバー YM-5309",
           "bold": false,
           "font_size": 1,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "原単位": {
           "text": "0.2995",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "分量": {
           "text": "1.20\nkg",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": true
         },
         "秤量者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "原料ロット": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         },
         "確認者": {
           "text": "",
-          "align": "center",
-          "valign": "middle",
           "bold": false,
           "font_size": 2,
-          "bg": null,
-          "text_color": null,
           "wrap": false
         }
       },
       {
         "_style": "full_width",
         "_value": "備考",
-        "_height": 3
+        "_height": 5
       }
     ]
   }

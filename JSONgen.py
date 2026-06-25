@@ -84,6 +84,8 @@ TABLE SECTION:
 - Blank cells must still appear as cell objects with text "".
 - Abnormally tall or wide cells must be noted with the appropriate height/width fields.
 
+- HANDWRITING: Ignore any handwritten annotations, pen marks, stamps, or ink overlaid on the printed form. Only capture pre-printed text.
+
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
 
