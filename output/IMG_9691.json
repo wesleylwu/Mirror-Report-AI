@@ -1,0 +1,6851 @@
+{
+  "header": [
+    [
+      {
+        "label": "分類",
+        "value": "",
+        "label_span": 2,
+        "value_span": 2,
+        "font_size": 2,
+        "bold": true,
+        "height": 1
+      }
+    ]
+  ],
+  "table": {
+    "column_widths": {
+      "月別": 8,
+      "種別": 12,
+      "売上件数": 10,
+      "売上棟数": 10,
+      "当月実績_売上高": 14,
+      "当月実績_売上原価": 14,
+      "当月実績_粗利益": 14,
+      "当月実績_粗利率%": 10,
+      "当月予算_売上高": 14,
+      "当月予算_達成率%": 10,
+      "累計実績_売上高": 14,
+      "累計実績_売上原価": 14,
+      "累計実績_粗利益": 14,
+      "累計実績_粗利率%": 10,
+      "累計予算_売上高": 14,
+      "累計予算_達成率%": 10
+    },
+    "row_height": 1,
+    "blank_rows": 0,
+    "rows": [
+      {
+        "_style": "subheader",
+        "_value": "2月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "2月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "6,749,249",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "23,210,056",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "109.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "29,880,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "109.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "23,210,056",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "109.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "29,880,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "109.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "6,743,249",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "6,749,249",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "9,408,070",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "6,749,249",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "9,408,070",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "6,749,249",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "28,016,070",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "28,070,070",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "90.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "29,408,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "90.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "28,016,070",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "28,070,070",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "90.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "29,408,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "90.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "6,749,249",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "29,854,030",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "29,854,030",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "101.2",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "29,408,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "101.2",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "29,854,030",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "29,854,030",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "101.2",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "29,408,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "101.2",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "4月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "4月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "6,749,249",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "48,074,189",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "48,074,189",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "90.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "90.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "48,074,189",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "48,074,189",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "90.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "90.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "6,749,249",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "25,854,030",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "25,854,030",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "98.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "98.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "25,854,030",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "25,854,030",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "98.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "98.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "96.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "67,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "96.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "96.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "67,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "96.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "40,987,701",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "40,987,701",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "40,987,701",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "98.4",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "98.4",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "40,987,701",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "40,987,701",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "98.4",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "98.4",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "5月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "5月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "10,455,433",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "10,455,433",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "10,455,433",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "91.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "91.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "10,455,433",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "10,455,433",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "91.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "91.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "40,883,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "40,883,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "93.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "93.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "40,883,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "40,883,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "93.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "93.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "90.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "90.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "40,987,701",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "90.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "90.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "40,987,701",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "40,987,701",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "40,987,701",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "92.2",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "92.2",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "40,987,701",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "40,987,701",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "92.2",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "92.2",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "6月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "6月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "37,407,194",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "37,407,194",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "37,407,194",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "91.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "91.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "37,407,194",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "37,407,194",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "91.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "91.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "10,880,901",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "10,880,901",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "10,880,901",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "30.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "30.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "10,880,901",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "10,880,901",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "30.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "30.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "8,748,970",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "8,748,970",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "8,748,970",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "39.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "39.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "8,748,970",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "8,748,970",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "39.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "39.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "8,748,970",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "8,748,970",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "8,748,970",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "96",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "96",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "8,748,970",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "8,748,970",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "96",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "96",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "7月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "7月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "24,711,920",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "46,221,370",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "46,221,370",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "75.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "75.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "46,221,370",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "46,221,370",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "75.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "75.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "28,837,509",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "28,837,509",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "28,837,509",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "79.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "79.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "28,837,509",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "28,837,509",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "79.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "79.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "9,005,576",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "9,005,576",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "9,005,576",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "79.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "79.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "9,005,576",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "9,005,576",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "79.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "79.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "9,005,576",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "9,005,576",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "9,005,576",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "9,005,576",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "9,005,576",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "8月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "8月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "47,503,782",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "47,503,782",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "47,503,782",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "98.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "98.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "47,503,782",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "47,503,782",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "98.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "98.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "32,463,900",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "32,463,900",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "32,463,900",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "104.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "104.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "32,463,900",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "32,463,900",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "104.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "104.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "8,212,943",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "8,212,943",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "8,212,943",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "90.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "90.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "8,212,943",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "8,212,943",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "90.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "90.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "8,212,943",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "8,212,943",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "8,212,943",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "91.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "91.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "8,212,943",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "8,212,943",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "91.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "91.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "9月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "9月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "46,773,937",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "46,773,937",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "46,773,937",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "46,773,937",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "46,773,937",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "5,346,888",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "5,346,888",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "5,346,888",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "5,346,888",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "5,346,888",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "30.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "29,355,034",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "29,355,034",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "91.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "91.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "29,355,034",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "29,355,034",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "91.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "91.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "29,355,034",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "29,355,034",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "29,355,034",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "92.7",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "92.7",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "29,355,034",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "29,355,034",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "92.7",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "92.7",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "上半期",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "上半期",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "46,773,937",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "46,773,937",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "46,773,937",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "92.4",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "92.4",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "46,773,937",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "46,773,937",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "92.4",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "92.4",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "57,295,763",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "57,295,763",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "57,295,763",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "57,295,763",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "57,295,763",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "52,143,294",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "52,143,294",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "52,143,294",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "52,143,294",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "52,143,294",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "93.0",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "52,143,294",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "52,143,294",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "52,143,294",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "83.5",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "83.5",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "52,143,294",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "52,143,294",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "83.5",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "83.5",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "10月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "10月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "41,014,868",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "41,014,868",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "41,014,868",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "97.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "97.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "41,014,868",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "41,014,868",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "97.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "97.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "15,007,635",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "15,007,635",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "15,007,635",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "95.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "95.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "15,007,635",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "15,007,635",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "95.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "95.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "5,219,810",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "5,219,810",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "5,219,810",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "98.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "98.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "5,219,810",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "5,219,810",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "98.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "98.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "5,219,810",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "5,219,810",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "5,219,810",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "5,219,810",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "5,219,810",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "11月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "11月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "29,355,034",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "29,355,034",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "29,355,034",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "84.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "84.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "29,355,034",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "29,355,034",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "84.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "84.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "9,318,228",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "9,318,228",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "9,318,228",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "95.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "95.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "9,318,228",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "9,318,228",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "95.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "95.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "6,205,955",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "6,205,955",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "6,205,955",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "91.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "91.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "6,205,955",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "6,205,955",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "91.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "91.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "6,205,955",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "6,205,955",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "6,205,955",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "6,205,955",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "6,205,955",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "12月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "12月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "29,810,796",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "29,810,796",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "29,810,796",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "85.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "85.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "29,810,796",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "29,810,796",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "85.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "85.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "13,411,488",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "13,411,488",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "13,411,488",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "83.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "83.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "13,411,488",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "13,411,488",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "83.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "83.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "36.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "31,929,465",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "31,929,465",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "83.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "83.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "31,929,465",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "31,929,465",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "83.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "83.2",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "31,929,465",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "31,929,465",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "31,929,465",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "31,929,465",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "31,929,465",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "93.0",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "1月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "1月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "29,810,796",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "29,810,796",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "29,810,796",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "32.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "32.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "29,810,796",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "29,810,796",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "32.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "32.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "7,763,370",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "7,763,370",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "7,763,370",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "32.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "32.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "7,763,370",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "7,763,370",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "32.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "32.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "32.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "30,783,818",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "30,783,818",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "92.4",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "92.4",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "30,783,818",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "30,783,818",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "92.4",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "92.4",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "30,783,818",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "30,783,818",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "30,783,818",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "94.4",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "94.4",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "30,783,818",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "30,783,818",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "94.4",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "94.4",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "3月",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "3月",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "34,668,284",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "34,668,284",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "34,668,284",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "32.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "32.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "34,668,284",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "34,668,284",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "32.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "32.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "21,830,080",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "21,830,080",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "21,830,080",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "75.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "61,186,460",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "75.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "21,830,080",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "21,830,080",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "75.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "61,186,460",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "75.9",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "7,453,980",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "7,453,980",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "7,453,980",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "36.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "36.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "7,453,980",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "7,453,980",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "36.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "36.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "7,453,980",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "7,453,980",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "7,453,980",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "75.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "74.6",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "74.6",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "7,453,980",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "7,453,980",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "75.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "74.6",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "74.6",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "年度累計",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "年度累計",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "30,329,880",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "30,329,880",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "30,329,880",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "84.6",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "30,329,880",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "30,329,880",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "84.6",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "282,718,150",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "282,718,150",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "282,718,150",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "123,500,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "282,718,150",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "282,718,150",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "123,500,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "92,754,391",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "92,754,391",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "92,754,391",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "92,754,391",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "92,754,391",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "27,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "27,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "27,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "33.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "115,242,618",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "83.3",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "27,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "27,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "33.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "115,242,618",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "83.3",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "下半期",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "下半期",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "42,914,557",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "42,914,557",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "42,914,557",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "33.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "168,420,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "74.6",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "42,914,557",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "42,914,557",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "33.5",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "168,420,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "74.6",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "62,789,364",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "62,789,364",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "62,789,364",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "36.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "61,186,460",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "36.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "62,789,364",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "62,789,364",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "36.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "61,186,460",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "36.1",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "27,154,557",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "27,154,557",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "27,154,557",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "34.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "62,783,354",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "34.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "27,154,557",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "27,154,557",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "34.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "62,783,354",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "34.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "21,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "21,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "21,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "33.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "115,242,618",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "74.6",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "21,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "21,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "33.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "115,242,618",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "74.6",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "subheader",
+        "_value": "七半期",
+        "_height": 1
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "七半期",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "建売%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "30,329,880",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "30,329,880",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "30,329,880",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "84.6",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "30,329,880",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "30,329,880",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "84.6",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "土地%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "339,753,881",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "339,753,881",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "339,753,881",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "340,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "339,753,881",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "339,753,881",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "340,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "32.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "仲介%",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "92,754,391",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "92,754,391",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "92,754,391",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "92,754,391",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "92,754,391",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "38.3",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "合計%",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "27,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "27,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "27,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "33.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "115,242,618",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "83.3",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "27,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "27,410,622",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "33.9",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "115,242,618",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "83.3",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "31,270,029",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "31,270,029",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "31,270,029",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "31,270,029",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "31,270,029",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "35.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "35.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "31,270,029",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "31,270,029",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "35.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "35.7",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "102,967,486",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "102,967,486",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "102,967,486",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "102,967,486",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "102,967,486",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "35.6",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "286,500,300",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "35.6",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "102,967,486",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "102,967,486",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "35.6",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "286,500,300",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "35.6",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "月別": {
+          "text": "287,650,236",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "287,650,236",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "287,650,236",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "287,650,236",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "287,650,236",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "35.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "287,650,236",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "35.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "287,650,236",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "287,650,236",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "35.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "287,650,236",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "35.8",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "total",
+        "月別": {
+          "text": "31,270,029",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "種別": {
+          "text": "31,270,029",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上件数": {
+          "text": "31,270,029",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "売上棟数": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上高": {
+          "text": "31,270,029",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_売上原価": {
+          "text": "31,270,029",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月実績_粗利率%": {
+          "text": "83.3",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "当月予算_達成率%": {
+          "text": "83.3",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上高": {
+          "text": "31,270,029",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_売上原価": {
+          "text": "31,270,029",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利益": {
+          "text": "",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計実績_粗利率%": {
+          "text": "83.3",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_売上高": {
+          "text": "28,000,000",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        },
+        "累計予算_達成率%": {
+          "text": "83.3",
+          "bold": true,
+          "font_size": 1,
+          "wrap": false
+        }
+      }
+    ]
+  }
+}

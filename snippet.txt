@@ -1,0 +1,6 @@
+Error: Expecting ':' delimiter: line 187 column 16 (char 19934)
+
+Around pos 19934:
+t": "29,903,836", "align": "right", "valign": "middle", "bold": false, "font_size": 2, "bg": null, "text_color": null, "wrap": false},
+        "実績_売上"_売上比%": {"text": "91.1", "align": "right", "valign": "middle", "bold": false, "font_size": 2, "bg": null, "text_color": null, "wrap": false},
+        
