@@ -3,19 +3,27 @@
 
 @theme {
   --color-mirror-dark-blue: #005471;
-  --color-mirror-blue: #0096c9;
+  --color-mirror-cyan: #0096c9;
   --color-mirror-light-blue: #eaf2f5;
   --color-mirror-green: #33e62a;
   --color-mirror-white: #ffffff;
-  --color-mirror-hover-blue: #a5f3fc;
-  --color-mirror-cyan-light: #ecfeff;
-  --color-mirror-text-dark: #1e293b;
-  --color-mirror-text-muted: #64748b;
-  --color-mirror-text-light: #94a3b8;
-  --color-mirror-border: #e2e8f0;
-  --color-mirror-cyan-footer: #cffafe;
+  --color-mirror-gray: #64748b;
 
   --font-mirror-noto: "Noto Sans JP", sans-serif;
+
+  --animate-scan: scan 2.5s ease-in-out infinite;
+
+  @keyframes scan {
+    0%,
+    100% {
+      top: 0%;
+      opacity: 0.3;
+    }
+    50% {
+      top: 98%;
+      opacity: 1;
+    }
+  }
 }
 
 @layer base {
@@ -26,6 +34,7 @@
     margin: 0;
     padding: 0;
     background-color: var(--color-mirror-white);
+    font-family: var(--font-mirror-noto);
   }
 
   *,
