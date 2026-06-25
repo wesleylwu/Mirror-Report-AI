@@ -14,15 +14,22 @@ import sys
 from pathlib import Path
 
 import anthropic
-from PIL import Image
+import cv2
+import numpy as np
+from PIL import Image, ImageOps
 
 from XLSXgen import json_to_xlsx
 
-MODEL_SONNET = "claude-sonnet-4-6"
-MODEL_HAIKU  = "claude-haiku-4-5-20251001"
-MODEL = MODEL_SONNET  # default
+MODEL = "claude-haiku-4-5-20251001"
 
 PROMPT = """You are a precise document digitizer. Your job is to reproduce every table and form in this image as faithfully as possible in JSON so it can be rendered in Excel at near-identical visual fidelity.
+
+CRITICAL ANTI-HALLUCINATION RULES — READ FIRST:
+- You must ONLY transcribe text that is VISUALLY PRESENT in the image. Do NOT invent, guess, or fill in values based on what you think the document "should" say.
+- If a cell is blank, output "". Never substitute plausible values.
+- Read every character directly from the image. Do not rely on memory of similar documents.
+- The document type, column names, and field names must come ONLY from what you can read in the image.
+- If you cannot confidently read a value, output "" rather than guessing.
 
 Return a single JSON object with this schema:
 
@@ -62,6 +69,8 @@ Return a single JSON object with this schema:
 
 RULES:
 
+DOCUMENT TITLE: If the document has a title printed at the top spanning the full width (e.g. 製造指図書, 調合票), capture it as the FIRST entry in the header array: a single-element row with label = the title text, value = "", label_span = max_total_span, value_span = 0, height: 3, bold: true.
+
 HEADER SECTION:
 - Capture every field in the metadata/form area above or beside the main data table.
 - Each row is a list of field cells. Label and value are SEPARATE cells.
@@ -97,10 +106,70 @@ TABLE SECTION:
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
 
-MAX_IMAGE_PX = 1024
+MAX_IMAGE_PX = 1568
+
+
+def _deskew(img: Image.Image) -> Image.Image:
+    """Auto-rotate via EXIF then find and warp the document's four corners."""
+    # Honour EXIF orientation (phone photos are often rotated in metadata)
+    img = ImageOps.exif_transpose(img)
+
+    cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    gray = cv2.cvtColor(cv, cv2.COLOR_BGR2GRAY)
+
+    # Enhance contrast so edges stand out on any background
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+    gray = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+    )
+    gray = cv2.bitwise_not(gray)
+
+    # Find the largest quadrilateral contour — that's the document border
+    contours, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
+    quad = None
+    h, w = cv.shape[:2]
+    min_area = w * h * 0.10  # must cover at least 10% of frame
+    for cnt in contours[:5]:
+        peri = cv2.arcLength(cnt, True)
+        approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+        if len(approx) == 4 and cv2.contourArea(cnt) > min_area:
+            quad = approx.reshape(4, 2).astype(np.float32)
+            break
+
+    if quad is None:
+        # No clear document rectangle — return as-is (just EXIF-corrected)
+        return img
+
+    # Order corners: top-left, top-right, bottom-right, bottom-left
+    s = quad.sum(axis=1)
+    diff = np.diff(quad, axis=1)
+    ordered = np.array([
+        quad[np.argmin(s)],
+        quad[np.argmin(diff)],
+        quad[np.argmax(s)],
+        quad[np.argmax(diff)],
+    ], dtype=np.float32)
+
+    # Compute output size from the longest sides
+    w_top = np.linalg.norm(ordered[1] - ordered[0])
+    w_bot = np.linalg.norm(ordered[2] - ordered[3])
+    h_left = np.linalg.norm(ordered[3] - ordered[0])
+    h_right = np.linalg.norm(ordered[2] - ordered[1])
+    out_w = int(max(w_top, w_bot))
+    out_h = int(max(h_left, h_right))
+
+    dst = np.array([[0, 0], [out_w, 0], [out_w, out_h], [0, out_h]], dtype=np.float32)
+    M = cv2.getPerspectiveTransform(ordered, dst)
+    warped = cv2.warpPerspective(cv, M, (out_w, out_h))
+    return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
+
 
 def extract_table(image_path: str) -> dict:
-    img = Image.open(image_path).convert("RGB")
+    img = Image.open(image_path)
+    img = _deskew(img)
+    img = img.convert("RGB")
     if max(img.size) > MAX_IMAGE_PX:
         img.thumbnail((MAX_IMAGE_PX, MAX_IMAGE_PX), Image.LANCZOS)
     buf = io.BytesIO()
@@ -138,7 +207,7 @@ def extract_table(image_path: str) -> dict:
         chars = 0
         with client.messages.stream(
             model=MODEL,
-            max_tokens=32000,
+            max_tokens=64000,
             messages=messages,
         ) as stream:
             for text in stream.text_stream:
@@ -190,13 +259,13 @@ def extract_table(image_path: str) -> dict:
             break
         text = fixed
 
-    # Repair missing opening quote on cell object keys: {text": → {"text":
+    # Repair missing opening quote on cell object keys: { text": → {"text":
     # Claude occasionally drops the leading " when starting a cell object,
-    # producing  {text": "…", align": …}  instead of  {"text": "…", "align": …}.
+    # producing  { text": "…", align": …}  instead of  {"text": "…", "align": …}.
+    # Handles optional whitespace between { and the key name.
     # Pass 1: fix the first key after {
-    text = _re.sub(r'\{([A-Za-z_　-鿿][^":\{\}\[\]\n]*)"(\s*:)', r'{"' + r'\1"\2', text)
+    text = _re.sub(r'\{\s*([A-Za-z_　-鿿][^":\{\}\[\]\n]*)"(\s*:)', r'{"' + r'\1"\2', text)
     # Pass 2: fix subsequent keys that are also missing their opening quote
-    # Pattern: , followed by word chars (no leading ") then ":
     text = _re.sub(r',(\s*)([A-Za-z_　-鿿][^":\{\}\[\]\n,]*)"(\s*:)', r',\1"\2"\3', text)
 
     try:
@@ -215,13 +284,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("image_path")
     parser.add_argument("output_json", nargs="?")
-    parser.add_argument("--haiku", action="store_true", help="Use Haiku instead of Sonnet (faster, less accurate)")
     args = parser.parse_args()
-
-    global MODEL
-    if args.haiku:
-        MODEL = MODEL_HAIKU
-        print(f"Using model: {MODEL}", file=sys.stderr)
 
     image_path = args.image_path
     data = extract_table(image_path)

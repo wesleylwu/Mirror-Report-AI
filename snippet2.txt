@@ -1,4 +1,0 @@
-or": null, "wrap": false},
-        "実績_売上高": {"text": "29,903,836", "align": "right", "valign": "middle", "bold": false, "font_size": 2, "bg": null, "text_color": null, "wrap": false},
-        "実績_売上"_売上比%": {"text": "91.1", "align": "right", "valign": "middle", "bold": false, "font_size": 2, "bg": null, "text_color": null, "wrap": false},
-        "実績_粗利額": {"text": "41,094,372", "align": "right",
