@@ -2,228 +2,360 @@
   "header": [
     [
       {
-        "label": "製造指図書",
+        "label": "印税関関号",
         "value": "",
-        "label_span": 12,
-        "value_span": 0,
-        "font_size": 3,
-        "bold": true,
-        "height": 3
+        "label_span": 2,
+        "value_span": 3,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "税務署認可",
+        "value": "",
+        "label_span": 2,
+        "value_span": 1,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "備考欄",
+        "value": "",
+        "label_span": 2,
+        "value_span": 6,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
       }
     ],
     [
       {
-        "label": "手配No.",
-        "value": "0000056481",
+        "label": "令和2/2/5",
+        "value": "",
         "label_span": 2,
-        "value_span": 2,
-        "font_size": 2,
+        "value_span": 3,
+        "font_size": 1,
         "bold": false,
         "height": 1
       },
       {
         "label": "",
-        "value": "1",
-        "label_span": 0,
-        "value_span": 1,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "発行日",
-        "value": "2018/12/05",
-        "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "作成者",
         "value": "",
         "label_span": 2,
-        "value_span": 0,
-        "font_size": 2,
+        "value_span": 1,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "",
+        "value": "",
+        "label_span": 2,
+        "value_span": 6,
+        "font_size": 1,
         "bold": false,
         "height": 1
       }
     ],
     [
       {
-        "label": "手配先",
-        "value": "S00000200 製造１課　倉庫",
+        "label": "顧客様名",
+        "value": "太郎",
         "label_span": 2,
-        "value_span": 5,
-        "font_size": 2,
+        "value_span": 3,
+        "font_size": 1,
         "bold": false,
         "height": 1
       },
       {
-        "label": "手配納期",
-        "value": "2018/12/14",
+        "label": "住所",
+        "value": "",
         "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
+        "value_span": 1,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "",
+        "value": "",
+        "label_span": 2,
+        "value_span": 6,
+        "font_size": 1,
         "bold": false,
         "height": 1
       }
     ],
     [
       {
-        "label": "品目CD",
-        "value": "HA0002610",
-        "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "工順",
+        "label": "物件",
         "value": "100",
-        "label_span": 1,
+        "label_span": 2,
+        "value_span": 3,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "棟数",
+        "value": "",
+        "label_span": 2,
         "value_span": 1,
-        "font_size": 2,
+        "font_size": 1,
         "bold": false,
         "height": 1
       },
       {
-        "label": "発注手配数",
-        "value": "400.72 kg",
+        "label": "用途",
+        "value": "",
         "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
+        "value_span": 6,
+        "font_size": 1,
         "bold": false,
         "height": 1
       }
     ],
     [
       {
-        "label": "品目名",
-        "value": "クレイジーマックスプロテイン（カフェオレ風味）造粒品",
+        "label": "契約日",
+        "value": "令和2/2/5",
         "label_span": 2,
-        "value_span": 5,
-        "font_size": 2,
+        "value_span": 3,
+        "font_size": 1,
         "bold": false,
         "height": 1
       },
       {
-        "label": "製番",
-        "value": "0000051090",
+        "label": "土地造成",
+        "value": "",
         "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
+        "value_span": 1,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "登記簿謄本",
+        "value": "",
+        "label_span": 2,
+        "value_span": 6,
+        "font_size": 1,
         "bold": false,
         "height": 1
       }
     ],
     [
       {
-        "label": "手配内容",
-        "value": "20　　仕込",
+        "label": "S0000005601",
+        "value": "",
         "label_span": 2,
-        "value_span": 5,
-        "font_size": 2,
+        "value_span": 3,
+        "font_size": 1,
         "bold": false,
         "height": 1
       },
       {
-        "label": "完成入庫",
-        "value": "S00000200 製造１課　倉庫",
+        "label": "S0000005609",
+        "value": "",
         "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
+        "value_span": 1,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "S0000000200",
+        "value": "",
+        "label_span": 2,
+        "value_span": 6,
+        "font_size": 1,
         "bold": false,
         "height": 1
       }
     ],
     [
       {
-        "label": "ロットNo.",
+        "label": "0000005601",
         "value": "",
         "label_span": 2,
-        "value_span": 5,
-        "font_size": 2,
+        "value_span": 3,
+        "font_size": 1,
         "bold": false,
         "height": 1
       },
       {
-        "label": "完成日",
+        "label": "0000005609",
         "value": "",
         "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
+        "value_span": 1,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "0000000200",
+        "value": "",
+        "label_span": 2,
+        "value_span": 6,
+        "font_size": 1,
         "bold": false,
         "height": 1
       }
     ],
     [
       {
-        "label": "調合票",
-        "value": "",
-        "label_span": 10,
-        "value_span": 0,
-        "font_size": 3,
-        "bold": true,
-        "height": 3
-      },
-      {
-        "label": "責任者",
+        "label": "4万円/坪",
         "value": "",
         "label_span": 2,
-        "value_span": 0,
-        "font_size": 2,
+        "value_span": 3,
+        "font_size": 1,
         "bold": false,
-        "height": 3
+        "height": 1
+      },
+      {
+        "label": "単価",
+        "value": "",
+        "label_span": 2,
+        "value_span": 1,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "実績面積",
+        "value": "",
+        "label_span": 2,
+        "value_span": 6,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      }
+    ],
+    [
+      {
+        "label": "坪",
+        "value": "20",
+        "label_span": 2,
+        "value_span": 3,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "",
+        "value": "",
+        "label_span": 2,
+        "value_span": 1,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "",
+        "value": "",
+        "label_span": 2,
+        "value_span": 6,
+        "font_size": 1,
+        "bold": false,
+        "height": 1
       }
     ]
   ],
   "table": {
     "column_widths": {
-      "成分名": 52,
-      "原単位": 14,
-      "分量": 14,
-      "秤量者": 12,
-      "原料ロット": 20,
-      "確認者": 12
+      "建売": 10,
+      "土地": 10,
+      "仲介": 10,
+      "建築": 10,
+      "その他": 10,
+      "販売価格": 12,
+      "建物価格": 12,
+      "土地価格": 12,
+      "消費税": 10,
+      "手数料": 10,
+      "値引き": 10,
+      "合計": 10,
+      "摘要": 20
     },
-    "row_height": 2,
-    "blank_rows": 14,
+    "row_height": 1,
+    "blank_rows": 0,
     "rows": [
       {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0006280       999 購入\nWheyco W80-パフォーマンスアカデミー",
-          "bold": false,
-          "font_size": 1,
-          "wrap": true
-        },
-        "原単位": {
-          "text": "89.8383",
-          "bold": false,
-          "font_size": 1,
+        "_style": "subheader",
+        "建売": {
+          "text": "取得価格",
+          "bold": true,
+          "font_size": 2,
           "wrap": false
         },
-        "分量": {
-          "text": "360.00\nkg",
-          "bold": false,
-          "font_size": 1,
-          "wrap": true
-        },
-        "秤量者": {
+        "土地": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "原料ロット": {
+        "仲介": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "確認者": {
+        "建築": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "その他": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "販売価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建物価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "消費税": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "手数料": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
           "text": "",
           "bold": false,
           "font_size": 1,
@@ -232,37 +364,160 @@
       },
       {
         "_style": "data",
-        "成分名": {
-          "text": "GE0005150       999 購入\nTATA INSTANT COFFEE FR-2132（深煎り）",
+        "建売": {
+          "text": "GE0006280",
           "bold": false,
           "font_size": 1,
-          "wrap": true
+          "wrap": false
         },
-        "原単位": {
+        "土地": {
+          "text": "999 購入",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "仲介": {
+          "text": "88.6883",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建築": {
+          "text": "0.00",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "その他": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "販売価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建物価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "消費税": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "手数料": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "建売": {
+          "text": "GE0005893",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地": {
+          "text": "999 購入",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "仲介": {
           "text": "5.9893",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "分量": {
-          "text": "24.00\nkg",
+        "建築": {
+          "text": "0.00",
           "bold": false,
           "font_size": 1,
-          "wrap": true
+          "wrap": false
         },
-        "秤量者": {
+        "その他": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "原料ロット": {
+        "販売価格": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "確認者": {
+        "建物価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "消費税": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "手数料": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
           "text": "",
           "bold": false,
           "font_size": 1,
@@ -271,115 +526,79 @@
       },
       {
         "_style": "data",
-        "成分名": {
-          "text": "GE0004220       999 購入\n練乳パウダー",
+        "建売": {
+          "text": "GE0005893",
           "bold": false,
           "font_size": 1,
-          "wrap": true
+          "wrap": false
         },
-        "原単位": {
+        "土地": {
+          "text": "100 仕込",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "仲介": {
           "text": "2.2959",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "分量": {
-          "text": "9.20\nkg",
+        "建築": {
+          "text": "0.00",
           "bold": false,
           "font_size": 1,
-          "wrap": true
+          "wrap": false
         },
-        "秤量者": {
+        "その他": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "原料ロット": {
+        "販売価格": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 1,
-          "wrap": false
-        }
-      },
-      {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0003040       999 購入\nステラロース200（大宮糧食）",
-          "bold": false,
-          "font_size": 1,
-          "wrap": true
-        },
-        "原単位": {
-          "text": "0.2795",
-          "bold": false,
-          "font_size": 1,
-          "wrap": false
-        },
-        "分量": {
-          "text": "1.12\nkg",
-          "bold": false,
-          "font_size": 1,
-          "wrap": true
-        },
-        "秤量者": {
+        "建物価格": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "原料ロット": {
+        "土地価格": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 1,
-          "wrap": false
-        }
-      },
-      {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0002070       999 購入\nアレック K-EML",
-          "bold": false,
-          "font_size": 1,
-          "wrap": true
-        },
-        "原単位": {
-          "text": "0.2995",
-          "bold": false,
-          "font_size": 1,
-          "wrap": false
-        },
-        "分量": {
-          "text": "1.20\nkg",
-          "bold": false,
-          "font_size": 1,
-          "wrap": true
-        },
-        "秤量者": {
+        "消費税": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "原料ロット": {
+        "手数料": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "確認者": {
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
           "text": "",
           "bold": false,
           "font_size": 1,
@@ -388,37 +607,79 @@
       },
       {
         "_style": "data",
-        "成分名": {
-          "text": "GE0003110       999 購入\nポエムZ L-3",
-          "bold": false,
-          "font_size": 1,
-          "wrap": true
-        },
-        "原単位": {
-          "text": "0.4991",
+        "建売": {
+          "text": "GE0000340",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "分量": {
-          "text": "2.00\nkg",
+        "土地": {
+          "text": "999 購入",
           "bold": false,
           "font_size": 1,
-          "wrap": true
+          "wrap": false
         },
-        "秤量者": {
+        "仲介": {
+          "text": "0.2785",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建築": {
+          "text": "0.00",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "その他": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "原料ロット": {
+        "販売価格": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "確認者": {
+        "建物価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "消費税": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "手数料": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
           "text": "",
           "bold": false,
           "font_size": 1,
@@ -427,37 +688,79 @@
       },
       {
         "_style": "data",
-        "成分名": {
-          "text": "GE0006810       999 購入\nバカダートミルクコーヒー SSH-181",
-          "bold": false,
-          "font_size": 1,
-          "wrap": true
-        },
-        "原単位": {
-          "text": "0.4991",
+        "建売": {
+          "text": "GE0000370",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "分量": {
-          "text": "2.00\nkg",
+        "土地": {
+          "text": "999 購入",
           "bold": false,
           "font_size": 1,
-          "wrap": true
+          "wrap": false
         },
-        "秤量者": {
+        "仲介": {
+          "text": "0.2785",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建築": {
+          "text": "0.00",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "その他": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "原料ロット": {
+        "販売価格": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "確認者": {
+        "建物価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "消費税": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "手数料": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
           "text": "",
           "bold": false,
           "font_size": 1,
@@ -466,37 +769,79 @@
       },
       {
         "_style": "data",
-        "成分名": {
-          "text": "GE0004800       999 購入\nコーヒーパウダーフレーバー YM-5309",
-          "bold": false,
-          "font_size": 1,
-          "wrap": true
-        },
-        "原単位": {
-          "text": "0.2995",
+        "建売": {
+          "text": "GE0001110",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "分量": {
-          "text": "1.20\nkg",
+        "土地": {
+          "text": "999 購入",
           "bold": false,
           "font_size": 1,
-          "wrap": true
+          "wrap": false
         },
-        "秤量者": {
+        "仲介": {
+          "text": "0.2931",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建築": {
+          "text": "0.00",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "その他": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "原料ロット": {
+        "販売価格": {
           "text": "",
           "bold": false,
           "font_size": 1,
           "wrap": false
         },
-        "確認者": {
+        "建物価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "消費税": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "手数料": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
           "text": "",
           "bold": false,
           "font_size": 1,
@@ -504,9 +849,328 @@
         }
       },
       {
-        "_style": "full_width",
-        "_value": "備考",
-        "_height": 3
+        "_style": "data",
+        "建売": {
+          "text": "GE0001110",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地": {
+          "text": "999 購入",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "仲介": {
+          "text": "0.4931",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建築": {
+          "text": "0.00",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "その他": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "販売価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建物価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "消費税": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "手数料": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "建売": {
+          "text": "GE0001810",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地": {
+          "text": "999 購入",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "仲介": {
+          "text": "0.2935",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建築": {
+          "text": "0.00",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "その他": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "販売価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建物価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "消費税": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "手数料": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "建売": {
+          "text": "GE0003800",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地": {
+          "text": "ー SS1-181 999 購入",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "仲介": {
+          "text": "0.2985",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建築": {
+          "text": "0.00",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "その他": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "販売価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建物価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "消費税": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "手数料": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "建売": {
+          "text": "GE0003800",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地": {
+          "text": "ー HA0007ー-HA-5309 999 購入",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "仲介": {
+          "text": "0.2985",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建築": {
+          "text": "0.00",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "その他": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "販売価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "建物価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "土地価格": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "消費税": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "手数料": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "値引き": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "合計": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        },
+        "摘要": {
+          "text": "",
+          "bold": false,
+          "font_size": 1,
+          "wrap": false
+        }
       }
     ]
   }

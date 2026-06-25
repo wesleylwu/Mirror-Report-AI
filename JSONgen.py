@@ -18,7 +18,9 @@ from PIL import Image
 
 from XLSXgen import json_to_xlsx
 
-MODEL = "claude-sonnet-4-6"
+MODEL_SONNET = "claude-sonnet-4-6"
+MODEL_HAIKU  = "claude-haiku-4-5-20251001"
+MODEL = MODEL_SONNET  # default
 
 PROMPT = """You are a precise document digitizer. Your job is to reproduce every table and form in this image as faithfully as possible in JSON so it can be rendered in Excel at near-identical visual fidelity.
 
@@ -95,7 +97,7 @@ TABLE SECTION:
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
 
-MAX_IMAGE_PX = 1568  # Claude's tile boundary — no accuracy gain above this
+MAX_IMAGE_PX = 1024
 
 def extract_table(image_path: str) -> dict:
     img = Image.open(image_path).convert("RGB")
@@ -136,7 +138,7 @@ def extract_table(image_path: str) -> dict:
         chars = 0
         with client.messages.stream(
             model=MODEL,
-            max_tokens=64000,
+            max_tokens=32000,
             messages=messages,
         ) as stream:
             for text in stream.text_stream:
@@ -209,16 +211,24 @@ def extract_table(image_path: str) -> dict:
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python JSONgen.py <image_path> [output.json]", file=sys.stderr)
-        sys.exit(1)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("image_path")
+    parser.add_argument("output_json", nargs="?")
+    parser.add_argument("--haiku", action="store_true", help="Use Haiku instead of Sonnet (faster, less accurate)")
+    args = parser.parse_args()
 
-    image_path = sys.argv[1]
+    global MODEL
+    if args.haiku:
+        MODEL = MODEL_HAIKU
+        print(f"Using model: {MODEL}", file=sys.stderr)
+
+    image_path = args.image_path
     data = extract_table(image_path)
     output = json.dumps(data, indent=2, ensure_ascii=False)
 
-    if len(sys.argv) >= 3:
-        json_path = sys.argv[2]
+    if args.output_json:
+        json_path = args.output_json
         with open(json_path, "w", encoding="utf-8") as f:
             f.write(output)
 
