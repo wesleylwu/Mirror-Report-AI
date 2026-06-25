@@ -4,14 +4,13 @@
       {
         "label": "製造指図書",
         "value": "",
-        "label_span": 12,
+        "label_span": 8,
         "value_span": 0,
         "label_bg": null,
         "value_bg": null,
         "font_size": 3,
         "bold": true,
         "align": "center",
-        "value_align": "center",
         "height": 2
       }
     ],
@@ -19,40 +18,37 @@
       {
         "label": "手配No.",
         "value": "0000056481",
-        "label_span": 2,
+        "label_span": 1,
         "value_span": 2,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
         "align": "center",
-        "value_align": "center",
         "height": 1
       },
       {
         "label": "",
         "value": "1",
-        "label_span": 1,
+        "label_span": 0,
         "value_span": 1,
         "label_bg": null,
         "value_bg": null,
         "font_size": 2,
         "bold": false,
         "align": "center",
-        "value_align": "center",
         "height": 1
       },
       {
         "label": "発行日",
         "value": "2018/12/05",
-        "label_span": 2,
-        "value_span": 4,
+        "label_span": 1,
+        "value_span": 3,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
         "align": "center",
-        "value_align": "center",
         "height": 1
       }
     ],
@@ -60,42 +56,51 @@
       {
         "label": "手配先",
         "value": "S00000200 製造１課　倉庫",
-        "label_span": 2,
-        "value_span": 5,
+        "label_span": 1,
+        "value_span": 4,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
+        "align": "left",
         "height": 1
       },
       {
         "label": "手配納期",
         "value": "2018/12/14",
-        "label_span": 2,
-        "value_span": 3,
+        "label_span": 1,
+        "value_span": 2,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
         "align": "center",
-        "value_align": "center",
         "height": 1
+      },
+      {
+        "label": "作成者",
+        "value": "",
+        "label_span": 1,
+        "value_span": 1,
+        "label_bg": "D9D9D9",
+        "value_bg": null,
+        "font_size": 2,
+        "bold": false,
+        "align": "center",
+        "height": 2
       }
     ],
     [
       {
         "label": "品目CD",
         "value": "HA0002610",
-        "label_span": 2,
-        "value_span": 3,
+        "label_span": 1,
+        "value_span": 2,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
+        "align": "left",
         "height": 1
       },
       {
@@ -108,20 +113,18 @@
         "font_size": 2,
         "bold": false,
         "align": "center",
-        "value_align": "center",
         "height": 1
       },
       {
         "label": "発注手配数",
         "value": "400.72 kg",
-        "label_span": 2,
-        "value_span": 3,
+        "label_span": 1,
+        "value_span": 2,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "right",
+        "align": "right",
         "height": 1
       }
     ],
@@ -129,27 +132,25 @@
       {
         "label": "品目名",
         "value": "クレイジーマックスプロテイン（カフェオレ風味）造粒品",
-        "label_span": 2,
-        "value_span": 5,
+        "label_span": 1,
+        "value_span": 4,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
+        "align": "left",
         "height": 1
       },
       {
         "label": "製番",
         "value": "0000051090",
-        "label_span": 2,
-        "value_span": 3,
+        "label_span": 1,
+        "value_span": 2,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
         "align": "center",
-        "value_align": "center",
         "height": 1
       }
     ],
@@ -157,27 +158,25 @@
       {
         "label": "手配内容",
         "value": "20　　仕込",
-        "label_span": 2,
-        "value_span": 5,
+        "label_span": 1,
+        "value_span": 4,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
+        "align": "left",
         "height": 1
       },
       {
         "label": "完成入庫",
-        "value": "S00000200　製造１課　倉庫",
-        "label_span": 2,
-        "value_span": 3,
+        "value": "S00000200 製造１課　倉庫",
+        "label_span": 1,
+        "value_span": 2,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
+        "align": "left",
         "height": 1
       }
     ],
@@ -185,27 +184,25 @@
       {
         "label": "ロットNo.",
         "value": "",
-        "label_span": 2,
-        "value_span": 5,
+        "label_span": 1,
+        "value_span": 4,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
+        "align": "left",
         "height": 1
       },
       {
         "label": "完成日",
         "value": "",
-        "label_span": 2,
-        "value_span": 3,
+        "label_span": 1,
+        "value_span": 2,
         "label_bg": "D9D9D9",
         "value_bg": null,
         "font_size": 2,
         "bold": false,
-        "align": "center",
-        "value_align": "left",
+        "align": "left",
         "height": 1
       }
     ],
@@ -213,26 +210,37 @@
       {
         "label": "調合票",
         "value": "",
-        "label_span": 12,
+        "label_span": 7,
         "value_span": 0,
         "label_bg": null,
         "value_bg": null,
         "font_size": 3,
         "bold": true,
         "align": "center",
-        "value_align": "center",
+        "height": 2
+      },
+      {
+        "label": "責任者",
+        "value": "",
+        "label_span": 1,
+        "value_span": 0,
+        "label_bg": "D9D9D9",
+        "value_bg": null,
+        "font_size": 2,
+        "bold": false,
+        "align": "center",
         "height": 2
       }
     ]
   ],
   "table": {
     "column_widths": {
-      "成分名": 48,
-      "原単位": 14,
-      "分量": 14,
-      "秤量者": 12,
-      "原料ロット": 20,
-      "確認者": 12
+      "成分名": 30,
+      "原単位": 10,
+      "分量": 10,
+      "秤量者": 10,
+      "原料ロット": 18,
+      "確認者": 10
     },
     "row_height": 2,
     "blank_rows": 13,
@@ -555,7 +563,7 @@
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0002070　　　　999 購入\nアレックK-EML",
+          "text": "GE0002070　　　　999 購入\nソレックK-EML",
           "align": "left",
           "valign": "middle",
           "bold": false,
@@ -618,7 +626,7 @@
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0003110　　　　999 購入\nポエムZL－3",
+          "text": "GE0003110　　　　999 購入\nポエムＺＬ－３",
           "align": "left",
           "valign": "middle",
           "bold": false,
@@ -681,7 +689,7 @@
       {
         "_style": "data",
         "成分名": {
-          "text": "GE0006810　　　　999 購入\nバカダートミルクコーヒー SSH-181",
+          "text": "GE0006810　　　　999 購入\nバタダートミルクコーヒー SSH-181",
           "align": "left",
           "valign": "middle",
           "bold": false,

@@ -1,0 +1,261 @@
+{
+  "header": [
+    [
+      {
+        "label": "製造指図書",
+        "value": "",
+        "label_span": 12,
+        "value_span": 0,
+        "font_size": 3,
+        "bold": true,
+        "height": 2
+      }
+    ],
+    [
+      {
+        "label": "手配No.",
+        "value": "0000056473",
+        "label_span": 2,
+        "value_span": 3,
+        "font_size": 2,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "",
+        "value": "1",
+        "label_span": 0,
+        "value_span": 1,
+        "font_size": 2,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "発行日",
+        "value": "2018/12/05",
+        "label_span": 2,
+        "value_span": 4,
+        "font_size": 2,
+        "bold": false,
+        "height": 1
+      }
+    ],
+    [
+      {
+        "label": "手配先",
+        "label_span": 2,
+        "value": "S00000200 製造1課 倉庫",
+        "value_span": 4,
+        "bold": true,
+        "font_size": 2,
+        "height": 1
+      },
+      {
+        "label": "手配納期",
+        "label_span": 1,
+        "value": "2018/12/14",
+        "value_span": 5,
+        "bold": true,
+        "font_size": 2,
+        "height": 1
+      }
+    ],
+    [
+      {
+        "label": "品目CD",
+        "label_span": 2,
+        "value": "HA0002610",
+        "value_span": 2,
+        "bold": true,
+        "font_size": 2,
+        "height": 1
+      },
+      {
+        "label": "工順",
+        "label_span": 1,
+        "value": "999",
+        "value_span": 1,
+        "bold": false,
+        "font_size": 2,
+        "height": 1
+      },
+      {
+        "label": "発注手配数",
+        "label_span": 1,
+        "value": "400.72 kg",
+        "value_span": 5,
+        "bold": true,
+        "font_size": 2,
+        "height": 1
+      }
+    ],
+    [
+      {
+        "label": "品目名",
+        "value": "クレイジーマックスプロテイン（カフェオレ風味）造粒品",
+        "label_span": 2,
+        "value_span": 4,
+        "font_size": 2,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "製番",
+        "value": "0000051090",
+        "label_span": 1,
+        "value_span": 5,
+        "font_size": 2,
+        "bold": false,
+        "height": 1
+      }
+    ],
+    [
+      {
+        "label": "手配内容",
+        "value": "30　噴霧",
+        "label_span": 2,
+        "value_span": 4,
+        "font_size": 2,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "完成入庫",
+        "value": "S00000200 製造1課 倉庫",
+        "label_span": 1,
+        "value_span": 5,
+        "font_size": 2,
+        "bold": false,
+        "height": 1
+      }
+    ],
+    [
+      {
+        "label": "ロットNo.",
+        "value": "",
+        "label_span": 2,
+        "value_span": 4,
+        "font_size": 2,
+        "bold": false,
+        "height": 1
+      },
+      {
+        "label": "完成日",
+        "value": "",
+        "label_span": 1,
+        "value_span": 5,
+        "font_size": 2,
+        "bold": false,
+        "height": 1
+      }
+    ],
+    [
+      {
+        "label": "調合票",
+        "value": "",
+        "label_span": 12,
+        "value_span": 0,
+        "font_size": 3,
+        "bold": true,
+        "height": 2
+      }
+    ]
+  ],
+  "table": {
+    "column_widths": {
+      "成分名": 50,
+      "原単位": 18,
+      "分量": 14,
+      "秤量者": 12,
+      "原料ロット": 20,
+      "確認者": 12
+    },
+    "row_height": 2,
+    "blank_rows": 14,
+    "rows": [
+      {
+        "_style": "data",
+        "成分名": {
+          "text": "HA0002610　　100 仕込\nクレイジーマックスプロテイン（カフェオレ風味）造粒品",
+          "bold": false,
+          "font_size": 1,
+          "wrap": true
+        },
+        "原単位": {
+          "text": "100.0000",
+          "bold": false,
+          "font_size": 2,
+          "wrap": false
+        },
+        "分量": {
+          "text": "400.72\nkg",
+          "bold": false,
+          "font_size": 2,
+          "wrap": true
+        },
+        "秤量者": {
+          "text": "",
+          "bold": false,
+          "font_size": 2,
+          "wrap": false
+        },
+        "原料ロット": {
+          "text": "",
+          "bold": false,
+          "font_size": 2,
+          "wrap": false
+        },
+        "確認者": {
+          "text": "",
+          "bold": false,
+          "font_size": 2,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "data",
+        "成分名": {
+          "text": "H00001630　　999 購入\nクラフト袋L イージーオープン",
+          "bold": false,
+          "font_size": 1,
+          "wrap": true
+        },
+        "原単位": {
+          "text": "8.3334",
+          "bold": false,
+          "font_size": 2,
+          "wrap": false
+        },
+        "分量": {
+          "text": "33.40\n枚",
+          "bold": false,
+          "font_size": 2,
+          "wrap": true
+        },
+        "秤量者": {
+          "text": "",
+          "bold": false,
+          "font_size": 2,
+          "wrap": false
+        },
+        "原料ロット": {
+          "text": "",
+          "bold": false,
+          "font_size": 2,
+          "wrap": false
+        },
+        "確認者": {
+          "text": "",
+          "bold": false,
+          "font_size": 2,
+          "wrap": false
+        }
+      },
+      {
+        "_style": "full_width",
+        "_value": "備考",
+        "_height": 3
+      }
+    ]
+  }
+}

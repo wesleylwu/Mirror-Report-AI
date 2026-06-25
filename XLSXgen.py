@@ -45,6 +45,10 @@ _NUMBER_UNIT_PATTERN = re.compile(r"^(-?[\d,]*\.?\d+)\s+([^\s\d][^\s]*)$")
 _MULTI_SPACE_PATTERN = re.compile(r" {2,}")
 MONOSPACE_FONT = Font(name="Consolas")
 
+# Light/off-white greys that are often OCR artifacts from photo lighting.
+# Applied both to header cell fills and data cell backgrounds.
+_LIGHT_GREYS = {"D9D9D9", "DDDDDD", "E0E0E0", "E5E5E5", "EBEBEB", "F0F0F0", "F2F2F2", "F5F5F5"}
+
 # Sentinel JSON value marking a cell whose source text couldn't be read at
 # all (as opposed to a value that was legibly read as zero). The cell is left
 # blank but filled red, so an illegible source field stays visually distinct
@@ -256,9 +260,22 @@ def json_to_xlsx(
     def _normalised_record(record: dict) -> dict:
         return {k: _cell_text(v) for k, v in record.items() if k not in INTERNAL_KEYS}
 
+    # Drop full_width rows (rendered after blank rows) and duplicate-header subheaders.
+    leaf_name_set_early = set(column_widths.keys()) if column_widths else set()
+
+    def _is_dup_header(rec):
+        if rec.get("_style") != "subheader":
+            return False
+        texts = {_cell_text(v) for k, v in rec.items() if k not in INTERNAL_KEYS}
+        return bool(texts) and texts <= leaf_name_set_early
+
+    data_records      = [r for r in records
+                         if r.get("_style") != "full_width" and not _is_dup_header(r)]
+    fullwidth_records = [r for r in records if r.get("_style") == "full_width"]
+
     flat_records = []
     flag_keys: set = set()
-    for record in records:
+    for record in data_records:
         flat, record_flag_keys = _flatten(_normalised_record(record))
         flat_records.append(flat)
         flag_keys.update(record_flag_keys)
@@ -268,22 +285,92 @@ def json_to_xlsx(
     leaf_names = [header.rsplit(".", 1)[-1] for header in headers]
     col_widths = [column_widths.get(leaf, column_width) for leaf in leaf_names]
 
+    # Ensure each column is wide enough for its actual content (floor = max cell display width).
+    for col_index, leaf in enumerate(leaf_names):
+        max_content = 0
+        for record in flat_records:
+            val = record.get(headers[col_index], "")
+            if isinstance(val, str):
+                max_content = max(max_content, _display_width(val))
+        if max_content > col_widths[col_index]:
+            col_widths[col_index] = max_content + 2  # +2 for cell padding
+
     wb = Workbook()
     ws = wb.active
+
+    # Compute grid layout.
+    # If a header is present its max_total_span gives us fine-grained grid columns.
+    # Each table column is mapped to a proportional number of grid columns so the
+    # header proportions and table proportions align on the same Excel columns.
+    if header:
+        normalised_rows_pre = [
+            ([r] if isinstance(r, dict) else r) for r in header
+        ]
+        max_total_span = max(
+            (sum(cd.get("label_span", 1) + cd.get("value_span", 1) for cd in row)
+             for row in normalised_rows_pre),
+            default=1,
+        )
+
+        # Normalise every row so its spans sum to max_total_span.
+        # This corrects OCR drift where Claude returns different totals per row.
+        for row in normalised_rows_pre:
+            row_total = sum(cd.get("label_span", 1) + cd.get("value_span", 1) for cd in row)
+            if row_total == max_total_span or len(row) == 0:
+                continue
+            all_spans = []
+            for cd in row:
+                all_spans.append(("label_span", cd, cd.get("label_span", 1)))
+                all_spans.append(("value_span", cd, cd.get("value_span", 1)))
+            # Scale proportionally, greedy-correct the last span.
+            remaining = max_total_span
+            for i, (key, cd, span) in enumerate(all_spans):
+                if i == len(all_spans) - 1:
+                    cd[key] = max(0, remaining)
+                else:
+                    new_span = max(0, round(span / row_total * max_total_span))
+                    new_span = min(new_span, remaining - (len(all_spans) - i - 1))
+                    cd[key] = new_span
+                    remaining -= new_span
+
+        n_grid_cols = max(max_total_span, len(headers))
+    else:
+        n_grid_cols = len(headers)
+
+    # Distribute n_grid_cols among table columns proportionally to their widths.
+    total_width = sum(col_widths) or 1
+    _rem = n_grid_cols
+    table_col_spans: list[int] = []
+    for i, w in enumerate(col_widths):
+        if i == len(col_widths) - 1:
+            table_col_spans.append(max(1, _rem))
+        else:
+            s = max(1, round(w / total_width * n_grid_cols))
+            s = min(s, _rem - (len(col_widths) - i - 1))
+            table_col_spans.append(s)
+            _rem -= s
+    table_col_starts = []
+    _cur = 1
+    for s in table_col_spans:
+        table_col_starts.append(_cur)
+        _cur += s
+    table_col_ends = [table_col_starts[i] + table_col_spans[i] - 1
+                      for i in range(len(headers))]
 
     # Render the header key-value grid above the main table if present.
     # Each header row is a list of {"label", "value", "label_span", "value_span"} cells.
     # Label and value are rendered as separate adjacent cells.
     header_row_offset = 0
     if header:
-        total_cols = len(headers)
-        DEFAULT_LABEL_BG = "D9D9D9"
+        total_cols = n_grid_cols
 
         def _make_fill(hex_color, default=None):
             color = hex_color if hex_color is not None else default
             if not color:
                 return None
-            return PatternFill(start_color=color, end_color=color, fill_type="solid")
+            if color.upper().lstrip("#") in _LIGHT_GREYS:
+                return None
+            return PatternFill(start_color=color.lstrip("#"), end_color=color.lstrip("#"), fill_type="solid")
 
         def _write_header_cell(text, row, col_start, col_end, bold=False, fill=None, align="left", font_size=2):
             sz = {1: 8, 2: 10, 3: 12}.get(font_size, 10)
@@ -301,119 +388,108 @@ def json_to_xlsx(
                     if fill:
                         cell2.fill = fill
 
-        for grid_row in header:
-            if isinstance(grid_row, dict):
-                grid_row = [grid_row]
-            total_span = sum(
-                cell_def.get("label_span", 1) + cell_def.get("value_span", 1)
-                for cell_def in grid_row
-            )
-            col_cursor = 1
+        for grid_row in normalised_rows_pre:
             row_height_mult = max((cd.get("height", 1) for cd in grid_row), default=1)
+
+            # Build a flat list of (span, text, bold, fill, align, font_sz) segments.
+            segments = []
             for cell_def in grid_row:
-                label    = cell_def.get("label", "")
-                value    = cell_def.get("value", "")
-                ls       = cell_def.get("label_span", 1)
-                vs       = cell_def.get("value_span", 1)
-                bold     = cell_def.get("bold", True)
-                align    = cell_def.get("align", "left")
-                font_sz  = cell_def.get("font_size", 2)
-                # Use DEFAULT_LABEL_BG only when label_bg key is absent, not when explicitly null.
-                lbg_val  = cell_def.get("label_bg", DEFAULT_LABEL_BG)
-                lbg      = _make_fill(lbg_val)
-                vbg      = _make_fill(cell_def.get("value_bg"))
-
+                label   = cell_def.get("label", "")
+                value   = cell_def.get("value", "")
+                ls      = cell_def.get("label_span", 1)
+                vs      = cell_def.get("value_span", 1)
+                bold    = cell_def.get("bold", True)
+                font_sz = cell_def.get("font_size", 2)
                 if ls > 0:
-                    l_cols = max(1, round(ls / total_span * total_cols))
-                    l_end  = min(col_cursor + l_cols - 1, total_cols)
-                    _write_header_cell(label, header_row_offset + 1, col_cursor, l_end,
-                                       bold=bold, fill=lbg, align=align, font_size=font_sz)
-                    col_cursor = l_end + 1
-
+                    segments.append((ls, label, bold, None, "left", font_sz))
                 if vs > 0:
-                    v_cols = max(1, round(vs / total_span * total_cols))
-                    v_end  = min(col_cursor + v_cols - 1, total_cols)
-                    _write_header_cell(value, header_row_offset + 1, col_cursor, v_end,
-                                       bold=False, fill=vbg, align="left", font_size=font_sz)
-                    col_cursor = v_end + 1
+                    segments.append((vs, value, False, None, "left", font_sz))
+
+            # Greedy last-cell fill: distribute total_cols proportionally, last segment
+            # claims all remaining columns so the row always fills exactly total_cols.
+            col_cursor     = 1
+            remaining_cols = total_cols
+            remaining_span = max_total_span
+            for i, (span, text, bold, fill, align, font_sz) in enumerate(segments):
+                is_last = (i == len(segments) - 1)
+                if is_last:
+                    col_count = remaining_cols
+                else:
+                    col_count = max(1, round(span / remaining_span * remaining_cols))
+                    col_count = min(col_count, remaining_cols - (len(segments) - i - 1))
+                col_end = col_cursor + col_count - 1
+                if col_cursor <= total_cols:
+                    _write_header_cell(text, header_row_offset + 1, col_cursor,
+                                       min(col_end, total_cols),
+                                       bold=bold, fill=fill, align=align, font_size=font_sz)
+                col_cursor      = col_end + 1
+                remaining_cols -= col_count
+                remaining_span -= span
 
             if row_height_mult > 1:
                 ws.row_dimensions[header_row_offset + 1].height = row_height * row_height_mult
             header_row_offset += 1
-        header_row_offset += 1  # blank separator row
+        # No blank separator — 調合票 title row (last header row) sits directly above the table.
 
     R = header_row_offset  # shorthand offset so all table rows shift down cleanly
-    col = 1
+    leaf_idx = 0
     for top, group_headers in groups:
-        start_col = col
+        gc_start = table_col_starts[leaf_idx]
         if top is None:
-            ws.cell(row=R + 1, column=start_col, value=group_headers[0])
-            ws.merge_cells(start_row=R + 1, end_row=R + 2, start_column=start_col, end_column=start_col)
-            col += 1
+            gc_end = table_col_ends[leaf_idx]
+            ws.cell(row=R + 1, column=gc_start, value=group_headers[0])
+            ws.merge_cells(start_row=R + 1, end_row=R + 2,
+                           start_column=gc_start, end_column=gc_end)
+            leaf_idx += 1
         else:
-            ws.cell(row=R + 1, column=start_col, value=top)
+            ws.cell(row=R + 1, column=gc_start, value=top)
             for header in group_headers:
-                ws.cell(row=R + 2, column=col, value=header[len(top) + 1 :])
-                col += 1
-            if len(group_headers) > 1:
-                ws.merge_cells(start_row=R + 1, end_row=R + 1, start_column=start_col, end_column=col - 1)
-            else:
-                ws.merge_cells(start_row=R + 1, end_row=R + 1, start_column=start_col, end_column=start_col)
+                sub_start = table_col_starts[leaf_idx]
+                sub_end   = table_col_ends[leaf_idx]
+                ws.cell(row=R + 2, column=sub_start,
+                        value=header[len(top) + 1:])
+                if sub_end > sub_start:
+                    ws.merge_cells(start_row=R + 2, end_row=R + 2,
+                                   start_column=sub_start, end_column=sub_end)
+                leaf_idx += 1
+            group_end = table_col_ends[leaf_idx - 1]
+            if group_end > gc_start:
+                ws.merge_cells(start_row=R + 1, end_row=R + 1,
+                               start_column=gc_start, end_column=group_end)
 
-    last_row = R + 2 + len(flat_records) + blank_rows
-    last_col = len(headers)
+    last_row = R + 2 + len(flat_records) + blank_rows + len(fullwidth_records)
+    last_col = n_grid_cols
     bottom_row = last_row + 1 if footer is not None else last_row
-    # Build a set of leaf column names so we can detect header-duplicate rows.
-    leaf_name_set = set(leaf_names)
 
     for record_index, record in enumerate(flat_records, start=1):
-        raw_record = records[record_index - 1]
+        raw_record = data_records[record_index - 1]
         row_index = record_index + R + 2
         line_count = 1
         row_style = raw_record.get("_style", "data")
-
-        # Skip subheader rows that simply repeat the column headers — XLSXgen
-        # already renders the header row from column_widths, so this would duplicate it.
-        if row_style == "subheader":
-            row_texts = {_cell_text(v) for k, v in raw_record.items() if k not in INTERNAL_KEYS}
-            if row_texts <= leaf_name_set:
-                continue
-
-        if row_style == "full_width":
-            text = raw_record.get("_value", "")
-            cell = ws.cell(row=row_index, column=1, value=text)
-            cell.font = HEADER_FONT
-            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-            cell.border = _table_border(row_index, 1, last_col, bottom_row, table_start=R + 1)
-            if last_col > 1:
-                ws.merge_cells(start_row=row_index, end_row=row_index, start_column=1, end_column=last_col)
-                for c in range(2, last_col + 1):
-                    ws.cell(row=row_index, column=c).border = _table_border(row_index, c, last_col, bottom_row, table_start=R + 1)
-            continue
-
-        row_bg = raw_record.get("_bg")
         row_height_mult = raw_record.get("_height", 1)
-        row_fill_color = row_bg or row_fills.get(record_index)
+        row_fill_color = row_fills.get(record_index)
 
         for col_index, header in enumerate(headers, start=1):
             leaf = leaf_names[col_index - 1]
             this_column_width = col_widths[col_index - 1]
+            gc_start = table_col_starts[col_index - 1]
+            gc_end   = table_col_ends[col_index - 1]
 
             # Pull per-cell style from rich cell object if present.
             raw_cell = raw_record.get(header, raw_record.get(leaf, ""))
             cell_props = raw_cell if isinstance(raw_cell, dict) else {}
-            cell_align  = cell_props.get("align") or column_alignments.get(leaf)
-            _raw_valign = cell_props.get("valign") or column_vertical_alignments.get(leaf)
+            cell_align  = column_alignments.get(leaf)
+            _raw_valign = column_vertical_alignments.get(leaf)
             cell_valign = "center" if _raw_valign == "middle" else _raw_valign
             cell_bold   = cell_props.get("bold", False)
-            cell_bg     = cell_props.get("bg") or row_fill_color or column_fills.get(leaf)
-            cell_color  = cell_props.get("text_color") or row_font_colors.get(record_index) or column_font_colors.get(leaf)
+            cell_bg     = row_fill_color or column_fills.get(leaf)
+            cell_color  = row_font_colors.get(record_index) or column_font_colors.get(leaf)
             cell_wrap   = cell_props.get("wrap", None)
 
             illegible = False
             if header in flag_keys:
                 value = 1 if flat_records[record_index - 1].get(header, False) else 0
-                cell = ws.cell(row=row_index, column=col_index, value=value)
+                cell = ws.cell(row=row_index, column=gc_start, value=value)
                 cell.number_format = CHECKBOX_FORMAT
                 cell.alignment = DATA_ALIGNMENT
             else:
@@ -423,7 +499,7 @@ def json_to_xlsx(
                     value = None
                 elif isinstance(value, str):
                     value = _split_trailing_unit(value)
-                cell = ws.cell(row=row_index, column=col_index, value=value)
+                cell = ws.cell(row=row_index, column=gc_start, value=value)
 
                 # Determine wrapping and alignment.
                 rtl = isinstance(value, str) and _is_rtl(value)
@@ -433,7 +509,11 @@ def json_to_xlsx(
                 if isinstance(value, str) and _MULTI_SPACE_PATTERN.search(value):
                     cell.font = MONOSPACE_FONT
 
+                # Wrapping cells look better left-aligned; center on a tall wrapped cell
+                # pushes each line to the middle which looks wrong for long ingredient text.
                 h_align = cell_align or ("right" if rtl else None)
+                if should_wrap and h_align == "center":
+                    h_align = "left"
                 v_align = cell_valign or ("top" if should_wrap else "center")
                 cell.alignment = Alignment(
                     horizontal=h_align,
@@ -449,6 +529,8 @@ def json_to_xlsx(
                 cell.number_format = number_format_override
 
             # Apply row-level style first, then per-cell overrides on top.
+            # Skip TOTAL_FILL when _bg is a light grey (OCR artifact) — the fill
+            # would just add spurious grey to rows that aren't grey in the source.
             font_bold = cell_bold
             if row_style == "total":
                 cell.fill = TOTAL_FILL
@@ -465,11 +547,18 @@ def json_to_xlsx(
                 bold=font_bold,
                 color=cell_color or "000000",
             )
-            cell.border = _table_border(row_index, col_index, last_col, bottom_row, table_start=R + 1)
+            cell.border = _table_border(row_index, gc_start, last_col, bottom_row, table_start=R + 1)
+            if gc_end > gc_start:
+                ws.merge_cells(start_row=row_index, end_row=row_index,
+                               start_column=gc_start, end_column=gc_end)
+                for c in range(gc_start + 1, gc_end + 1):
+                    ws.cell(row=row_index, column=c).border = _table_border(
+                        row_index, c, last_col, bottom_row, table_start=R + 1)
 
-        effective_height = row_height * row_height_mult * line_count
-        if effective_height > row_height:
-            ws.row_dimensions[row_index].height = effective_height
+        # _height is relative to DEFAULT_ROW_HEIGHT so it doesn't stack with row_height.
+        # Always set explicitly so Excel doesn't fall back to its own default.
+        effective_height = max(row_height * line_count, DEFAULT_ROW_HEIGHT * row_height_mult * line_count)
+        ws.row_dimensions[row_index].height = effective_height
 
     blank_start_row = R + 3 + len(flat_records)
     for row_index in range(blank_start_row, blank_start_row + blank_rows):
@@ -477,38 +566,76 @@ def json_to_xlsx(
             leaf = leaf_names[col_index - 1]
             alignment_override = column_alignments.get(leaf)
             vertical_override = column_vertical_alignments.get(leaf)
-            cell = ws.cell(row=row_index, column=col_index)
+            gc_start = table_col_starts[col_index - 1]
+            gc_end   = table_col_ends[col_index - 1]
+            cell = ws.cell(row=row_index, column=gc_start)
             cell.alignment = (
                 Alignment(horizontal=alignment_override, vertical=vertical_override or DATA_ALIGNMENT.vertical)
                 if alignment_override or vertical_override
                 else DATA_ALIGNMENT
             )
-            cell.border = _table_border(row_index, col_index, last_col, bottom_row, table_start=R + 1)
+            cell.border = _table_border(row_index, gc_start, last_col, bottom_row, table_start=R + 1)
+            if gc_end > gc_start:
+                ws.merge_cells(start_row=row_index, end_row=row_index,
+                               start_column=gc_start, end_column=gc_end)
+                for c in range(gc_start + 1, gc_end + 1):
+                    ws.cell(row=row_index, column=c).border = _table_border(
+                        row_index, c, last_col, bottom_row, table_start=R + 1)
+        ws.row_dimensions[row_index].height = row_height
+
+    # Full-width rows always go at the very bottom, after all blank rows.
+    fw_start_row = blank_start_row + blank_rows
+    for fw_index, fw_record in enumerate(fullwidth_records):
+        row_index = fw_start_row + fw_index
+        text = fw_record.get("_value", "")
+        height_mult = fw_record.get("_height", 3)
+        # Auto-size: estimate lines from newlines + character wrap, at least height_mult rows.
+        total_cell_width = sum(col_widths)
+        chars_per_line = max(int(total_cell_width), 20)
+        text_lines = sum(
+            max(1, (len(ln) + chars_per_line - 1) // chars_per_line)
+            for ln in (text or "").split("\n")
+        )
+        auto_mult = max(height_mult, text_lines)
+        cell = ws.cell(row=row_index, column=1, value=text)
+        cell.font = HEADER_FONT
+        cell.alignment = Alignment(horizontal="left", vertical="top",
+                                   wrap_text=bool(text and "\n" in text))
+        cell.border = _table_border(row_index, 1, last_col, bottom_row, table_start=R + 1)
+        if last_col > 1:
+            ws.merge_cells(start_row=row_index, end_row=row_index, start_column=1, end_column=last_col)
+            for c in range(2, last_col + 1):
+                ws.cell(row=row_index, column=c).border = _table_border(
+                    row_index, c, last_col, bottom_row, table_start=R + 1)
+        ws.row_dimensions[row_index].height = row_height * auto_mult
 
     for col_index, header in enumerate(headers, start=1):
         if header in flag_keys:
-            column_letter = get_column_letter(col_index)
+            column_letter = get_column_letter(table_col_starts[col_index - 1])
             validation = DataValidation(type="list", formula1='"1,0"', allow_blank=True)
             validation.add(f"{column_letter}{R + 3}:{column_letter}{last_row}")
             ws.add_data_validation(validation)
 
-    for row in ws.iter_rows(min_row=R + 1, max_row=R + 2, max_col=len(headers)):
+    for row in ws.iter_rows(min_row=R + 1, max_row=R + 2, max_col=n_grid_cols):
         for cell in row:
             cell.font = HEADER_FONT
             cell.alignment = HEADER_ALIGNMENT
             cell.border = _table_border(cell.row, cell.column, last_col, bottom_row, table_start=R + 1)
 
+    # Each table column's declared width is split evenly across its grid sub-columns.
     for col_index in range(1, len(headers) + 1):
-        ws.column_dimensions[get_column_letter(col_index)].width = col_widths[col_index - 1]
+        sub_width = col_widths[col_index - 1] / table_col_spans[col_index - 1]
+        for gc in range(table_col_starts[col_index - 1], table_col_ends[col_index - 1] + 1):
+            ws.column_dimensions[get_column_letter(gc)].width = sub_width
 
     if footer is not None:
         footer_row = last_row + 1
         footer_cell = ws.cell(row=footer_row, column=1, value=footer)
         footer_cell.alignment = DATA_ALIGNMENT
-        ws.merge_cells(start_row=footer_row, end_row=footer_row, start_column=1, end_column=len(headers))
-        for col_index in range(1, len(headers) + 1):
-            ws.cell(row=footer_row, column=col_index).border = _table_border(
-                footer_row, col_index, last_col, bottom_row, table_start=R + 1
+        ws.merge_cells(start_row=footer_row, end_row=footer_row, start_column=1, end_column=n_grid_cols)
+        for gc in range(1, n_grid_cols + 1):
+            ws.cell(row=footer_row, column=gc).border = _table_border(
+                footer_row, gc, last_col, bottom_row, table_start=R + 1
             )
 
     wb.save(xlsx_path)

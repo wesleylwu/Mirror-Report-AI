@@ -30,11 +30,8 @@ Return a single JSON object with this schema:
         "value": "<field value, or empty string if blank>",
         "label_span": <int — number of grid columns the label cell occupies>,
         "value_span": <int — number of grid columns the value cell occupies>,
-        "label_bg": "<hex color of the label cell background, e.g. D9D9D9, or null>",
-        "value_bg": "<hex color of the value cell background, or null>",
         "font_size": <relative font size: 1=small, 2=normal, 3=large>,
         "bold": <true|false>,
-        "align": "<left|center|right>",
         "height": <relative row height: 1=normal, 2=tall, 3=very tall>
       }
     ]
@@ -48,15 +45,10 @@ Return a single JSON object with this schema:
         "_style": "<data|total|subheader|full_width>",
         "_value": "<only for full_width rows — the text spanning all columns>",
         "_height": <optional row height multiplier for this specific row>,
-        "_bg": "<optional hex background color for this entire row>",
         "<column header>": {
           "text": "<cell text content, empty string if blank>",
-          "align": "<left|center|right — horizontal text alignment>",
-          "valign": "<top|middle|bottom — vertical alignment>",
           "bold": <true|false>,
           "font_size": <1=small, 2=normal, 3=large>,
-          "bg": "<hex fill color or null>",
-          "text_color": "<hex font color or null>",
           "wrap": <true|false — whether text wraps in the cell>
         }
       }
@@ -71,13 +63,17 @@ HEADER SECTION:
 - Each row is a list of field cells. Label and value are SEPARATE cells.
 - All rows must have the same total span (sum of label_span + value_span across all cells per row must be equal for every row).
 - Include empty value boxes — if a field has no value, still include it with value "".
-- Capture background colors, font sizes, and alignment as they appear in the image.
+- "label_span" and "value_span" must reflect the actual visual width of each cell relative to others. Measure the PIXEL POSITION of every column boundary from the left edge of the form. Use those pixel positions to compute consistent spans so that cells appearing in the same visual column across different rows have the same cumulative span from the left. For example, if the second major column boundary falls at 40% of the total width, every row should have cumulative spans summing to 40% of max_total_span at that boundary.
+- "height" must reflect the actual visual row height: 1=normal single-line row, 2=row that is roughly twice the normal height, 3=very tall row.
 - If no header section exists, return [].
 
 TABLE SECTION:
-- "column_widths": measure each column's width in characters proportional to how wide it appears visually. A column twice as wide as another should have roughly twice the number.
+- "column_widths": measure each column's pixel width carefully and express it as character counts. A column that is visually twice as wide as another must have exactly twice the number. Measure from the image — do not guess. Note that Japanese/CJK characters display at roughly DOUBLE the width of ASCII characters, so a column containing Japanese text needs a larger number to display the full content. Typical values range from 8 to 60; columns with long Japanese text should be 30–60.
+- "row_height": measure the typical data row height. Use 1 for normal single-line rows, 2 for rows that are visually taller.
 - "blank_rows": ONLY genuinely empty pre-printed rows (for hand-filling). Do NOT include total/summary rows here.
-- Every row in "rows" must use the full cell object format with "text", "align", "valign", "bold", "font_size", "bg", "text_color", "wrap".
+- CRITICAL: Do NOT emit a row whose cell texts are just the column header names. The column headers are already encoded in the column_widths keys and will be rendered automatically — do not repeat them as a row inside "rows".
+- CRITICAL: Do NOT collapse multiple source rows into a single cell. If the original table has separate rows for 建売, 土地, 仲介, etc., each must appear as its own separate JSON row. Never comma-separate or newline-separate items that occupy distinct rows in the source; instead emit one JSON row object per source row.
+- Every row in "rows" must use the full cell object format with "text", "bold", "font_size", "wrap".
 - "_style" values:
     - "data": normal data row
     - "total": total/subtotal/summary row
@@ -97,30 +93,105 @@ def extract_table(image_path: str) -> dict:
         image_data = base64.standard_b64encode(f.read()).decode("utf-8")
 
     client = anthropic.Anthropic()
-    message = client.messages.create(
-        model=MODEL,
-        max_tokens=8192,
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {"type": "base64", "media_type": media_type, "data": image_data},
-                    },
-                    {"type": "text", "text": PROMPT},
-                ],
-            }
-        ],
-    )
+    # Mark the image and prompt with cache_control so that on continuation turns
+    # the API reads them from cache instead of re-processing the full image each
+    # time.  Without this, every max_tokens continuation re-sends the image and
+    # multiplies the token cost by the number of turns needed.
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "source": {"type": "base64", "media_type": media_type, "data": image_data},
+                    "cache_control": {"type": "ephemeral"},
+                },
+                {"type": "text", "text": PROMPT, "cache_control": {"type": "ephemeral"}},
+            ],
+        }
+    ]
 
-    usage = message.usage
-    print(f"Tokens — input: {usage.input_tokens}, output: {usage.output_tokens}, total: {usage.input_tokens + usage.output_tokens}", file=sys.stderr)
+    accumulated = ""
+    total_input = 0
+    total_output = 0
+    total_cache_read = 0
+    total_cache_write = 0
 
-    text = message.content[0].text.strip()
+    while True:
+        turn = len([m for m in messages if m["role"] == "user"])
+        chars = 0
+        with client.messages.stream(
+            model=MODEL,
+            max_tokens=64000,
+            messages=messages,
+        ) as stream:
+            for text in stream.text_stream:
+                chars += len(text)
+                print(f"\r  Turn {turn} — {chars:,} chars generated...", end="", flush=True)
+            print()
+            message = stream.get_final_message()
+
+        total_input += message.usage.input_tokens
+        total_output += message.usage.output_tokens
+        total_cache_read  += getattr(message.usage, "cache_read_input_tokens", 0) or 0
+        total_cache_write += getattr(message.usage, "cache_creation_input_tokens", 0) or 0
+
+        chunk = message.content[0].text
+        accumulated += chunk
+
+        if message.stop_reason != "max_tokens":
+            break
+
+        # Response was cut off — ask Claude to continue exactly where it left off.
+        messages.append({"role": "assistant", "content": chunk})
+        messages.append({"role": "user", "content": "Continue the JSON exactly from where you left off. Output only raw JSON continuation — no explanation, no markdown, no repeated content."})
+
+    print(f"Tokens — input: {total_input}, output: {total_output}, total: {total_input + total_output} "
+          f"(cache write: {total_cache_write}, cache read: {total_cache_read})", file=sys.stderr)
+
+    text = accumulated.strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-    return json.loads(text)
+
+    # Repair unescaped double-quotes inside JSON object keys.
+    # Claude occasionally embeds a literal " in a key name (e.g. from OCR of a
+    # symbol in the source document), which breaks JSON parsing.  We scan for
+    # the pattern  "...": and remove any unescaped " that appears inside a key.
+    import re as _re
+    def _repair_keys(s: str) -> str:
+        # Replace  "...<bare-quote>...":  with the quote removed from the key.
+        # Strategy: find every  "text":  token where text contains a bare quote
+        # by looking for quote-before-colon patterns that have extra quotes inside.
+        return _re.sub(
+            r'"([^"\\\n]*)"([^"\\\n:,\}\]{\[\n]*)"(\s*:)',
+            lambda m: '"' + m.group(1) + m.group(2) + '"' + m.group(3),
+            s,
+        )
+    # Apply repeatedly until no more stray quotes remain.
+    for _ in range(5):
+        fixed = _repair_keys(text)
+        if fixed == text:
+            break
+        text = fixed
+
+    # Repair missing opening quote on cell object keys: {text": → {"text":
+    # Claude occasionally drops the leading " when starting a cell object,
+    # producing  {text": "…", align": …}  instead of  {"text": "…", "align": …}.
+    # Pass 1: fix the first key after {
+    text = _re.sub(r'\{([A-Za-z_　-鿿][^":\{\}\[\]\n]*)"(\s*:)', r'{"' + r'\1"\2', text)
+    # Pass 2: fix subsequent keys that are also missing their opening quote
+    # Pattern: , followed by word chars (no leading ") then ":
+    text = _re.sub(r',(\s*)([A-Za-z_　-鿿][^":\{\}\[\]\n,]*)"(\s*:)', r',\1"\2"\3', text)
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        raw_path = image_path + ".raw_response.txt"
+        with open(raw_path, "w", encoding="utf-8") as f:
+            f.write(text)
+        print(f"JSON parse error: {e}", file=sys.stderr)
+        print(f"Raw response saved to: {raw_path}", file=sys.stderr)
+        raise
 
 
 def main():
@@ -139,12 +210,14 @@ def main():
 
         table = data.get("table", {})
         xlsx_path = str(Path(json_path).with_suffix(".xlsx"))
+        base_row_height = {1: 15, 2: 30, 3: 45}.get(table.get("row_height", 1), 15)
         json_to_xlsx(
             json_path,
             xlsx_path,
             column_widths=table.get("column_widths"),
             blank_rows=table.get("blank_rows", 0),
             header=data.get("header"),
+            row_height=base_row_height,
         )
     else:
         print(output)
