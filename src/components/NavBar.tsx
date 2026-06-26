@@ -14,9 +14,13 @@ import { motion, AnimatePresence } from "motion/react";
 interface NavBarProps {
   onFileSelect: (file: File) => void;
   onCaptureClick: () => void;
+  onGenerate: () => void;
+  onDownload: () => void;
+  canGenerate: boolean;
+  canDownload: boolean;
 }
 
-const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
+const NavBar = ({ onFileSelect, onCaptureClick, onGenerate, onDownload, canGenerate, canDownload }: NavBarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -87,6 +91,7 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
           <button
             onClick={onDownload}
             disabled={!canDownload}
+
             className="text-mirror-white flex cursor-pointer items-center rounded text-sm font-medium transition-colors duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed hover:text-mirror-cyan"
             style={{ padding: "0.5vh 1vw" }}
           >

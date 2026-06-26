@@ -10,6 +10,10 @@ import { AnimatePresence } from "motion/react";
 const Page = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [canDownload, setCanDownload] = useState(false);
+  const [canGenerate, setCanGenerate] = useState(false);
+  const generateRef = useRef<(() => void) | null>(null);
+  const downloadRef = useRef<(() => void) | null>(null);
 
   const handleFileSelect = (file: File) => {
     setUploadedFile(file);
@@ -24,6 +28,10 @@ const Page = () => {
       <NavBar
         onFileSelect={handleFileSelect}
         onCaptureClick={() => setIsCapturing(true)}
+        onGenerate={() => generateRef.current?.()}
+        onDownload={() => downloadRef.current?.()}
+        canGenerate={canGenerate}
+        canDownload={canDownload}
       />
       <Mirror
         uploadedFile={uploadedFile}
