@@ -4,22 +4,26 @@ import { useState, useRef } from "react";
 import NavBar from "@/src/components/NavBar";
 import Mirror from "@/src/components/Mirror";
 import Footer from "@/src/components/Footer";
+import Capture from "@/src/components/Capture";
+import { AnimatePresence } from "motion/react";
 
 const Page = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const generateRef = useRef<(() => void) | null>(null);
-  const downloadRef = useRef<(() => void) | null>(null);
-  const [canGenerate, setCanGenerate] = useState(false);
-  const [canDownload, setCanDownload] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  const handleFileSelect = (file: File) => {
+    setUploadedFile(file);
+  };
+
+  const handleClear = () => {
+    setUploadedFile(null);
+  };
 
   return (
     <div className="bg-mirror-white font-mirror-noto flex min-h-screen flex-col">
       <NavBar
-        onFileSelect={(f) => { setUploadedFile(f); setCanDownload(false); }}
-        onGenerate={() => generateRef.current?.()}
-        onDownload={() => downloadRef.current?.()}
-        canGenerate={canGenerate}
-        canDownload={canDownload}
+        onFileSelect={handleFileSelect}
+        onCaptureClick={() => setIsCapturing(true)}
       />
       <Mirror
         uploadedFile={uploadedFile}
@@ -30,6 +34,14 @@ const Page = () => {
         onDownloadCleared={() => setCanDownload(false)}
       />
       <Footer />
+      <AnimatePresence>
+        {isCapturing && (
+          <Capture
+            onFileSelect={handleFileSelect}
+            onClose={() => setIsCapturing(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
