@@ -108,10 +108,6 @@ const NavBar = ({
             <p>Excel</p>
           </button>
 
-
-
-
-
           <button
             className="bg-mirror-white/10 hover:bg-mirror-white/20 border-mirror-white/20 flex cursor-pointer items-center justify-center rounded-full border transition-all duration-200 focus:outline-none"
             style={{ width: "4vh", height: "4vh" }}
@@ -201,8 +197,6 @@ const NavBar = ({
                   />
                   <p>Excel Template</p>
                 </button>
-
-
 
                 <div className="border-mirror-white/10 my-4 flex items-center justify-between border-t pt-4">
                   <p className="text-mirror-light-gray text-sm">

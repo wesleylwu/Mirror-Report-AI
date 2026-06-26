@@ -233,11 +233,14 @@ const Mirror = ({
                       style={{ width: "3.5vh", height: "3.5vh" }}
                     />
                   </div>
-                  <div className="flex flex-col items-center text-center" style={{ gap: "0.8vh" }}>
+                  <div
+                    className="flex flex-col items-center text-center"
+                    style={{ gap: "0.8vh" }}
+                  >
                     <p className="text-mirror-dark-blue text-base font-bold">
                       Drag & drop your document here
                     </p>
-                    <p className="text-mirror-gray max-w-[70vw] md:max-w-[20vw] text-xs leading-relaxed text-center">
+                    <p className="text-mirror-gray max-w-[70vw] text-center text-xs leading-relaxed md:max-w-[20vw]">
                       Supports JPEG, PNG, WebP, or PDF. Click to browse.
                     </p>
                   </div>
@@ -375,7 +378,7 @@ const Mirror = ({
               {(status === "idle" || status === "error") && (
                 <button
                   onClick={handleGenerate}
-                  className="bg-mirror-cyan hover:bg-mirror-dark-blue active:scale-95 text-mirror-white inline-flex self-center items-center justify-center rounded-lg text-sm font-bold shadow-sm transition-all duration-200 focus:outline-none cursor-pointer"
+                  className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white inline-flex cursor-pointer items-center justify-center self-center rounded-lg text-sm font-bold shadow-sm transition-all duration-200 focus:outline-none active:scale-95"
                   style={{ padding: "1.2vh 2vw" }}
                 >
                   Generate Template
@@ -455,7 +458,7 @@ const Mirror = ({
                   onClick={() =>
                     xlsxBlob && triggerDownload(xlsxBlob, xlsxName)
                   }
-                  className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white flex items-center rounded-lg text-sm font-bold shadow-sm transition-colors duration-200 cursor-pointer"
+                  className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white flex cursor-pointer items-center rounded-lg text-sm font-bold shadow-sm transition-colors duration-200"
                   style={{ padding: "1.2vh 2vw", gap: "0.8vw" }}
                 >
                   <FaFileExcel style={{ width: "2vh", height: "2vh" }} />
