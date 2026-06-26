@@ -14,18 +14,14 @@ import { motion, AnimatePresence } from "motion/react";
 interface NavBarProps {
   onFileSelect: (file: File) => void;
   onCaptureClick: () => void;
-  onGenerate: () => void;
   onDownload: () => void;
-  canGenerate: boolean;
   canDownload: boolean;
 }
 
 const NavBar = ({
   onFileSelect,
   onCaptureClick,
-  onGenerate,
   onDownload,
-  canGenerate,
   canDownload,
 }: NavBarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +34,11 @@ const NavBar = ({
 
   const handleCaptureClick = () => {
     onCaptureClick();
+    setIsMenuOpen(false);
+  };
+
+  const handleDownloadClick = () => {
+    onDownload();
     setIsMenuOpen(false);
   };
 
@@ -107,14 +108,9 @@ const NavBar = ({
             <p>Excel</p>
           </button>
 
-          <button
-            onClick={onGenerate}
-            disabled={!canGenerate}
-            className="bg-mirror-white/10 hover:bg-mirror-white/20 active:bg-mirror-white/30 text-mirror-white border-mirror-white/20 cursor-pointer rounded-lg border text-sm font-semibold shadow-sm transition-all duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-            style={{ padding: "0.8vh 1.5vw" }}
-          >
-            <p>Generate</p>
-          </button>
+
+
+
 
           <button
             className="bg-mirror-white/10 hover:bg-mirror-white/20 border-mirror-white/20 flex cursor-pointer items-center justify-center rounded-full border transition-all duration-200 focus:outline-none"
@@ -194,7 +190,11 @@ const NavBar = ({
                   <p>Capture Document</p>
                 </button>
 
-                <button className="text-mirror-white hover:text-mirror-cyan hover:bg-mirror-white/5 border-mirror-white/5 flex w-full cursor-pointer items-center rounded-lg border p-3 text-base font-medium transition-all duration-200 focus:outline-none">
+                <button
+                  onClick={handleDownloadClick}
+                  disabled={!canDownload}
+                  className="text-mirror-white hover:text-mirror-cyan hover:bg-mirror-white/5 border-mirror-white/5 flex w-full cursor-pointer items-center rounded-lg border p-3 text-base font-medium transition-all duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                >
                   <FaFileExcel
                     className="mr-4"
                     style={{ width: "2.2vh", height: "2.2vh" }}
@@ -202,9 +202,7 @@ const NavBar = ({
                   <p>Excel Template</p>
                 </button>
 
-                <button className="bg-mirror-cyan hover:bg-mirror-cyan/95 text-mirror-white flex w-full cursor-pointer items-center justify-center rounded-lg p-3 text-base font-semibold shadow-md transition-all duration-200 focus:outline-none active:scale-95">
-                  <p>Generate Template</p>
-                </button>
+
 
                 <div className="border-mirror-white/10 my-4 flex items-center justify-between border-t pt-4">
                   <p className="text-mirror-light-gray text-sm">

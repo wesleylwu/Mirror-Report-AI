@@ -176,6 +176,16 @@ def _match_template(data: dict, templates: list[dict]) -> dict:
         if (m.get("title") or "").strip() == title:
             return tmpl
 
+    # Last resort fallback: default to the first template if available
+    if templates:
+        import sys
+        print(
+            f"Warning: No template found for title={title!r} section={section!r}. "
+            f"Falling back to default template: {templates[0].get('id')}",
+            file=sys.stderr
+        )
+        return templates[0]
+
     raise ValueError(
         f"No template found for title={title!r} section={section!r}. "
         f"Available: {[t.get('id') for t in templates]}"

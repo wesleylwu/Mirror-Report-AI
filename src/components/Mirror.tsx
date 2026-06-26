@@ -17,7 +17,6 @@ interface MirrorProps {
   uploadedFile: File | null;
   onClear: () => void;
   onFileSelect: (file: File) => void;
-  onGenerateReady: (fn: () => void) => void;
   onDownloadReady: (fn: () => void) => void;
   onDownloadCleared: () => void;
 }
@@ -28,7 +27,6 @@ const Mirror = ({
   uploadedFile,
   onClear,
   onFileSelect,
-  onGenerateReady,
   onDownloadReady,
   onDownloadCleared,
 }: MirrorProps) => {
@@ -50,8 +48,22 @@ const Mirror = ({
     const a = document.createElement("a");
     a.href = url;
     a.download = name;
+
+    const isIOS =
+      typeof window !== "undefined" &&
+      (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+    if (isIOS) {
+      a.target = "_blank";
+    }
+
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 10000);
   }, []);
 
   const handleGenerate = useCallback(async () => {
@@ -88,14 +100,12 @@ const Mirror = ({
     }
   }, [uploadedFile, onDownloadCleared, onDownloadReady, triggerDownload]);
 
-  // Reset when file changes
   useEffect(() => {
     setStatus("idle");
     setXlsxBlob(null);
     setErrorMsg(null);
     onDownloadCleared();
-    if (uploadedFile) onGenerateReady(handleGenerate);
-  }, [uploadedFile, handleGenerate, onDownloadCleared, onGenerateReady]);
+  }, [uploadedFile, onDownloadCleared]);
 
   useEffect(() => {
     return () => {
@@ -144,7 +154,6 @@ const Mirror = ({
         className="relative grid grid-cols-1 gap-8 md:grid-cols-2"
         style={{ gap: "4vw" }}
       >
-        {/* Left — document source */}
         <div
           className="flex flex-col md:border-r"
           style={{
@@ -224,11 +233,11 @@ const Mirror = ({
                       style={{ width: "3.5vh", height: "3.5vh" }}
                     />
                   </div>
-                  <div className="flex flex-col" style={{ gap: "0.8vh" }}>
+                  <div className="flex flex-col items-center text-center" style={{ gap: "0.8vh" }}>
                     <p className="text-mirror-dark-blue text-base font-bold">
                       Drag & drop your document here
                     </p>
-                    <p className="text-mirror-gray max-w-[20vw] text-xs leading-relaxed">
+                    <p className="text-mirror-gray max-w-[70vw] md:max-w-[20vw] text-xs leading-relaxed text-center">
                       Supports JPEG, PNG, WebP, or PDF. Click to browse.
                     </p>
                   </div>
@@ -363,11 +372,19 @@ const Mirror = ({
                   </div>
                 )}
               </div>
+              {(status === "idle" || status === "error") && (
+                <button
+                  onClick={handleGenerate}
+                  className="bg-mirror-cyan hover:bg-mirror-dark-blue active:scale-95 text-mirror-white inline-flex self-center items-center justify-center rounded-lg text-sm font-bold shadow-sm transition-all duration-200 focus:outline-none cursor-pointer"
+                  style={{ padding: "1.2vh 2vw" }}
+                >
+                  Generate Template
+                </button>
+              )}
             </div>
           )}
         </div>
 
-        {/* Right — generated template */}
         <div className="flex flex-col md:pl-4">
           <div style={{ marginBottom: "1vh" }}>
             <p
@@ -438,7 +455,7 @@ const Mirror = ({
                   onClick={() =>
                     xlsxBlob && triggerDownload(xlsxBlob, xlsxName)
                   }
-                  className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white flex items-center rounded-lg text-sm font-bold shadow-sm transition-colors duration-200"
+                  className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white flex items-center rounded-lg text-sm font-bold shadow-sm transition-colors duration-200 cursor-pointer"
                   style={{ padding: "1.2vh 2vw", gap: "0.8vw" }}
                 >
                   <FaFileExcel style={{ width: "2vh", height: "2vh" }} />
