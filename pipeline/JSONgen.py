@@ -12,6 +12,7 @@ import base64
 import io
 import json
 import sys
+import time
 from pathlib import Path
 
 import anthropic
@@ -19,7 +20,9 @@ import cv2
 import numpy as np
 from PIL import Image, ImageOps
 
-MODEL = "claude-haiku-4-5-20251001"
+MODEL_HAIKU  = "claude-haiku-4-5-20251001"
+MODEL_SONNET = "claude-sonnet-4-6"
+MODEL = MODEL_HAIKU  # default; overridden by --sonnet flag at runtime
 
 PROMPT = """You are a precise document digitizer. Extract ONLY the text visible in the image. Do not infer, guess, or fill in values.
 
@@ -120,7 +123,7 @@ def _deskew(img: Image.Image) -> Image.Image:
     return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
 
 
-def extract_text(image_path: str) -> dict:
+def extract_text(image_path: str, model: str = MODEL) -> dict:
     img = Image.open(image_path)
     img = _deskew(img)
     img = img.convert("RGB")
@@ -151,7 +154,7 @@ def extract_text(image_path: str) -> dict:
         turn = len([m for m in messages if m["role"] == "user"])
         chars = 0
         with client.messages.stream(
-            model=MODEL, max_tokens=8192, temperature=0, messages=messages,
+            model=model, max_tokens=8192, temperature=0, messages=messages,
         ) as stream:
             for text in stream.text_stream:
                 chars += len(text)
@@ -198,9 +201,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("image_path")
     parser.add_argument("output_json", nargs="?")
+    parser.add_argument("--sonnet", action="store_true", help="Use claude-sonnet-4-6 instead of Haiku")
     args = parser.parse_args()
 
-    data = extract_text(args.image_path)
+    model = MODEL_SONNET if args.sonnet else MODEL_HAIKU
+    print(f"Using model: {model}", file=sys.stderr)
+    t0 = time.time()
+    data = extract_text(args.image_path, model=model)
+    elapsed = time.time() - t0
+    print(f"Elapsed: {elapsed:.1f}s", file=sys.stderr)
     output = json.dumps(data, indent=2, ensure_ascii=False)
 
     if args.output_json:

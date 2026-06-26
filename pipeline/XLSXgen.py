@@ -45,23 +45,28 @@ def _fmt_item_code(text: str, opts: dict | None = None) -> str:
             code_line = parts[0]  # only the code token (e.g. "GE0006280")
             if len(parts) > 1:
                 remainder = parts[1].strip()
-                # Check type token at START of remainder (CODE TYPE NAME order)
-                m = start_type_pat.match(remainder)
-                if m and len(f"{m.group(1)} {m.group(2)}") <= 12:
+                # Entire remainder IS the type token: "CODE TYPE_NUM TYPE_WORD"
+                m = type_pat.match(remainder)
+                if m and len(remainder) <= 12:
                     type_token = f"{m.group(1)}{type_internal}{m.group(2)}"
-                    name_part = remainder[m.end():].strip()
-                    if name_part:
-                        name_lines.append(name_part)
                 else:
-                    # Check type token at END of remainder (CODE NAME TYPE order)
-                    m = end_type_pat.search(remainder)
+                    # Check type token at START of remainder (CODE TYPE NAME order)
+                    m = start_type_pat.match(remainder)
                     if m and len(f"{m.group(1)} {m.group(2)}") <= 12:
                         type_token = f"{m.group(1)}{type_internal}{m.group(2)}"
-                        name_part = remainder[:m.start()].strip()
+                        name_part = remainder[m.end():].strip()
                         if name_part:
                             name_lines.append(name_part)
                     else:
-                        name_lines.append(remainder)
+                        # Check type token at END of remainder (CODE NAME TYPE order)
+                        m = end_type_pat.search(remainder)
+                        if m and len(f"{m.group(1)} {m.group(2)}") <= 12:
+                            type_token = f"{m.group(1)}{type_internal}{m.group(2)}"
+                            name_part = remainder[:m.start()].strip()
+                            if name_part:
+                                name_lines.append(name_part)
+                        else:
+                            name_lines.append(remainder)
         else:
             m = type_pat.match(stripped)
             if m and len(stripped) <= 12:
@@ -69,6 +74,10 @@ def _fmt_item_code(text: str, opts: dict | None = None) -> str:
             else:
                 name_lines.append(stripped)
 
+    if not type_token:
+        injected = (opts.get("injected_type") or "").strip()
+        if injected:
+            type_token = injected.replace(" ", type_internal, 1)
     first_line = f"{code_line}{code_to_type}{type_token}" if type_token else code_line
     rest = "\n".join(name_lines)
     return f"{first_line}\n{rest}" if rest else first_line
@@ -260,7 +269,7 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
                 ws, r, first_col, last_col, r,
                 row_data["_full_width"],
                 {"bold": False, "size": 10},
-                {"h": "center", "v": "center", "wrap": True},
+                {"h": "left", "v": "top", "wrap": True},
                 border_spec,
             )
             continue
@@ -285,9 +294,19 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
         for cell in footer["cells"]:
             fr = footer["row"] + extra
             ws.row_dimensions[fr].height = footer.get("height", 30)
+            if cell.get("fixed", True):
+                value = cell.get("value", "")
+            else:
+                key = cell.get("key", "")
+                if key == "_full_width":
+                    rows = data.get("table", {}).get("rows", [])
+                    fw = next((r["_full_width"] for r in rows if "_full_width" in r), "")
+                    value = fw
+                else:
+                    value = data.get(key, "")
             _write_cell(
                 ws, fr, cell["col"], cell["end_col"], fr,
-                cell.get("value", ""),
+                value,
                 cell["font"], cell["align"], cell["border"],
             )
 
@@ -306,14 +325,37 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
     print(f"Saved {xlsx_path} (template: {tmpl['id']})", file=__import__('sys').stderr)
 
 
+def blank_xlsx(template_id: str, xlsx_path: str) -> None:
+    templates = _load_templates()
+    tmpl = next((t for t in templates if t["id"] == template_id), None)
+    if tmpl is None:
+        ids = [t["id"] for t in templates]
+        raise ValueError(f"Template '{template_id}' not found. Available: {ids}")
+    data = {"title": tmpl["match"].get("title", ""), "section_header": tmpl["match"].get("section_header", ""), "header": {}, "table": {"columns": [], "rows": []}}
+    wb = Workbook()
+    ws = wb.active
+    fill_template(tmpl, data, ws)
+    wb.save(xlsx_path)
+    import sys
+    print(f"Saved blank {xlsx_path} (template: {tmpl['id']})", file=sys.stderr)
+
+
 def main():
     import argparse
     p = argparse.ArgumentParser()
-    p.add_argument("json_path")
+    p.add_argument("json_path", nargs="?")
     p.add_argument("xlsx_path", nargs="?")
+    p.add_argument("--blank", metavar="TEMPLATE_ID", help="Generate a blank sheet for the given template ID")
     args = p.parse_args()
-    xlsx_path = args.xlsx_path or str(Path(args.json_path).with_suffix(".xlsx"))
-    json_to_xlsx(args.json_path, xlsx_path)
+
+    if args.blank:
+        out = args.json_path or args.xlsx_path or f"{args.blank}_blank.xlsx"
+        blank_xlsx(args.blank, out)
+    else:
+        if not args.json_path:
+            p.error("json_path is required unless --blank is used")
+        xlsx_path = args.xlsx_path or str(Path(args.json_path).with_suffix(".xlsx"))
+        json_to_xlsx(args.json_path, xlsx_path)
 
 
 if __name__ == "__main__":

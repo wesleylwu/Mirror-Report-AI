@@ -389,7 +389,7 @@
     "cells": [
       {
         "col": 1, "end_col": 24,
-        "fixed": true, "value": "調合票",
+        "fixed": false, "key": "_full_width",
         "font": {"bold": true, "size": 11},
         "align": {"h": "left", "v": "top", "wrap": true},
         "border": {"top": "thin", "bottom": "medium", "left": "medium", "right": "medium"}
