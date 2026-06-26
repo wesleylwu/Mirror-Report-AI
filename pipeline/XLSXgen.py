@@ -29,7 +29,7 @@ def _fmt_item_code(text: str, opts: dict | None = None) -> str:
     # Matches lines that are ONLY digits + one word (e.g. "999 購入", "100 中込")
     # Whole line is just a type token: "999 購入"
     type_pat      = _re.compile(r"^(\d+)\s+(\S+)$")
-    code_pat      = _re.compile(r"^[A-Z]{2}\d+")
+    code_pat      = _re.compile(r"^[A-Za-z][A-Za-z0-9]{3,}")
     # Type token at START of remainder, followed by more text: "999 購入 <name>"
     start_type_pat = _re.compile(r"^(\d+)\s+(\S+)\s+")
     # Type token at END of remainder: "<name> 999 購入"
