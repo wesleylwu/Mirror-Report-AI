@@ -1,238 +1,284 @@
-"""Convert a JSON table description (from JSONgen) to an Excel file.
+"""Fill an Excel template from extracted JSON text (produced by JSONgen).
 
-JSON schema (matches JSONgen output):
-  {
-    "header": [
-      [{"label", "value", "label_span", "value_span", "bold", "font_size", "height"}, ...]
-    ],
-    "table": {
-      "column_widths": {"col_name": width_chars},
-      "row_height": 1|2|3,
-      "blank_rows": int,
-      "rows": [
-        {"_style": "data|total|subheader|full_width", "_value": "...",
-         "col_name": {"text", "bold", "font_size", "wrap"}}
-      ]
-    }
-  }
+Scans pipeline/templates/*.json, picks the template whose title and
+section_header match the extracted document, then writes every keyed cell.
+
+Usage:
+    python XLSXgen.py <json_path> [output.xlsx]
 """
+import difflib
 import json
-import sys
 from pathlib import Path
 
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.styles import Alignment, Border, Font, Side
 from openpyxl.utils import get_column_letter
 
-# ── Constants ──────────────────────────────────────────────────────────────
-_THIN = Side(style="thin")
-BORDER = Border(left=_THIN, right=_THIN, top=_THIN, bottom=_THIN)
-ROW_HEIGHT = 15          # default row height in points
-COL_SCALE  = 1.2         # scale factor applied to column widths for readability
-GREY_FILL  = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
-INTERNAL   = {"_style", "_value", "_height", "_bg"}
+import re as _re
+
+def _fmt_item_code(text: str, opts: dict | None = None) -> str:
+    """Move purchase-type tokens (e.g. '999 購入') onto the code line.
+    Spacing is controlled by format_options in the template."""
+    if not text:
+        return text
+    opts = opts or {}
+    code_to_type = " " * opts.get("code_to_type_spaces", 8)
+    type_internal = " " * opts.get("type_internal_spaces", 1)
+
+    lines = text.split("\n")
+    purchase_pat = _re.compile(r"^(\d+)\s+(.+)$")
+    code_line, name_lines, type_token = "", [], ""
+    for line in lines:
+        stripped = line.strip()
+        m = purchase_pat.match(stripped)
+        if m and any(c in m.group(2) for c in "購買"):
+            num, rest = m.group(1), m.group(2).strip()
+            type_token = f"{num}{type_internal}{rest}"
+        elif not code_line and _re.match(r"^[A-Z]{2}\d+", stripped):
+            code_line = stripped
+        else:
+            if stripped:
+                name_lines.append(stripped)
+
+    first_line = f"{code_line}{code_to_type}{type_token}" if type_token else code_line
+    rest = "\n".join(name_lines)
+    return f"{first_line}\n{rest}" if rest else first_line
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────
-def _text(cell_val) -> str:
-    if isinstance(cell_val, dict):
-        return cell_val.get("text", "")
-    return cell_val or ""
+_SIDES = {
+    "thin":   Side(style="thin"),
+    "medium": Side(style="medium"),
+    None:     Side(style=None),
+}
 
 
-def _font_size(code: int) -> int:
-    return {1: 8, 2: 10, 3: 14}.get(code, 10)
+def _side(s):
+    return _SIDES.get(s, Side(style=None))
 
 
-def _write(ws, text, row, c1, c2, *, bold=False, size=10,
-           halign="left", valign="center", wrap=True, fill=None):
-    cell = ws.cell(row=row, column=c1, value=text)
-    cell.font = Font(bold=bold, size=size)
-    cell.alignment = Alignment(horizontal=halign, vertical=valign, wrap_text=wrap)
-    cell.border = BORDER
-    if fill:
-        cell.fill = fill
-    if c2 > c1:
-        ws.merge_cells(start_row=row, end_row=row, start_column=c1, end_column=c2)
-        for gc in range(c1 + 1, c2 + 1):
-            c = ws.cell(row=row, column=gc)
-            c.border = BORDER
-            if fill:
-                c.fill = fill
+def _border(spec: dict) -> Border:
+    return Border(
+        top=_side(spec.get("top")),
+        bottom=_side(spec.get("bottom")),
+        left=_side(spec.get("left")),
+        right=_side(spec.get("right")),
+    )
 
 
-def _is_fullwidth(record: dict) -> bool:
-    if record.get("_style") == "full_width":
-        return True
-    # Claude sometimes emits _style:"subheader" with _value and no column keys
-    return "_value" in record and not any(k not in INTERNAL for k in record)
+def _write_cell(ws, row: int, col: int, end_col: int, end_row: int,
+                value: str, font_spec: dict, align_spec: dict, border_spec: dict):
+    font = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 10))
+    align = Alignment(
+        horizontal=align_spec.get("h", "left"),
+        vertical=align_spec.get("v", "center"),
+        wrap_text=align_spec.get("wrap", True),
+    )
+    outer = _border(border_spec)
+    no_side = Side(style=None)
+
+    ws.cell(row=row, column=col, value=value or None)
+
+    if end_col > col or end_row > row:
+        ws.merge_cells(start_row=row, end_row=end_row, start_column=col, end_column=end_col)
+
+    for r in range(row, end_row + 1):
+        for c in range(col, end_col + 1):
+            is_top    = r == row
+            is_bottom = r == end_row
+            is_left   = c == col
+            is_right  = c == end_col
+            cell = ws.cell(row=r, column=c)
+            cell.font = Font(bold=font.bold, size=font.size)
+            cell.alignment = Alignment(
+                horizontal=align.horizontal,
+                vertical=align.vertical,
+                wrap_text=align.wrap_text,
+            )
+            cell.border = Border(
+                top=outer.top       if is_top    else no_side,
+                bottom=outer.bottom if is_bottom else no_side,
+                left=outer.left     if is_left   else no_side,
+                right=outer.right   if is_right  else no_side,
+            )
 
 
-# ── Main ───────────────────────────────────────────────────────────────────
-def json_to_xlsx(
-    json_path: str,
-    xlsx_path: str,
-    *,
-    column_widths: dict | None = None,
-    blank_rows: int = 0,
-    header: list | None = None,
-    row_height: int = ROW_HEIGHT,
-):
+def _fuzzy_get(d: dict, key: str, cutoff: float = 0.7) -> str:
+    """Return d[key] if it exists, otherwise return the value whose key best
+    matches `key` by sequence similarity (above cutoff). Returns '' if nothing
+    matches well enough."""
+    if key in d:
+        return d[key]
+    candidates = list(d.keys())
+    matches = difflib.get_close_matches(key, candidates, n=1, cutoff=cutoff)
+    if matches:
+        return d[matches[0]]
+    return ""
+
+
+# ── Template discovery ────────────────────────────────────────────────────────
+
+def _load_templates() -> list[dict]:
+    templates_dir = Path(__file__).parent / "templates"
+    templates = []
+    for path in sorted(templates_dir.glob("*.json")):
+        with open(path, encoding="utf-8") as f:
+            templates.append(json.load(f))
+    return templates
+
+
+def _match_template(data: dict, templates: list[dict]) -> dict:
+    title   = (data.get("title") or "").strip()
+    section = (data.get("section_header") or "").strip()
+
+    for tmpl in templates:
+        m = tmpl.get("match", {})
+        t_title   = (m.get("title") or "").strip()
+        t_section = (m.get("section_header") or "").strip()
+        if t_title == title and t_section == section:
+            return tmpl
+
+    # Fallback: match on title only
+    for tmpl in templates:
+        m = tmpl.get("match", {})
+        if (m.get("title") or "").strip() == title:
+            return tmpl
+
+    raise ValueError(
+        f"No template found for title={title!r} section={section!r}. "
+        f"Available: {[t.get('id') for t in templates]}"
+    )
+
+
+# ── Sheet builder ─────────────────────────────────────────────────────────────
+
+def fill_template(tmpl: dict, data: dict, ws) -> None:
+    header_vals = data.get("header", {})
+    table       = data.get("table", {})
+    table_rows  = table.get("rows", [])
+
+    # Column widths
+    for col_letter, width in tmpl.get("column_widths", {}).items():
+        ws.column_dimensions[col_letter].width = width
+
+    # ── Header rows ───────────────────────────────────────────────────────────
+    for row_spec in tmpl.get("header", []):
+        r = row_spec["row"]
+        ws.row_dimensions[r].height = row_spec.get("height", 15)
+        for cell in row_spec["cells"]:
+            if cell.get("fixed"):
+                value = cell.get("value", "")
+            else:
+                value = _fuzzy_get(header_vals, cell.get("key", ""))
+            _write_cell(
+                ws, r, cell["col"], cell["end_col"], r,
+                value, cell["font"], cell["align"], cell["border"],
+            )
+
+    # ── Column headers (span two rows) ────────────────────────────────────────
+    ch = tmpl.get("col_headers", {})
+    r1 = ch.get("start_row", 0)
+    r2 = ch.get("end_row", r1)
+    heights = ch.get("row_heights", [15, 15])
+    if r1:
+        ws.row_dimensions[r1].height = heights[0] if heights else 15
+    if r2 and r2 != r1:
+        ws.row_dimensions[r2].height = heights[1] if len(heights) > 1 else 15
+    for cell in ch.get("cells", []):
+        _write_cell(
+            ws, r1, cell["col"], cell["end_col"], r2,
+            cell["value"], cell["font"], cell["align"], cell["border"],
+        )
+
+    # ── Data rows ─────────────────────────────────────────────────────────────
+    dr = tmpl.get("data_rows", {})
+    start    = dr.get("start_row", r2 + 1 if r2 else 1)
+    count    = dr.get("count", 0)
+    row_h    = dr.get("row_height", 30)
+    col_defs = dr.get("columns", [])
+
+    # Column header names — used to filter out misidentified full_width rows
+    col_header_names = {c["value"] for c in ch.get("cells", [])}
+
+    # Strip any _full_width rows whose text is just a column header name
+    table_rows = [
+        rw for rw in table_rows
+        if not ("_full_width" in rw and rw["_full_width"].strip() in col_header_names)
+    ]
+
+    # Number of rows to render: at least template count, expand for extra data
+    data_count = len([rw for rw in table_rows if "_full_width" not in rw])
+    n_rows = max(count, data_count)
+
+    for i in range(n_rows):
+        r = start + i
+        ws.row_dimensions[r].height = row_h
+        row_data = table_rows[i] if i < len(table_rows) else {}
+        is_first = (i == 0)
+
+        if "_full_width" in row_data:
+            # Rare: full-width text row — write across all cols
+            n_cols = tmpl.get("n_cols", 24)
+            first_col = col_defs[0]["col"] if col_defs else 1
+            last_col  = col_defs[-1]["end_col"] if col_defs else n_cols
+            border_spec = col_defs[0].get("border", {}) if col_defs else {}
+            _write_cell(
+                ws, r, first_col, last_col, r,
+                row_data["_full_width"],
+                {"bold": False, "size": 10},
+                {"h": "center", "v": "center", "wrap": True},
+                border_spec,
+            )
+            continue
+
+        for col_def in col_defs:
+            key         = col_def.get("key", "")
+            value       = row_data.get(key, "")
+            if col_def.get("format") == "item_code":
+                value = _fmt_item_code(value, col_def.get("format_options"))
+            border_spec = col_def.get("first_row_border", col_def["border"]) if is_first \
+                          else col_def["border"]
+            _write_cell(
+                ws, r, col_def["col"], col_def["end_col"], r,
+                value, col_def["font"], col_def["align"], border_spec,
+            )
+
+    # ── Footer ────────────────────────────────────────────────────────────────
+    footer = tmpl.get("footer")
+    if footer:
+        # If we added extra data rows, shift the footer down accordingly
+        extra = max(0, n_rows - count)
+        for cell in footer["cells"]:
+            fr = footer["row"] + extra
+            ws.row_dimensions[fr].height = footer.get("height", 30)
+            _write_cell(
+                ws, fr, cell["col"], cell["end_col"], fr,
+                cell.get("value", ""),
+                cell["font"], cell["align"], cell["border"],
+            )
+
+
+def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
 
-    table         = data.get("table", {})
-    column_widths = column_widths if column_widths is not None else table.get("column_widths") or {}
-    header        = header        if header        is not None else data.get("header") or []
-    blank_rows    = blank_rows    or table.get("blank_rows", 0)
-    records       = table.get("rows", [])
-    col_names     = list(column_widths)
+    templates = _load_templates()
+    tmpl = _match_template(data, templates)
 
     wb = Workbook()
     ws = wb.active
-
-    # ── Grid layout ───────────────────────────────────────────────────────
-    # max_span from header rows drives the fine-grained column count (n_grid).
-    # Each table column gets a proportional slice of those grid columns.
-    header_rows = [[r] if isinstance(r, dict) else r for r in header]
-
-    if header_rows:
-        n_grid = max(
-            sum(c.get("label_span", 1) + c.get("value_span", 1) for c in row)
-            for row in header_rows
-        )
-        n_grid = max(n_grid, len(col_names))
-    else:
-        n_grid = len(col_names) or 1
-
-    # Distribute n_grid proportionally among table columns by their widths.
-    total_w = sum(column_widths.values()) or 1
-    gc_spans: list[int] = []
-    rem = n_grid
-    for i, name in enumerate(col_names):
-        if i == len(col_names) - 1:
-            gc_spans.append(max(1, rem))
-        else:
-            s = max(1, round(column_widths[name] / total_w * n_grid))
-            s = min(s, rem - (len(col_names) - i - 1))
-            gc_spans.append(s)
-            rem -= s
-
-    gc_start: list[int] = []
-    cur = 1
-    for s in gc_spans:
-        gc_start.append(cur)
-        cur += s
-    gc_end = [gc_start[i] + gc_spans[i] - 1 for i in range(len(col_names))]
-
-    # Set Excel column widths.
-    for i, name in enumerate(col_names):
-        sub_w = column_widths[name] * COL_SCALE / gc_spans[i]
-        for gc in range(gc_start[i], gc_end[i] + 1):
-            ws.column_dimensions[get_column_letter(gc)].width = sub_w
-
-    # ── Header ────────────────────────────────────────────────────────────
-    excel_row = 0
-    for grid_row in header_rows:
-        excel_row += 1
-        is_title = len(grid_row) == 1 and grid_row[0].get("value_span", 0) == 0
-        h_mult   = max((c.get("height", 1) for c in grid_row), default=1)
-        if is_title:
-            h_mult = max(h_mult, 3)
-
-        # Build (span, text, bold, size) segments.
-        segs = []
-        for cell in grid_row:
-            ls = cell.get("label_span", 1)
-            vs = cell.get("value_span", 1)
-            sz = _font_size(cell.get("font_size", 2))
-            bd = cell.get("bold", is_title)
-            if ls > 0:
-                segs.append((ls, cell.get("label", ""), bd, sz))
-            if vs > 0:
-                segs.append((vs, cell.get("value", ""), False, sz))
-
-        # Greedy proportional allocation of segments to grid columns.
-        rem_span = sum(s[0] for s in segs)
-        rem_cols = n_grid
-        col_cur  = 1
-        for idx, (span, text, bold, size) in enumerate(segs):
-            if idx == len(segs) - 1:
-                count = rem_cols
-            else:
-                count = max(1, round(span / rem_span * rem_cols))
-                count = min(count, rem_cols - (len(segs) - idx - 1))
-            _write(ws, text, excel_row, col_cur, col_cur + count - 1,
-                   bold=bold, size=size,
-                   halign="center" if is_title else "left")
-            col_cur  += count
-            rem_cols -= count
-            rem_span -= span
-
-        ws.row_dimensions[excel_row].height = ROW_HEIGHT * h_mult
-
-    # ── Table column headers ──────────────────────────────────────────────
-    excel_row += 1
-    for i, name in enumerate(col_names):
-        _write(ws, name, excel_row, gc_start[i], gc_end[i],
-               bold=True, halign="center", fill=GREY_FILL)
-    ws.row_dimensions[excel_row].height = ROW_HEIGHT * 2
-
-    # ── Table rows (in order) ─────────────────────────────────────────────
-    for record in records:
-        excel_row += 1
-        style  = record.get("_style", "data")
-        r_mult = record.get("_height", 1)
-
-        if _is_fullwidth(record):
-            text  = record.get("_value", "")
-            h     = record.get("_height", 2)
-            _write(ws, text, excel_row, 1, n_grid,
-                   bold=True, size=12, halign="center")
-            ws.row_dimensions[excel_row].height = ROW_HEIGHT * h
-            continue
-
-        row_fill = GREY_FILL if style == "subheader" else None
-        for i, name in enumerate(col_names):
-            cv   = record.get(name, "")
-            text = _text(cv)
-            bold = (cv.get("bold", False) if isinstance(cv, dict) else False) \
-                   or style in ("total", "subheader")
-            size = _font_size(cv.get("font_size", 2) if isinstance(cv, dict) else 2)
-            wrap = cv.get("wrap", True)  if isinstance(cv, dict) else True
-            _write(ws, text, excel_row, gc_start[i], gc_end[i],
-                   bold=bold, size=size, wrap=wrap, fill=row_fill)
-
-        ws.row_dimensions[excel_row].height = row_height * max(r_mult, 1)
-
-    # ── Blank template rows ───────────────────────────────────────────────
-    for _ in range(blank_rows):
-        excel_row += 1
-        for i in range(len(col_names)):
-            _write(ws, "", excel_row, gc_start[i], gc_end[i])
-        ws.row_dimensions[excel_row].height = row_height
-
+    fill_template(tmpl, data, ws)
     wb.save(xlsx_path)
+    print(f"Saved {xlsx_path} (template: {tmpl['id']})", file=__import__('sys').stderr)
 
 
 def main():
     import argparse
-    p = argparse.ArgumentParser(description="Convert JSON table description to Excel")
+    p = argparse.ArgumentParser()
     p.add_argument("json_path")
     p.add_argument("xlsx_path", nargs="?")
     args = p.parse_args()
-
     xlsx_path = args.xlsx_path or str(Path(args.json_path).with_suffix(".xlsx"))
-    with open(args.json_path, encoding="utf-8") as f:
-        data = json.load(f)
-    table = data.get("table", {})
-    json_to_xlsx(
-        args.json_path, xlsx_path,
-        column_widths=table.get("column_widths"),
-        blank_rows=table.get("blank_rows", 0),
-        header=data.get("header"),
-        row_height={1: 15, 2: 30, 3: 45}.get(table.get("row_height", 1), 15),
-    )
+    json_to_xlsx(args.json_path, xlsx_path)
 
 
 if __name__ == "__main__":

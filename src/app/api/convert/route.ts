@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
     await writeFile(imagePath, Buffer.from(await file.arrayBuffer()));
 
     await runPython(process.cwd(), ["pipeline/JSONgen.py", imagePath, jsonPath]);
+    await runPython(process.cwd(), ["pipeline/XLSXgen.py", jsonPath, xlsxPath]);
 
     // Read raw response if it exists (written by JSONgen on JSON parse errors)
     const rawPath = `${imagePath}.raw_response.txt`;

@@ -1,956 +1,137 @@
 {
-  "header": [
-    [
-      {
-        "label": "製造指図書",
-        "value": "",
-        "label_span": 12,
-        "value_span": 0,
-        "font_size": 3,
-        "bold": true,
-        "height": 3
-      }
-    ],
-    [
-      {
-        "label": "手配№",
-        "value": "0000056481",
-        "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "",
-        "value": "1",
-        "label_span": 1,
-        "value_span": 1,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "発行日",
-        "value": "2018/12/05",
-        "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      }
-    ],
-    [
-      {
-        "label": "手配先",
-        "value": "S00000200 製造1課 倉庫",
-        "label_span": 2,
-        "value_span": 4,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "手配納期",
-        "value": "2018/12/14",
-        "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      }
-    ],
-    [
-      {
-        "label": "品目CD",
-        "value": "HA0002610",
-        "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "工順",
-        "value": "100",
-        "label_span": 1,
-        "value_span": 1,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "発注手配数",
-        "value": "400.72 kg",
-        "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      }
-    ],
-    [
-      {
-        "label": "品目名",
-        "value": "タヤ/ッ゛ａｑｕｅ ｻﾃﾝ(ｻﾃﾝ風膜)滋賀品",
-        "label_span": 2,
-        "value_span": 4,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "製番",
-        "value": "0000051090",
-        "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      }
-    ],
-    [
-      {
-        "label": "手配内容",
-        "value": "20　仕込",
-        "label_span": 2,
-        "value_span": 4,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "完成人庫",
-        "value": "S00000200 製造1課 倉庫",
-        "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      }
-    ],
-    [
-      {
-        "label": "ｿｯﾄﾖﾑ",
-        "value": "",
-        "label_span": 2,
-        "value_span": 4,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      },
-      {
-        "label": "完成日",
-        "value": "",
-        "label_span": 2,
-        "value_span": 3,
-        "font_size": 2,
-        "bold": false,
-        "height": 1
-      }
-    ]
-  ],
+  "title": "製造指図書",
+  "section_header": "調合票",
+  "header": {
+    "手配No.": "0000056481",
+    "手配先": "S00000200 製造1課 倉庫",
+    "品目CD": "HA002510",
+    "品目名": "ナイロンマットタイプ ナイロン(ナイ+風味)造粒品",
+    "手配内容": "20　仕込",
+    "ウット№.": "",
+    "発行日": "2018/12/05",
+    "手配納期": "2018/12/14",
+    "工順": "100",
+    "発注予配数": "400.72 kg",
+    "製番": "0000051090",
+    "完成人庫": "S00000200　製造1課　倉庫",
+    "完成日": ""
+  },
   "table": {
-    "column_widths": {
-      "成分名": 35,
-      "原単位": 8,
-      "分量": 10,
-      "秤量番": 10,
-      "原料ロット": 15,
-      "確認者": 8
-    },
-    "row_height": 1,
-    "blank_rows": 5,
+    "columns": [
+      "成分名",
+      "原単位",
+      "分量",
+      "秤量番",
+      "原材ロット",
+      "確認者"
+    ],
     "rows": [
       {
-        "_style": "subheader",
-        "_value": "調合票",
-        "_height": 2
+        "成分名": "GE0006280\nShayco　W80ーフォーマスナイ\n999　購入",
+        "原単位": "89.8383",
+        "分量": "360.00\nkg",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0006280        999 購入",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "89.8383",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "360.00 kg",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "GE0005150\nDATA　INSTANT　COFFEE　FR-2132(原臨り)\n999　購入",
+        "原単位": "5.9893",
+        "分量": "24.00\nkg",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "Maxco WB-ｻﾃﾝﾌｮｰｽｻﾃﾝ",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "GE0004220\n鎌足レタッチ\n999　購入",
+        "原単位": "2.2959",
+        "分量": "9.20\nkg",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0005150        999 購入",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "5.9893",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "24.00 kg",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "GE0003040\nスナッチ×200(大茂機食)\n999　購入",
+        "原単位": "0.2795",
+        "分量": "1.12\nkg",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "DATA INSTANT COFFEE FR-2132(蒸留用)",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "GE0002070\nソッチ　K-EM.\n999　購入",
+        "原単位": "0.2995",
+        "分量": "1.20\nkg",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0004220        999 購入",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "2.2959",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "9.20 kg",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "GE0003110\nボエムZ　1-3\n999　購入",
+        "原単位": "0.4991",
+        "分量": "2.00\nkg",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "練乳ﾌﾟﾛﾌﾟﾗ",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "GE0006810\nハッダーし　ミナーチー　SSH-181\n999　購入",
+        "原単位": "0.4991",
+        "分量": "2.00\nkg",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0003040        999 購入",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "0.2795",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "1.12 kg",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "GE0004800\nコーヒー　ダターブレーバー　YM-5309\n999　購入",
+        "原単位": "0.2995",
+        "分量": "1.20\nkg",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "ｽﾀﾋﾟｰ ×200(大茶機食)",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "",
+        "原単位": "",
+        "分量": "",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0002070        999 購入",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "0.2995",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "1.20 kg",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "",
+        "原単位": "",
+        "分量": "",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "ｿﾞｯﾌ K-EM.",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "",
+        "原単位": "",
+        "分量": "",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0003110        999 購入",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "0.4991",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "2.00 kg",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "",
+        "原単位": "",
+        "分量": "",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "ﾎﾟﾑｴﾑｚ L-3",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
+        "成分名": "",
+        "原単位": "",
+        "分量": "",
+        "秤量番": "",
+        "原材ロット": "",
+        "確認者": ""
       },
       {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0006810        999 購入",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "0.4991",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "2.00 kg",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
-      },
-      {
-        "_style": "data",
-        "成分名": {
-          "text": "ﾊﾟﾀﾞｰｰｷﾞ ｻﾐﾞｰﾝ SSH-181",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
-      },
-      {
-        "_style": "data",
-        "成分名": {
-          "text": "GE0004800        999 購入",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "0.2995",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "1.20 kg",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
-      },
-      {
-        "_style": "data",
-        "成分名": {
-          "text": "ｺｰﾋｰﾞ ﾀﾞﾌﾌﾚｰﾌﾞ YM-5309",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
-      },
-      {
-        "_style": "data",
-        "成分名": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
-      },
-      {
-        "_style": "data",
-        "成分名": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
-      },
-      {
-        "_style": "data",
-        "成分名": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
-      },
-      {
-        "_style": "data",
-        "成分名": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原単位": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "分量": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "秤量番": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "原料ロット": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        },
-        "確認者": {
-          "text": "",
-          "bold": false,
-          "font_size": 2,
-          "wrap": false
-        }
-      },
-      {
-        "_style": "full_width",
-        "_value": "備考",
-        "_height": 2
+        "_full_width": "備考"
       }
     ]
   }
