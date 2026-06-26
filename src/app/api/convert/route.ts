@@ -23,7 +23,11 @@ export async function POST(req: NextRequest) {
   try {
     await writeFile(imagePath, Buffer.from(await file.arrayBuffer()));
 
-    await runPython(process.cwd(), ["pipeline/JSONgen.py", imagePath, jsonPath]);
+    await runPython(process.cwd(), [
+      "pipeline/JSONgen.py",
+      imagePath,
+      jsonPath,
+    ]);
     await runPython(process.cwd(), ["pipeline/XLSXgen.py", jsonPath, xlsxPath]);
 
     // Read raw response if it exists (written by JSONgen on JSON parse errors)
@@ -31,7 +35,9 @@ export async function POST(req: NextRequest) {
     const xlsxData = await readFile(xlsxPath).catch(async () => {
       const raw = await readFile(rawPath, "utf-8").catch(() => "");
       unlink(rawPath).catch(() => {});
-      throw new Error(`XLSX not produced. Raw Claude response:\n${raw.slice(0, 2000)}`);
+      throw new Error(
+        `XLSX not produced. Raw Claude response:\n${raw.slice(0, 2000)}`,
+      );
     });
     const outName = `${path.basename(file.name, ext)}.xlsx`;
 
@@ -63,7 +69,8 @@ function runPython(cwd: string, args: string[]): Promise<void> {
     proc.stderr.on("data", (d: Buffer) => stderr.push(d.toString()));
     proc.on("close", (code: number) => {
       if (code === 0) resolve();
-      else reject(new Error(stderr.join("") || `Python exited with code ${code}`));
+      else
+        reject(new Error(stderr.join("") || `Python exited with code ${code}`));
     });
   });
 }

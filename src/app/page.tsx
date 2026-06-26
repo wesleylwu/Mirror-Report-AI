@@ -19,10 +19,6 @@ const Page = () => {
     setUploadedFile(file);
   };
 
-  const handleClear = () => {
-    setUploadedFile(null);
-  };
-
   return (
     <div className="bg-mirror-white font-mirror-noto flex min-h-screen flex-col">
       <NavBar
@@ -35,10 +31,23 @@ const Page = () => {
       />
       <Mirror
         uploadedFile={uploadedFile}
-        onClear={() => { setUploadedFile(null); setCanDownload(false); setCanGenerate(false); }}
-        onFileSelect={(f) => { setUploadedFile(f); setCanDownload(false); }}
-        onGenerateReady={(fn) => { generateRef.current = fn; setCanGenerate(true); }}
-        onDownloadReady={(fn) => { downloadRef.current = fn; setCanDownload(true); }}
+        onClear={() => {
+          setUploadedFile(null);
+          setCanDownload(false);
+          setCanGenerate(false);
+        }}
+        onFileSelect={(f) => {
+          setUploadedFile(f);
+          setCanDownload(false);
+        }}
+        onGenerateReady={(fn) => {
+          generateRef.current = fn;
+          setCanGenerate(true);
+        }}
+        onDownloadReady={(fn) => {
+          downloadRef.current = fn;
+          setCanDownload(true);
+        }}
         onDownloadCleared={() => setCanDownload(false)}
       />
       <Footer />
