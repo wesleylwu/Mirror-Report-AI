@@ -14,9 +14,20 @@ import { motion, AnimatePresence } from "motion/react";
 interface NavBarProps {
   onFileSelect: (file: File) => void;
   onCaptureClick: () => void;
+  onGenerate: () => void;
+  onDownload: () => void;
+  canGenerate: boolean;
+  canDownload: boolean;
 }
 
-const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
+const NavBar = ({
+  onFileSelect,
+  onCaptureClick,
+  onGenerate,
+  onDownload,
+  canGenerate,
+  canDownload,
+}: NavBarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -85,7 +96,9 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
           </button>
 
           <button
-            className="text-mirror-white hover:text-mirror-cyan flex cursor-pointer items-center rounded text-sm font-medium transition-colors duration-200 focus:outline-none"
+            onClick={onDownload}
+            disabled={!canDownload}
+            className="text-mirror-white hover:text-mirror-cyan flex cursor-pointer items-center rounded text-sm font-medium transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
             style={{ padding: "0.5vh 1vw" }}
           >
             <FaFileExcel
@@ -95,7 +108,9 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
           </button>
 
           <button
-            className="bg-mirror-white/10 hover:bg-mirror-white/20 active:bg-mirror-white/30 text-mirror-white border-mirror-white/20 cursor-pointer rounded-lg border text-sm font-semibold shadow-sm transition-all duration-200 focus:outline-none"
+            onClick={onGenerate}
+            disabled={!canGenerate}
+            className="bg-mirror-white/10 hover:bg-mirror-white/20 active:bg-mirror-white/30 text-mirror-white border-mirror-white/20 cursor-pointer rounded-lg border text-sm font-semibold shadow-sm transition-all duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
             style={{ padding: "0.8vh 1.5vw" }}
           >
             <p>Generate</p>

@@ -1,24 +1,101 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Image from "next/image";
-import { FaPaperclip, FaCamera, FaTimes, FaFileAlt } from "react-icons/fa";
+import {
+  FaPaperclip,
+  FaCamera,
+  FaTimes,
+  FaFileAlt,
+  FaFileExcel,
+  FaSpinner,
+  FaCheckCircle,
+  FaExclamationCircle,
+} from "react-icons/fa";
 
 interface MirrorProps {
   uploadedFile: File | null;
   onClear: () => void;
   onFileSelect: (file: File) => void;
+  onGenerateReady: (fn: () => void) => void;
+  onDownloadReady: (fn: () => void) => void;
+  onDownloadCleared: () => void;
 }
 
-const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
+type ConvertStatus = "idle" | "loading" | "done" | "error";
+
+const Mirror = ({
+  uploadedFile,
+  onClear,
+  onFileSelect,
+  onGenerateReady,
+  onDownloadReady,
+  onDownloadCleared,
+}: MirrorProps) => {
   const imageUrl = useMemo<string | null>(() => {
-    if (uploadedFile && uploadedFile.type.startsWith("image/")) {
+    if (uploadedFile?.type.startsWith("image/"))
       return URL.createObjectURL(uploadedFile);
-    }
     return null;
   }, [uploadedFile]);
+
   const [isDragging, setIsDragging] = useState(false);
+  const [status, setStatus] = useState<ConvertStatus>("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [xlsxBlob, setXlsxBlob] = useState<Blob | null>(null);
+  const [xlsxName, setXlsxName] = useState("");
   const localInputRef = useRef<HTMLInputElement>(null);
+
+  const triggerDownload = useCallback((blob: Blob, name: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleGenerate = useCallback(async () => {
+    if (!uploadedFile) return;
+    setStatus("loading");
+    setErrorMsg(null);
+    setXlsxBlob(null);
+    onDownloadCleared();
+
+    try {
+      const form = new FormData();
+      form.append("file", uploadedFile);
+      const res = await fetch("/api/convert", { method: "POST", body: form });
+
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error || "Conversion failed");
+      }
+
+      const blob = await res.blob();
+      const name =
+        res.headers
+          .get("Content-Disposition")
+          ?.match(/filename="(.+?)"/)?.[1] ??
+        `${uploadedFile.name.replace(/\.[^.]+$/, "")}.xlsx`;
+
+      setXlsxBlob(blob);
+      setXlsxName(name);
+      setStatus("done");
+      onDownloadReady(() => triggerDownload(blob, name));
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Unknown error");
+      setStatus("error");
+    }
+  }, [uploadedFile, onDownloadCleared, onDownloadReady, triggerDownload]);
+
+  // Reset when file changes
+  useEffect(() => {
+    setStatus("idle");
+    setXlsxBlob(null);
+    setErrorMsg(null);
+    onDownloadCleared();
+    if (uploadedFile) onGenerateReady(handleGenerate);
+  }, [uploadedFile, handleGenerate, onDownloadCleared, onGenerateReady]);
 
   useEffect(() => {
     return () => {
@@ -26,55 +103,37 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
     };
   }, [imageUrl]);
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      const allowedTypes = [
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/webp",
-        "application/pdf",
-      ];
-      const fileExtension = file.name.split(".").pop()?.toLowerCase();
-      const allowedExtensions = ["jpg", "jpeg", "png", "webp", "pdf"];
-
-      if (
-        allowedTypes.includes(file.type) ||
-        (fileExtension && allowedExtensions.includes(fileExtension))
-      ) {
-        onFileSelect(file);
-      } else {
-        alert("Only JPEG, PNG, PDF, and WebP files are allowed.");
-      }
+  const validateAndSelect = (file: File) => {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "application/pdf",
+    ];
+    const allowedExts = ["jpg", "jpeg", "png", "webp", "pdf"];
+    if (
+      allowedTypes.includes(file.type) ||
+      (ext && allowedExts.includes(ext))
+    ) {
+      onFileSelect(file);
+    } else {
+      alert("Only JPEG, PNG, WebP, or PDF files are allowed.");
     }
   };
 
-  const triggerUpload = () => {
-    localInputRef.current?.click();
-  };
+  const isImage = uploadedFile?.type.startsWith("image/");
 
   const formatBytes = (bytes: number, decimals = 2) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+    return (
+      parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + " " + sizes[i]
+    );
   };
-
-  const isImage = uploadedFile && uploadedFile.type.startsWith("image/");
 
   return (
     <div
@@ -85,6 +144,7 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
         className="relative grid grid-cols-1 gap-8 md:grid-cols-2"
         style={{ gap: "4vw" }}
       >
+        {/* Left — document source */}
         <div
           className="flex flex-col md:border-r"
           style={{
@@ -125,10 +185,18 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
           {!uploadedFile ? (
             <div className="flex flex-col">
               <div
-                onClick={triggerUpload}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
+                onClick={() => localInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  const f = e.dataTransfer.files?.[0];
+                  if (f) validateAndSelect(f);
+                }}
                 className="bg-mirror-light-blue flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300"
                 style={{
                   minHeight: "55vh",
@@ -176,37 +244,8 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
                 type="file"
                 ref={localInputRef}
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const allowedTypes = [
-                      "image/jpeg",
-                      "image/jpg",
-                      "image/png",
-                      "image/webp",
-                      "application/pdf",
-                    ];
-                    const fileExtension = file.name
-                      .split(".")
-                      .pop()
-                      ?.toLowerCase();
-                    const allowedExtensions = [
-                      "jpg",
-                      "jpeg",
-                      "png",
-                      "webp",
-                      "pdf",
-                    ];
-
-                    if (
-                      allowedTypes.includes(file.type) ||
-                      (fileExtension &&
-                        allowedExtensions.includes(fileExtension))
-                    ) {
-                      onFileSelect(file);
-                    } else {
-                      alert("Only JPEG, PNG, PDF, and WebP files are allowed.");
-                    }
-                  }
+                  const f = e.target.files?.[0];
+                  if (f) validateAndSelect(f);
                 }}
                 accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
                 className="hidden"
@@ -243,7 +282,7 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
                     </p>
                     <p className="text-mirror-gray text-xs">
                       {formatBytes(uploadedFile.size)} •{" "}
-                      {uploadedFile.type || "unknown file type"}
+                      {uploadedFile.type || "unknown"}
                     </p>
                   </div>
                 </div>
@@ -251,14 +290,12 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
                   onClick={onClear}
                   className="text-mirror-gray hover:text-mirror-cyan flex cursor-pointer items-center justify-center rounded transition-colors focus:outline-none"
                   style={{ padding: "0.5vh 0.5vw" }}
-                  title="Remove document"
                 >
                   <FaTimes style={{ width: "2vh", height: "2vh" }} />
                 </button>
               </div>
-
               <div
-                className="bg-mirror-dark-blue/95 relative flex animate-[fadeIn_0.2s_ease-out] items-center justify-center overflow-hidden rounded-2xl border shadow-inner"
+                className="bg-mirror-dark-blue/95 relative flex items-center justify-center overflow-hidden rounded-2xl border shadow-inner"
                 style={{
                   minHeight: "55vh",
                   padding: "2vh 2vw",
@@ -269,7 +306,7 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
                   <div className="relative w-full" style={{ height: "48vh" }}>
                     <Image
                       src={imageUrl}
-                      alt="Uploaded document source"
+                      alt="Uploaded document"
                       fill
                       style={{ objectFit: "contain", borderRadius: "2vh" }}
                       className="shadow-md"
@@ -330,6 +367,7 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
           )}
         </div>
 
+        {/* Right — generated template */}
         <div className="flex flex-col md:pl-4">
           <div style={{ marginBottom: "1vh" }}>
             <p
@@ -341,19 +379,93 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
           </div>
           <div style={{ marginBottom: "2vh" }}>
             <p className="text-mirror-gray text-sm font-semibold">
-              Generating Status:
+              Generating Status:{" "}
+            </p>
+            <p className="text-mirror-dark-blue text-sm font-normal">
+              {status === "idle" && "Waiting for generation..."}
+              {status === "loading" && "Processing document..."}
+              {status === "done" && "Template ready for download"}
+              {status === "error" && "Generation failed"}
             </p>
           </div>
+
           <div
-            className="bg-mirror-light-blue flex items-center justify-center rounded-2xl border"
+            className="bg-mirror-light-blue flex flex-col items-center justify-center rounded-2xl border"
             style={{
               minHeight: "55vh",
               borderColor: "var(--color-mirror-light-blue)",
+              padding: "4vh 4vw",
+              gap: "3vh",
             }}
           >
-            <p className="text-mirror-gray text-sm font-medium">
-              No template generated yet
-            </p>
+            {status === "idle" && (
+              <p className="text-mirror-gray text-sm font-medium">
+                No template generated yet
+              </p>
+            )}
+
+            {status === "loading" && (
+              <div
+                className="flex flex-col items-center"
+                style={{ gap: "2vh" }}
+              >
+                <FaSpinner
+                  className="text-mirror-cyan animate-spin"
+                  style={{ width: "6vh", height: "6vh" }}
+                />
+                <p className="text-mirror-dark-blue text-sm font-semibold">
+                  Running OCR pipeline...
+                </p>
+                <p className="text-mirror-gray text-xs">
+                  This may take up to a minute
+                </p>
+              </div>
+            )}
+
+            {status === "done" && (
+              <div
+                className="flex flex-col items-center"
+                style={{ gap: "2vh" }}
+              >
+                <FaCheckCircle
+                  className="text-mirror-green"
+                  style={{ width: "6vh", height: "6vh" }}
+                />
+                <p className="text-mirror-dark-blue text-sm font-semibold">
+                  Excel template generated
+                </p>
+                <button
+                  onClick={() =>
+                    xlsxBlob && triggerDownload(xlsxBlob, xlsxName)
+                  }
+                  className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white flex items-center rounded-lg text-sm font-bold shadow-sm transition-colors duration-200"
+                  style={{ padding: "1.2vh 2vw", gap: "0.8vw" }}
+                >
+                  <FaFileExcel style={{ width: "2vh", height: "2vh" }} />
+                  Download {xlsxName}
+                </button>
+              </div>
+            )}
+
+            {status === "error" && (
+              <div
+                className="flex flex-col items-center"
+                style={{ gap: "2vh" }}
+              >
+                <FaExclamationCircle
+                  className="text-red-500"
+                  style={{ width: "6vh", height: "6vh" }}
+                />
+                <p className="text-mirror-dark-blue text-sm font-semibold">
+                  Generation failed
+                </p>
+                {errorMsg && (
+                  <p className="text-mirror-gray max-w-[25vw] text-center text-xs">
+                    {errorMsg}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
