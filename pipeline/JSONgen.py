@@ -23,6 +23,10 @@ MODEL = "claude-haiku-4-5-20251001"
 
 PROMPT = """You are a precise document digitizer. Extract ONLY the text visible in the image. Do not infer, guess, or fill in values.
 
+VALIDATION RULE:
+- Inspect the image first. If the image is not a printed document or manufacturing report (e.g., if it is a photo of a person, animal, food, scenery, or any random physical object/scene), or if it is too blurry or dark to read, you MUST return a JSON with an "error" key:
+  {"error": "invalid_document", "message": "The uploaded image does not appear to be a valid manufacturing document."}
+
 CRITICAL RULES:
 - Transcribe ONLY pre-printed text. Ignore handwriting, stamps, and pen marks.
 - If a field value is blank, output "".
@@ -171,19 +175,22 @@ def extract_text(image_path: str) -> dict:
         messages.append({"role": "assistant", "content": chunk})
         messages.append({"role": "user", "content": "Continue the JSON exactly from where you left off. Output only raw JSON continuation."})
 
-    print(
-        f"Tokens — input: {total_input}, output: {total_output}, "
-        f"total: {total_input + total_output} "
-        f"(cache write: {total_cache_write}, read: {total_cache_read})",
-        file=sys.stderr,
-    )
-
     text = accumulated.strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
 
     try:
-        return json.loads(text)
+        data = json.loads(text)
+        if "error" in data:
+            raise ValueError(data.get("message") or "The uploaded image does not appear to be a valid manufacturing document.")
+
+        print(
+            f"Tokens — input: {total_input}, output: {total_output}, "
+            f"total: {total_input + total_output} "
+            f"(cache write: {total_cache_write}, read: {total_cache_read})",
+            file=sys.stderr,
+        )
+        return data
     except json.JSONDecodeError as e:
         raw_path = image_path + ".raw_response.txt"
         with open(raw_path, "w", encoding="utf-8") as f:
@@ -200,7 +207,12 @@ def main():
     parser.add_argument("output_json", nargs="?")
     args = parser.parse_args()
 
-    data = extract_text(args.image_path)
+    try:
+        data = extract_text(args.image_path)
+    except ValueError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
+
     output = json.dumps(data, indent=2, ensure_ascii=False)
 
     if args.output_json:
