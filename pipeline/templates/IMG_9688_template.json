@@ -318,18 +318,18 @@
         "border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
-        "col": 18, "end_col": 20,
+        "col": 18, "end_col": 22,
         "value": "原料ロット",
         "font": {"bold": true, "size": 11},
         "align": {"h": "center", "v": "center", "wrap": true},
-        "border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
+        "border": {"top": "medium", "bottom": "medium", "left": "thin", "right": "thin"}
       },
       {
-        "col": 21, "end_col": 24,
+        "col": 23, "end_col": 24,
         "value": "備考",
         "font": {"bold": true, "size": 11},
         "align": {"h": "center", "v": "center", "wrap": true},
-        "border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
+        "border": {"top": "medium", "bottom": "medium", "left": null, "right": "thin"}
       }
     ]
   },
@@ -368,18 +368,18 @@
         "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
-        "col": 18, "end_col": 20, "key": "原料ロット",
+        "col": 18, "end_col": 22, "key": "原料ロット",
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
         "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
         "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
-        "col": 21, "end_col": 24, "key": "備考",
+        "col": 23, "end_col": 24, "key": "備考",
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
-        "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
-        "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
+        "border": {"top": "thin", "bottom": "thin", "left": null, "right": "thin"},
+        "first_row_border": {"top": "medium", "bottom": "thin", "left": null, "right": "thin"}
       }
     ]
   },

@@ -17,27 +17,56 @@ from openpyxl.utils import get_column_letter
 import re as _re
 
 def _fmt_item_code(text: str, opts: dict | None = None) -> str:
-    """Move purchase-type tokens (e.g. '999 購入') onto the code line.
+    """Move type tokens (e.g. '999 購入', '100 中込') onto the code line.
+    Handles both multiline input (\n-separated) and single-line input (space-separated).
     Spacing is controlled by format_options in the template."""
     if not text:
         return text
     opts = opts or {}
-    code_to_type = " " * opts.get("code_to_type_spaces", 8)
+    code_to_type  = " " * opts.get("code_to_type_spaces", 8)
     type_internal = " " * opts.get("type_internal_spaces", 1)
 
-    lines = text.split("\n")
-    purchase_pat = _re.compile(r"^(\d+)\s+(.+)$")
-    code_line, name_lines, type_token = "", [], ""
-    for line in lines:
+    # Matches lines that are ONLY digits + one word (e.g. "999 購入", "100 中込")
+    # Whole line is just a type token: "999 購入"
+    type_pat      = _re.compile(r"^(\d+)\s+(\S+)$")
+    code_pat      = _re.compile(r"^[A-Z]{2}\d+")
+    # Type token at START of remainder, followed by more text: "999 購入 <name>"
+    start_type_pat = _re.compile(r"^(\d+)\s+(\S+)\s+")
+    # Type token at END of remainder: "<name> 999 購入"
+    end_type_pat  = _re.compile(r"\s+(\d+)\s+(\S+)\s*$")
+
+    code_line, type_token, name_lines = "", "", []
+    for line in text.split("\n"):
         stripped = line.strip()
-        m = purchase_pat.match(stripped)
-        if m and any(c in m.group(2) for c in "購買"):
-            num, rest = m.group(1), m.group(2).strip()
-            type_token = f"{num}{type_internal}{rest}"
-        elif not code_line and _re.match(r"^[A-Z]{2}\d+", stripped):
-            code_line = stripped
+        if not stripped:
+            continue
+        if code_pat.match(stripped) and not code_line:
+            parts = stripped.split(None, 1)
+            code_line = parts[0]  # only the code token (e.g. "GE0006280")
+            if len(parts) > 1:
+                remainder = parts[1].strip()
+                # Check type token at START of remainder (CODE TYPE NAME order)
+                m = start_type_pat.match(remainder)
+                if m and len(f"{m.group(1)} {m.group(2)}") <= 12:
+                    type_token = f"{m.group(1)}{type_internal}{m.group(2)}"
+                    name_part = remainder[m.end():].strip()
+                    if name_part:
+                        name_lines.append(name_part)
+                else:
+                    # Check type token at END of remainder (CODE NAME TYPE order)
+                    m = end_type_pat.search(remainder)
+                    if m and len(f"{m.group(1)} {m.group(2)}") <= 12:
+                        type_token = f"{m.group(1)}{type_internal}{m.group(2)}"
+                        name_part = remainder[:m.start()].strip()
+                        if name_part:
+                            name_lines.append(name_part)
+                    else:
+                        name_lines.append(remainder)
         else:
-            if stripped:
+            m = type_pat.match(stripped)
+            if m and len(stripped) <= 12:
+                type_token = f"{m.group(1)}{type_internal}{m.group(2).strip()}"
+            else:
                 name_lines.append(stripped)
 
     first_line = f"{code_line}{code_to_type}{type_token}" if type_token else code_line
@@ -102,15 +131,19 @@ def _write_cell(ws, row: int, col: int, end_col: int, end_row: int,
             )
 
 
-def _fuzzy_get(d: dict, key: str, cutoff: float = 0.7) -> str:
+def _fuzzy_get(d: dict, key: str, cutoff: float = 0.45,
+               _used: set | None = None) -> str:
     """Return d[key] if it exists, otherwise return the value whose key best
     matches `key` by sequence similarity (above cutoff). Returns '' if nothing
-    matches well enough."""
+    matches well enough. Pass a shared `_used` set to prevent the same source
+    key from being consumed by two different template keys."""
     if key in d:
         return d[key]
-    candidates = list(d.keys())
+    candidates = [k for k in d.keys() if _used is None or k not in _used]
     matches = difflib.get_close_matches(key, candidates, n=1, cutoff=cutoff)
     if matches:
+        if _used is not None:
+            _used.add(matches[0])
         return d[matches[0]]
     return ""
 
@@ -161,6 +194,7 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
         ws.column_dimensions[col_letter].width = width
 
     # ── Header rows ───────────────────────────────────────────────────────────
+    _used_header_keys: set = set()
     for row_spec in tmpl.get("header", []):
         r = row_spec["row"]
         ws.row_dimensions[r].height = row_spec.get("height", 15)
@@ -168,7 +202,8 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
             if cell.get("fixed"):
                 value = cell.get("value", "")
             else:
-                value = _fuzzy_get(header_vals, cell.get("key", ""))
+                value = _fuzzy_get(header_vals, cell.get("key", ""),
+                                   _used=_used_header_keys)
             _write_cell(
                 ws, r, cell["col"], cell["end_col"], r,
                 value, cell["font"], cell["align"], cell["border"],
@@ -232,7 +267,7 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
 
         for col_def in col_defs:
             key         = col_def.get("key", "")
-            value       = row_data.get(key, "")
+            value       = _fuzzy_get(row_data, key) if row_data else ""
             if col_def.get("format") == "item_code":
                 value = _fmt_item_code(value, col_def.get("format_options"))
             border_spec = col_def.get("first_row_border", col_def["border"]) if is_first \

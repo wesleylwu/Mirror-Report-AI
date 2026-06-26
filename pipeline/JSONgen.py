@@ -26,7 +26,9 @@ PROMPT = """You are a precise document digitizer. Extract ONLY the text visible 
 CRITICAL RULES:
 - Transcribe ONLY pre-printed text. Ignore handwriting, stamps, and pen marks.
 - If a field value is blank, output "".
-- Read every character directly from the image.
+- Read every character directly from the image. Do NOT approximate, simplify, or substitute similar-looking characters — transcribe exactly what is printed, including every kanji, kana, alphanumeric character, symbol, and punctuation mark.
+- Pay close attention to characters that look similar: e.g. ン vs ソ, サ vs セ, 両 vs 吋, ド vs ト. Zoom in mentally on each character before committing.
+- Product names, codes, and field values must be transcribed in full — do not truncate or paraphrase.
 
 Return a single JSON object with this exact schema:
 
@@ -54,6 +56,7 @@ TITLE: The full-width text spanning the top of the document (e.g. 製造指図�
 
 HEADER FIELDS: Every label/value pair in the metadata section above the data table.
 - Use the EXACT printed label text as the key (e.g. "手配No.", "発行日", "品目CD").
+- Capture the COMPLETE text within each value cell — a cell may contain multiple words or tokens separated by spaces (e.g. "30 噴霧", "20 仕込"). Transcribe ALL of them as one string.
 - If a field has no value printed, still include it with value "".
 - Do NOT include the title or section header in this dict.
 
@@ -67,7 +70,7 @@ TABLE ROWS: Each data row as an object keyed by column header.
 - The last row(s) of the table may be a full-width text row spanning all columns — output it as a special entry: {"_full_width": "<text>"}.
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
-MAX_IMAGE_PX = 1568
+MAX_IMAGE_PX = 3000
 
 
 def _deskew(img: Image.Image) -> Image.Image:
@@ -125,7 +128,7 @@ def extract_text(image_path: str) -> dict:
         img.thumbnail((MAX_IMAGE_PX, MAX_IMAGE_PX), Image.LANCZOS)
 
     buf = io.BytesIO()
-    img.save(buf, format="JPEG")
+    img.save(buf, format="JPEG", quality=95)
     image_data = base64.standard_b64encode(buf.getvalue()).decode("utf-8")
 
     client = anthropic.Anthropic()
@@ -204,6 +207,10 @@ def main():
         with open(args.output_json, "w", encoding="utf-8") as f:
             f.write(output)
         print(f"Saved to {args.output_json}", file=sys.stderr)
+
+        xlsx_path = str(Path(args.output_json).with_suffix(".xlsx"))
+        from XLSXgen import json_to_xlsx
+        json_to_xlsx(args.output_json, xlsx_path)
     else:
         print(output)
 
