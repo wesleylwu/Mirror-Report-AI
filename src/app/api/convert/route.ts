@@ -64,7 +64,10 @@ export async function POST(req: NextRequest) {
 
 function runPython(cwd: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
-    const proc = spawn("python", args, { cwd, env: { ...process.env } });
+    const proc = spawn("python", args, {
+      cwd,
+      env: { ...process.env, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY },
+    });
     const stderr: string[] = [];
     proc.stderr.on("data", (d: Buffer) => stderr.push(d.toString()));
     proc.on("close", (code: number) => {
