@@ -4,6 +4,7 @@
     "title": "製造指図書",
     "section_header": "調合票"
   },
+  "match_signals": ["成分名", "分量", "原単位", "手配No.", "品目CD"],
   "n_cols": 24,
   "column_widths": {
     "A": 5.7265625,

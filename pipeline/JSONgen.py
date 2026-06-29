@@ -11,6 +11,7 @@ Requires the ANTHROPIC_API_KEY environment variable to be set.
 import base64
 import io
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -28,7 +29,7 @@ PROMPT = """You are a precise document digitizer. Extract ONLY the text visible 
 
 CRITICAL RULES:
 - Transcribe ONLY pre-printed text. Ignore handwriting, stamps, and pen marks.
-- If a field value is blank, output "".
+- If a field value is blank or illegible, output "".
 - Read every character directly from the image. Do NOT approximate, simplify, or substitute similar-looking characters — transcribe exactly what is printed, including every kanji, kana, alphanumeric character, symbol, and punctuation mark.
 - Pay close attention to characters that look similar: e.g. ン vs ソ, サ vs セ, 両 vs 吋, ド vs ト. Zoom in mentally on each character before committing.
 - Product names, codes, and field values must be transcribed in full — do not truncate or paraphrase.
@@ -69,15 +70,45 @@ TABLE COLUMNS: Column header strings in left-to-right order.
 
 TABLE ROWS: Each data row as an object keyed by column header.
 - Do NOT emit a row whose values are just the column header names.
+- Include subtotal and grand total rows — do not skip rows because they contain summary labels like 計 or 合計.
 - Blank cells: "".
+- If two or more columns share the same header text, append _2, _3, etc. to the duplicates (e.g. "達成%" and "達成%_2") so every key in a row object is unique. This applies even when the shared header text is "".
 - The last row(s) of the table may be a full-width text row spanning all columns — output it as a special entry: {"_full_width": "<text>"}.
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
 MAX_IMAGE_PX = 3000
 
 
-def _deskew(img: Image.Image) -> Image.Image:
+def _auto_orient(img: Image.Image) -> Image.Image:
+    """Pick the rotation (0/90/180/270) where text lines are horizontal and
+    the document is top-heavy (title/headers at top have more ink than bottom).
+    Variance of horizontal projection picks the correct axis; top-vs-bottom ink
+    density breaks the 0° vs 180° tie."""
     img = ImageOps.exif_transpose(img)
+    candidates = []
+    for angle in (0, 90, 180, 270):
+        rotated = img.rotate(angle, expand=True)
+        gray = np.array(rotated.convert("L"))
+        inv = (255 - gray).astype(float)
+        h = inv.shape[0]
+        row_sums = inv.sum(axis=1)
+        var_score = float(np.var(row_sums))
+        top_density = inv[:h // 4].mean()
+        bot_density = inv[3 * h // 4:].mean()
+        top_bias = float(top_density - bot_density)
+        # Variance of row sums in top quarter: lower = better (correct top is
+        # consistent header area; wrong orientation's top has background contrast)
+        top_q_var = float(np.var(row_sums[:h // 4]))
+        candidates.append((var_score, top_bias, top_q_var, rotated))
+
+    max_var = max(c[0] for c in candidates) or 1.0
+    max_tqv = max(c[2] for c in candidates) or 1.0
+    best = max(candidates, key=lambda c: c[0] / max_var + c[1] / 255 - 0.05 * c[2] / max_tqv)
+    return best[3]
+
+
+def _deskew(img: Image.Image) -> Image.Image:
+    img = _auto_orient(img)
     cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     gray = cv2.cvtColor(cv, cv2.COLOR_BGR2GRAY)
     gray = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -109,17 +140,19 @@ def _deskew(img: Image.Image) -> Image.Image:
     h_left = np.linalg.norm(ordered[3] - ordered[0])
     h_right= np.linalg.norm(ordered[2] - ordered[1])
     out_w, out_h = int(max(w_top, w_bot)), int(max(h_left, h_right))
-    dst = np.array([[0,0],[out_w,0],[out_w,out_h],[0,out_h]], dtype=np.float32)
+    # Add 3% output padding on all sides so edge content isn't clipped
+    pad_px_x = int(out_w * 0.03)
+    pad_px_y = int(out_h * 0.03)
+    canvas_w = out_w + 2 * pad_px_x
+    canvas_h = out_h + 2 * pad_px_y
+    dst = np.array([
+        [pad_px_x,         pad_px_y        ],
+        [pad_px_x + out_w, pad_px_y        ],
+        [pad_px_x + out_w, pad_px_y + out_h],
+        [pad_px_x,         pad_px_y + out_h],
+    ], dtype=np.float32)
     M = cv2.getPerspectiveTransform(ordered, dst)
-    warped = cv2.warpPerspective(cv, M, (out_w, out_h))
-    warped_gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
-    _, paper_mask = cv2.threshold(warped_gray, 200, 255, cv2.THRESH_BINARY)
-    paper_coords = cv2.findNonZero(paper_mask)
-    if paper_coords is not None:
-        x, y, bw, bh = cv2.boundingRect(paper_coords)
-        pad = 10
-        warped = warped[max(0,y-pad):min(out_h,y+bh+pad),
-                        max(0,x-pad):min(out_w,x+bw+pad)]
+    warped = cv2.warpPerspective(cv, M, (canvas_w, canvas_h))
     return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
 
 
@@ -172,7 +205,8 @@ def extract_text(image_path: str, model: str = MODEL) -> dict:
         if message.stop_reason != "max_tokens":
             break
         messages.append({"role": "assistant", "content": chunk})
-        messages.append({"role": "user", "content": "Continue the JSON exactly from where you left off. Output only raw JSON continuation."})
+        tail = accumulated[-120:].replace('"', '\\"')
+        messages.append({"role": "user", "content": f'The JSON was cut off. Continue outputting raw JSON from exactly where it stopped. The last characters output were: "...{tail}". Do NOT restart. Do NOT repeat any output. Continue from that exact point.'})
 
     print(
         f"Tokens — input: {total_input}, output: {total_output}, "
@@ -184,16 +218,58 @@ def extract_text(image_path: str, model: str = MODEL) -> dict:
     text = accumulated.strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+    # Strip stray code-fence markers and invalid control characters
+    text = re.sub(r"```[a-z]*\n?", "", text)
+    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", text)
 
     try:
         return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Model may have restarted mid-stream — find the last top-level { and try it
+    last_start = text.rfind('\n{')
+    if last_start > 0:
+        try:
+            return json.loads(text[last_start + 1:])
+        except json.JSONDecodeError:
+            pass
+
+    # Truncate at the last complete row and close the JSON structure
+    try:
+        err_pos = None
+        try:
+            json.loads(text)
+        except json.JSONDecodeError as e:
+            err_pos = e.pos
+        if err_pos:
+            for pattern, closing in [
+                ('\n      },', '\n    ]\n  }\n}'),
+                ('\n      }',  '\n    ]\n  }\n}'),
+                ('\n    },',   '\n  }\n}'),
+                ('\n    }',    '\n  }\n}'),
+            ]:
+                pos = text.rfind(pattern, 0, err_pos)
+                if pos > 0:
+                    fixed = text[:pos + len(pattern.rstrip(','))] + closing
+                    try:
+                        data = json.loads(fixed)
+                        print(f"Warning: JSON truncated at pos {err_pos}, recovered {len(data.get('table',{}).get('rows',[]))} rows", file=sys.stderr)
+                        return data
+                    except json.JSONDecodeError:
+                        continue
+    except Exception:
+        pass
+
+    # Save raw response and return empty shell so the program can continue
+    raw_path = image_path + ".raw_response.txt"
+    with open(raw_path, "w", encoding="utf-8") as f:
+        f.write(text)
+    try:
+        json.loads(text)
     except json.JSONDecodeError as e:
-        raw_path = image_path + ".raw_response.txt"
-        with open(raw_path, "w", encoding="utf-8") as f:
-            f.write(text)
-        print(f"JSON parse error: {e}", file=sys.stderr)
-        print(f"Raw response saved to: {raw_path}", file=sys.stderr)
-        raise
+        print(f"JSON parse error: {e} — raw response saved to {raw_path}", file=sys.stderr)
+    return {"title": "", "section_header": "", "header": {}, "table": {"columns": [], "rows": []}}
 
 
 def main():
