@@ -232,7 +232,7 @@ const Capture = ({ onFileSelect, onClose }: CaptureProps) => {
               <div className="border-mirror-cyan absolute -bottom-1.5 -left-1.5 h-6 w-6 rounded-bl-lg border-b-4 border-l-4"></div>
               <div className="border-mirror-cyan absolute -right-1.5 -bottom-1.5 h-6 w-6 rounded-br-lg border-r-4 border-b-4"></div>
 
-              <div className="text-mirror-cyan bg-mirror-black/70 border-mirror-cyan/20 animate-pulse rounded-full border px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm">
+              <div className="text-mirror-cyan bg-mirror-black/70 border-mirror-cyan/20 animate-pulse rounded-full border px-3 py-1.5 text-xs font-bold tracking-wider uppercase backdrop-blur-sm">
                 Align Document Here
               </div>
             </div>
@@ -240,7 +240,7 @@ const Capture = ({ onFileSelect, onClose }: CaptureProps) => {
         )}
       </div>
 
-      <div className="bg-mirror-black border-mirror-dark-gray/60 z-10 flex min-h-35 items-center justify-between border-t px-6 py-8">
+      <div className="bg-mirror-black border-mirror-dark-gray/60 z-10 flex min-h-36 items-center justify-between border-t px-6 py-8">
         {!capturedImage ? (
           <>
             <div className="h-14 w-14"></div>
@@ -248,7 +248,7 @@ const Capture = ({ onFileSelect, onClose }: CaptureProps) => {
             <button
               onClick={handleCapture}
               disabled={loading || !!error}
-              className="bg-mirror-white border-mirror-dark-gray relative flex h-20 w-20 items-center justify-center rounded-full border-[6px] shadow-xl transition-all hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+              className="bg-mirror-white border-mirror-dark-gray relative flex h-20 w-20 items-center justify-center rounded-full border-8 shadow-xl transition-all hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
             >
               <div className="bg-mirror-white hover:bg-mirror-light-blue h-14 w-14 rounded-full transition-colors"></div>
             </button>

@@ -10,8 +10,6 @@ import { AnimatePresence } from "motion/react";
 const Page = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [canDownload, setCanDownload] = useState(false);
-  const downloadRef = useRef<(() => void) | null>(null);
 
   const handleFileSelect = useCallback((file: File) => {
     setUploadedFile(file);
@@ -19,35 +17,22 @@ const Page = () => {
 
   const handleClear = useCallback(() => {
     setUploadedFile(null);
-    setCanDownload(false);
   }, []);
 
   const handleFileSelectFromMirror = useCallback((f: File) => {
     setUploadedFile(f);
-    setCanDownload(false);
   }, []);
-
-  const handleDownloadReady = useCallback((fn: () => void) => {
-    downloadRef.current = fn;
-    setCanDownload(true);
-  }, []);
-
-  const handleDownloadCleared = useCallback(() => setCanDownload(false), []);
 
   return (
     <div className="bg-mirror-white font-mirror-noto flex min-h-screen flex-col">
       <NavBar
         onFileSelect={handleFileSelect}
         onCaptureClick={() => setIsCapturing(true)}
-        onDownload={() => downloadRef.current?.()}
-        canDownload={canDownload}
       />
       <Mirror
         uploadedFile={uploadedFile}
         onClear={handleClear}
         onFileSelect={handleFileSelectFromMirror}
-        onDownloadReady={handleDownloadReady}
-        onDownloadCleared={handleDownloadCleared}
       />
       <Footer />
       <AnimatePresence>

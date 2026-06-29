@@ -2,12 +2,9 @@
 
 const Footer = () => {
   return (
-    <div className="text-mirror-white bg-mirror-dark-blue mt-auto w-full shadow-md select-none">
-      <div className="mx-auto max-w-[80vw]" style={{ padding: "3vh 2vw" }}>
-        <div
-          className="flex flex-col items-center justify-between sm:flex-row"
-          style={{ gap: "2vh" }}
-        >
+    <div className="text-mirror-white bg-mirror-dark-blue mt-auto w-full shadow-md select-none print:hidden">
+      <div className="mx-auto max-w-6xl px-6 py-6">
+        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center">
             <p className="text-mirror-white text-lg font-bold">smartNexus®</p>
           </div>

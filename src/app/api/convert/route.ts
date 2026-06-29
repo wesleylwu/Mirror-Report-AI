@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
-import { writeFile, readFile, unlink } from "fs/promises";
+import { writeFile, readFile, unlink, readdir } from "fs/promises";
 import path from "path";
 import os from "os";
 
@@ -30,7 +30,49 @@ export async function POST(req: NextRequest) {
     ]);
     await runPython(process.cwd(), ["pipeline/XLSXgen.py", jsonPath, xlsxPath]);
 
-    // Read raw response if it exists (written by JSONgen on JSON parse errors)
+    const jsonContent = await readFile(jsonPath, "utf-8");
+    const extractedData = JSON.parse(jsonContent);
+
+    const templatesDir = path.join(process.cwd(), "pipeline", "templates");
+    const templateFiles = await readdir(templatesDir);
+    let matchedTemplate: any = null;
+    const templates: any[] = [];
+
+    for (const f of templateFiles) {
+      if (f.endsWith(".json")) {
+        const fileContent = await readFile(path.join(templatesDir, f), "utf-8");
+        templates.push(JSON.parse(fileContent));
+      }
+    }
+
+    const title = (extractedData.title || "").trim();
+    const section = (extractedData.section_header || "").trim();
+
+    for (const tmpl of templates) {
+      const m = tmpl.match || {};
+      if (
+        (m.title || "").trim() === title &&
+        (m.section_header || "").trim() === section
+      ) {
+        matchedTemplate = tmpl;
+        break;
+      }
+    }
+
+    if (!matchedTemplate) {
+      for (const tmpl of templates) {
+        const m = tmpl.match || {};
+        if ((m.title || "").trim() === title) {
+          matchedTemplate = tmpl;
+          break;
+        }
+      }
+    }
+
+    if (!matchedTemplate && templates.length > 0) {
+      matchedTemplate = templates[0];
+    }
+
     const rawPath = `${imagePath}.raw_response.txt`;
     const xlsxData = await readFile(xlsxPath).catch(async () => {
       const raw = await readFile(rawPath, "utf-8").catch(() => "");
@@ -41,14 +83,17 @@ export async function POST(req: NextRequest) {
     });
     const outName = `${path.basename(file.name, ext)}.xlsx`;
 
-    return new NextResponse(xlsxData, {
-      status: 200,
-      headers: {
-        "Content-Type":
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="${outName}"`,
+    const base64xlsx = xlsxData.toString("base64");
+
+    return NextResponse.json(
+      {
+        extractedData,
+        template: matchedTemplate,
+        xlsx: base64xlsx,
+        filename: outName,
       },
-    });
+      { status: 200 },
+    );
   } catch (err) {
     console.error("Conversion error:", err);
     return NextResponse.json(
