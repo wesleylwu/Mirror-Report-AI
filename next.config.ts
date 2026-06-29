@@ -11,8 +11,14 @@ const nextConfig: NextConfig = {
           destination: "/api/py_convert",
         },
       ];
+    } else {
+      return [
+        {
+          source: "/api/convert",
+          destination: "/api/convert_local",
+        },
+      ];
     }
-    return [];
   },
 };
 
