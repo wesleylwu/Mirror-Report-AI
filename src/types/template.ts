@@ -70,8 +70,12 @@ export interface MatchedTemplate {
 }
 
 export interface ExtractedData {
+  title?: string;
+  section_header?: string;
   header?: Record<string, string>;
   table?: {
     rows?: Record<string, string>[];
   };
 }
+
+export type ExtractedDataPage = ExtractedData;

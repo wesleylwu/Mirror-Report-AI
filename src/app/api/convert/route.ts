@@ -17,7 +17,7 @@ export const maxDuration = 120;
 export async function POST(req: NextRequest) {
   const contentType = req.headers.get("content-type") || "";
 
-  // Support JSON payload for edited template regeneration
+  // Support JSON payload for edited template regeneration (multi-page/batch)
   if (contentType.includes("application/json")) {
     const body = await req.json();
     const { extractedData } = body;
@@ -63,36 +63,44 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Handle standard multipart image upload
+  // Handle standard multipart image/PDF upload (supports multiple files)
   const formData = await req.formData();
-  const file = formData.get("file") as File | null;
+  const files = formData.getAll("file") as File[];
 
-  if (!file) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  if (files.length === 0) {
+    return NextResponse.json({ error: "No files provided" }, { status: 400 });
   }
 
   const id = `mirror_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const ext = path.extname(file.name) || ".jpg";
-  const imagePath = path.join(os.tmpdir(), `${id}${ext}`);
+  const tempFiles: string[] = [];
   const jsonPath = path.join(os.tmpdir(), `${id}.json`);
   const xlsxPath = path.join(os.tmpdir(), `${id}.xlsx`);
 
   try {
-    await writeFile(imagePath, Buffer.from(await file.arrayBuffer()));
+    // Write all uploaded files to tmp locations
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const ext = path.extname(file.name) || ".jpg";
+      const filePath = path.join(os.tmpdir(), `${id}_${i}${ext}`);
+      await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
+      tempFiles.push(filePath);
+    }
 
+    // Run Python JSONgen on all files concurrently
     await runPython(process.cwd(), [
       "pipeline/JSONgen.py",
-      imagePath,
+      ...tempFiles,
       jsonPath,
     ]);
+
+    // Run Python XLSXgen to generate multi-sheet workbook
     await runPython(process.cwd(), ["pipeline/XLSXgen.py", jsonPath, xlsxPath]);
 
     const jsonContent = await readFile(jsonPath, "utf-8");
-    const extractedData = JSON.parse(jsonContent);
+    const extractedData = JSON.parse(jsonContent); // always structured as { pages: [...] }
 
     const templatesDir = path.join(process.cwd(), "pipeline", "templates");
     const templateFiles = await readdir(templatesDir);
-    let matchedTemplate: LocalTemplate | null = null;
     const templates: LocalTemplate[] = [];
 
     for (const f of templateFiles) {
@@ -102,50 +110,58 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const title = (extractedData.title || "").trim();
-    const section = (extractedData.section_header || "").trim();
+    // Process matched templates for each page
+    const pagesResult = [];
+    const pagesList = extractedData.pages || [];
 
-    for (const tmpl of templates) {
-      const m = tmpl.match || {};
-      if (
-        (m.title || "").trim() === title &&
-        (m.section_header || "").trim() === section
-      ) {
-        matchedTemplate = tmpl;
-        break;
-      }
-    }
+    for (const pageData of pagesList) {
+      const title = (pageData.title || "").trim();
+      const section = (pageData.section_header || "").trim();
+      let matchedTemplate: LocalTemplate | null = null;
 
-    if (!matchedTemplate) {
       for (const tmpl of templates) {
         const m = tmpl.match || {};
-        if ((m.title || "").trim() === title) {
+        if (
+          (m.title || "").trim() === title &&
+          (m.section_header || "").trim() === section
+        ) {
           matchedTemplate = tmpl;
           break;
         }
       }
+
+      if (!matchedTemplate) {
+        for (const tmpl of templates) {
+          const m = tmpl.match || {};
+          if ((m.title || "").trim() === title) {
+            matchedTemplate = tmpl;
+            break;
+          }
+        }
+      }
+
+      if (!matchedTemplate && templates.length > 0) {
+        matchedTemplate = templates[0];
+      }
+
+      pagesResult.push({
+        extractedData: pageData,
+        template: matchedTemplate,
+      });
     }
 
-    if (!matchedTemplate && templates.length > 0) {
-      matchedTemplate = templates[0];
+    let outName = "batch_export.xlsx";
+    if (files.length === 1) {
+      const ext = path.extname(files[0].name);
+      outName = `${path.basename(files[0].name, ext)}.xlsx`;
     }
 
-    const rawPath = `${imagePath}.raw_response.txt`;
-    const xlsxData = await readFile(xlsxPath).catch(async () => {
-      const raw = await readFile(rawPath, "utf-8").catch(() => "");
-      unlink(rawPath).catch(() => {});
-      throw new Error(
-        `XLSX not produced. Raw Claude response:\n${raw.slice(0, 2000)}`,
-      );
-    });
-    const outName = `${path.basename(file.name, ext)}.xlsx`;
-
+    const xlsxData = await readFile(xlsxPath);
     const base64xlsx = xlsxData.toString("base64");
 
     return NextResponse.json(
       {
-        extractedData,
-        template: matchedTemplate,
+        pages: pagesResult,
         xlsx: base64xlsx,
         filename: outName,
       },
@@ -158,7 +174,9 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   } finally {
-    for (const p of [imagePath, jsonPath, xlsxPath]) {
+    unlink(jsonPath).catch(() => {});
+    unlink(xlsxPath).catch(() => {});
+    for (const p of tempFiles) {
       unlink(p).catch(() => {});
     }
   }
