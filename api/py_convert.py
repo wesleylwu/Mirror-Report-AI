@@ -1,6 +1,7 @@
 from flask import Flask, request, send_file, make_response, jsonify
 import io
 import json
+import base64
 import urllib.parse
 import sys
 import re
@@ -45,13 +46,11 @@ def convert():
             wb.remove(default_sheet)
         out_stream = io.BytesIO()
         wb.save(out_stream)
-        out_stream.seek(0)
-        return send_file(
-            out_stream,
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            as_attachment=True,
-            download_name="export.xlsx"
-        )
+        xlsx_data = out_stream.getvalue()
+        base64_xlsx = base64.b64encode(xlsx_data).decode("utf-8")
+        return jsonify({
+            "xlsx": base64_xlsx
+        })
 
     files = request.files.getlist("file")
     if not files or files[0].filename == "":
@@ -121,20 +120,16 @@ def convert():
 
     out_stream = io.BytesIO()
     wb.save(out_stream)
-    out_stream.seek(0)
+    xlsx_data = out_stream.getvalue()
+    base64_xlsx = base64.b64encode(xlsx_data).decode("utf-8")
 
     out_filename = "batch_export.xlsx"
     if len(files) == 1:
         base_name = Path(files[0].filename).stem
         out_filename = f"{base_name}.xlsx"
 
-    response = make_response(send_file(
-        out_stream,
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        as_attachment=True,
-        download_name=out_filename
-    ))
-
-    response.headers["X-Extracted-Data"] = urllib.parse.quote(json.dumps(pages_result))
-    response.headers["Access-Control-Expose-Headers"] = "X-Extracted-Data, Content-Disposition"
-    return response
+    return jsonify({
+        "pages": pages_result,
+        "xlsx": base64_xlsx,
+        "filename": out_filename
+    })
