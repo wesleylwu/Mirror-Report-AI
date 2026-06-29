@@ -206,6 +206,7 @@ def _match_template(data: dict, templates: list[dict]) -> dict:
         hits         = sum(1 for s in signals if s in data_tokens)
         signal_score = hits / len(signals)
 
+<<<<<<< HEAD
         # Title + section similarity as tiebreaker (weighted 0..0.5)
         m          = tmpl.get("match", {})
         t_title    = (m.get("title") or "").strip()
@@ -224,6 +225,22 @@ def _match_template(data: dict, templates: list[dict]) -> dict:
             f"Available: {[t.get('id') for t in templates]}"
         )
     return best_tmpl
+=======
+    # Last resort fallback: default to the first template if available
+    if templates:
+        import sys
+        print(
+            f"Warning: No template found for title={title!r} section={section!r}. "
+            f"Falling back to default template: {templates[0].get('id')}",
+            file=sys.stderr
+        )
+        return templates[0]
+
+    raise ValueError(
+        f"No template found for title={title!r} section={section!r}. "
+        f"Available: {[t.get('id') for t in templates]}"
+    )
+>>>>>>> dev
 
 
 # ── Sheet builder ─────────────────────────────────────────────────────────────
@@ -849,12 +866,34 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
 
-    templates = _load_templates()
-    tmpl = _match_template(data, templates)
-
     wb = Workbook()
-    ws = wb.active
-    fill_template(tmpl, data, ws)
+    default_sheet = wb.active
+
+    pages = data.get("pages")
+    if pages is None:
+        pages = [data]
+
+    templates = _load_templates()
+
+    for idx, page_data in enumerate(pages):
+        tmpl = _match_template(page_data, templates)
+        title = page_data.get("title", f"Sheet {idx+1}")
+        clean_title = _re.sub(r'[:\\/?*\[\]]', '', title)[:30].strip() or f"Page {idx+1}"
+
+        # Ensure sheet name uniqueness
+        orig_title = clean_title
+        ctr = 1
+        while clean_title in wb.sheetnames:
+            suffix = f"_{ctr}"
+            clean_title = orig_title[:30 - len(suffix)] + suffix
+            ctr += 1
+
+        ws = wb.create_sheet(title=clean_title)
+        fill_template(tmpl, page_data, ws)
+
+    if len(wb.worksheets) > 1:
+        wb.remove(default_sheet)
+
     wb.save(xlsx_path)
     print(f"Saved {xlsx_path} (template: {tmpl['id']})", file=__import__('sys').stderr)
     print(f"Saved {xlsx_path}", file=__import__('sys').stderr)

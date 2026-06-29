@@ -1,9 +1,11 @@
+"""Extract text content from document images/PDFs using Claude.
 
 Outputs a flat JSON with title, section_header, header key/value pairs,
 and table rows. Layout is handled entirely by XLSXgen via templates.
 Outputs a unified JSON with a "pages" array containing extracted fields for each page.
 
 Usage:
+    python JSONgen.py <input_path1> [<input_path2> ...] [output.json]
 
 Requires the ANTHROPIC_API_KEY environment variable to be set.
 """
@@ -12,11 +14,16 @@ import io
 import json
 import re
 import sys
+<<<<<<< HEAD
 import time
+=======
+import concurrent.futures
+>>>>>>> dev
 from pathlib import Path
 
 import anthropic
 import cv2
+import fitz  # PyMuPDF
 import numpy as np
 from PIL import Image, ImageOps
 
@@ -25,6 +32,10 @@ MODEL_SONNET = "claude-sonnet-4-6"
 MODEL = MODEL_HAIKU  # default; overridden by --sonnet flag at runtime
 
 PROMPT = """You are a precise document digitizer. Extract ONLY the text visible in the image. Do not infer, guess, or fill in values.
+
+VALIDATION RULE:
+- Inspect the image first. If the image is not a printed document or manufacturing report (e.g., if it is a photo of a person, animal, food, scenery, or any random physical object/scene), or if it is too blurry or dark to read, you MUST return a JSON with an "error" key:
+  {"error": "invalid_document", "message": "The uploaded image does not appear to be a valid manufacturing document."}
 
 CRITICAL RULES:
 - Transcribe ONLY pre-printed text. Ignore handwriting, stamps, and pen marks.
@@ -155,8 +166,12 @@ def _deskew(img: Image.Image) -> Image.Image:
     return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
 
 
+<<<<<<< HEAD
 def extract_text(image_path: str, model: str = MODEL) -> dict:
     img = Image.open(image_path)
+=======
+def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict:
+>>>>>>> dev
     img = _deskew(img)
     img = img.convert("RGB")
     if max(img.size) > MAX_IMAGE_PX:
@@ -224,6 +239,7 @@ def extract_text(image_path: str, model: str = MODEL) -> dict:
     text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", text)
 
     try:
+<<<<<<< HEAD
         return json.loads(text)
     except json.JSONDecodeError:
         pass
@@ -287,6 +303,84 @@ def main():
     data = extract_text(args.image_path, model=model)
     elapsed = time.time() - t0
     print(f"Elapsed: {elapsed:.1f}s", file=sys.stderr)
+=======
+        data = json.loads(text)
+        if "error" in data:
+            raise ValueError(data.get("message") or f"Invalid document in {debug_name}.")
+
+        print(
+            f"[{debug_name}] Tokens — input: {total_input}, output: {total_output}, "
+            f"total: {total_input + total_output}",
+            file=sys.stderr,
+        )
+        return data
+    except json.JSONDecodeError as e:
+        print(f"JSON parse error in {debug_name}: {e}", file=sys.stderr)
+        raise
+
+
+def extract_all(paths: list[str]) -> dict:
+    tasks = []
+
+    for path_str in paths:
+        p = Path(path_str)
+        if not p.exists():
+            print(f"Error: path {path_str} does not exist", file=sys.stderr)
+            continue
+
+        if p.suffix.lower() == ".pdf":
+            try:
+                doc = fitz.open(p)
+                for page_idx in range(len(doc)):
+                    page = doc.load_page(page_idx)
+                    pix = page.get_pixmap(dpi=150)
+                    img_data = pix.tobytes("jpeg")
+                    img = Image.open(io.BytesIO(img_data))
+                    tasks.append((img, f"{p.name} (page {page_idx + 1})"))
+            except Exception as e:
+                print(f"Error reading PDF {path_str}: {e}", file=sys.stderr)
+                raise
+        else:
+            try:
+                img = Image.open(p)
+                tasks.append((img, p.name))
+            except Exception as e:
+                print(f"Error reading image {path_str}: {e}", file=sys.stderr)
+                raise
+
+    if not tasks:
+        raise ValueError("No valid images or PDF pages found to process.")
+
+    pages_data = []
+    # Run the extractions concurrently
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(extract_text_from_image, task[0], task[1]) for task in tasks]
+        for f in futures:
+            pages_data.append(f.result())
+
+    return {"pages": pages_data}
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python JSONgen.py <input_path1> [<input_path2> ...] [output.json]", file=sys.stderr)
+        sys.exit(1)
+
+    args = sys.argv[1:]
+    output_json = None
+    if len(args) >= 2 and args[-1].endswith(".json"):
+        output_json = args[-1]
+        input_paths = args[:-1]
+    else:
+        input_paths = args
+
+    try:
+        data = extract_all(input_paths)
+    except Exception as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
+
+>>>>>>> dev
     output = json.dumps(data, indent=2, ensure_ascii=False)
 
     if args.output_json:
