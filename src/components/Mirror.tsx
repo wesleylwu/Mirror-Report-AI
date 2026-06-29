@@ -2,41 +2,50 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { FaSpinner, FaExclamationCircle } from "react-icons/fa";
-import { ExtractedData, MatchedTemplate } from "../types/template";
+import { ExtractedDataPage, MatchedTemplate } from "../types/template";
 import DocumentUploader from "./DocumentUploader";
 import DocumentPreview from "./DocumentPreview";
 import TemplateViewer from "./TemplateViewer";
 
 interface MirrorProps {
-  uploadedFile: File | null;
+  uploadedFiles: File[];
   onClear: () => void;
-  onFileSelect: (file: File) => void;
+  onFilesSelect: (files: File[]) => void;
 }
 
 type ConvertStatus = "idle" | "loading" | "done" | "error";
 
-const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
+interface PageResult {
+  extractedData: ExtractedDataPage;
+  template: MatchedTemplate;
+}
+
+const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [status, setStatus] = useState<ConvertStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [xlsxBlob, setXlsxBlob] = useState<Blob | null>(null);
   const [xlsxName, setXlsxName] = useState("");
-  const [extractedData, setExtractedData] = useState<ExtractedData | null>(
-    null,
-  );
-  const [matchedTemplate, setMatchedTemplate] =
-    useState<MatchedTemplate | null>(null);
+  const [pages, setPages] = useState<PageResult[]>([]);
+  const [activePageIndex, setActivePageIndex] = useState(0);
+
+  // Editing state trackers
+  const [isDirty, setIsDirty] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const handleGenerate = useCallback(async () => {
-    if (!uploadedFile) return;
+    if (uploadedFiles.length === 0) return;
     setStatus("loading");
     setErrorMsg(null);
     setXlsxBlob(null);
-    setExtractedData(null);
-    setMatchedTemplate(null);
+    setPages([]);
+    setActivePageIndex(0);
+    setIsDirty(false);
 
     try {
       const form = new FormData();
-      form.append("file", uploadedFile);
+      for (const file of uploadedFiles) {
+        form.append("file", file);
+      }
       const res = await fetch("/api/convert", { method: "POST", body: form });
 
       if (!res.ok) {
@@ -56,22 +65,124 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
 
       setXlsxBlob(blob);
       setXlsxName(result.filename);
-      setExtractedData(result.extractedData);
-      setMatchedTemplate(result.template);
+      setPages(result.pages || []);
       setStatus("done");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Unknown error");
       setStatus("error");
     }
-  }, [uploadedFile]);
+  }, [uploadedFiles]);
 
   useEffect(() => {
     setStatus("idle");
     setXlsxBlob(null);
-    setExtractedData(null);
-    setMatchedTemplate(null);
+    setPages([]);
+    setActivePageIndex(0);
     setErrorMsg(null);
-  }, [uploadedFile]);
+    setIsDirty(false);
+  }, [uploadedFiles]);
+
+  const handlePageDataChange = useCallback(
+    (index: number, newPageData: ExtractedDataPage) => {
+      setPages((prev) => {
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          extractedData: newPageData,
+        };
+        return next;
+      });
+      setIsDirty(true);
+    },
+    [],
+  );
+
+  const handleDownloadExcel = useCallback(async () => {
+    // If the data hasn't been edited, download the cached XLSX file
+    if (!isDirty && xlsxBlob) {
+      const url = URL.createObjectURL(xlsxBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = xlsxName;
+
+      const isIOS =
+        typeof window !== "undefined" &&
+        (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+      if (isIOS) {
+        a.target = "_blank";
+      }
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 10000);
+      return;
+    }
+
+    if (pages.length === 0) return;
+
+    // If edited, regenerate the Excel sheet with the new values
+    setIsRegenerating(true);
+    try {
+      const res = await fetch("/api/convert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          extractedData: {
+            pages: pages.map((p) => p.extractedData),
+          },
+          filename: xlsxName,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to regenerate Excel spreadsheet");
+      }
+
+      const result = await res.json();
+      const binaryString = window.atob(result.xlsx);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      setXlsxBlob(blob);
+      setIsDirty(false);
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = xlsxName;
+
+      const isIOS =
+        typeof window !== "undefined" &&
+        (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+      if (isIOS) {
+        a.target = "_blank";
+      }
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 10000);
+    } catch (err) {
+      console.error("Regeneration failed:", err);
+      alert("Failed to export edited Excel file.");
+    } finally {
+      setIsRegenerating(false);
+    }
+  }, [isDirty, xlsxBlob, xlsxName, pages]);
 
   return (
     <div className="mx-auto w-full max-w-[90vw] grow px-6 py-8 md:px-12 print:m-0 print:w-full print:max-w-none print:p-0">
@@ -81,28 +192,31 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
             <p className="text-mirror-dark-blue text-xl font-bold tracking-wide uppercase md:text-2xl">
               document source
             </p>
-            {uploadedFile && (
+            {uploadedFiles.length > 0 && (
               <p className="bg-mirror-green/20 text-mirror-dark-blue rounded-full px-3 py-1 text-xs font-semibold">
                 Loaded
               </p>
             )}
           </div>
           <div className="mb-4">
-            <p className="text-mirror-gray text-sm font-semibold">
+            <p className="text-mirror-gray inline text-sm font-semibold">
               Scanning Status:{" "}
             </p>
-            <p className="text-mirror-dark-blue text-sm font-normal">
-              {uploadedFile
-                ? "File Ready for Processing"
+            <p className="text-mirror-dark-blue inline text-sm font-normal">
+              {uploadedFiles.length > 0
+                ? "Files Ready for Processing"
                 : "Waiting for file upload..."}
             </p>
           </div>
 
-          {!uploadedFile ? (
-            <DocumentUploader onFileSelect={onFileSelect} />
+          {uploadedFiles.length === 0 ? (
+            <DocumentUploader onFilesSelect={onFilesSelect} />
           ) : (
             <div className="flex flex-col gap-4">
-              <DocumentPreview uploadedFile={uploadedFile} onClear={onClear} />
+              <DocumentPreview
+                uploadedFiles={uploadedFiles}
+                onClear={onClear}
+              />
               {(status === "idle" || status === "error") && (
                 <button
                   onClick={handleGenerate}
@@ -121,16 +235,35 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
             </p>
           </div>
           <div className="mb-4 print:hidden">
-            <p className="text-mirror-gray text-sm font-semibold">
+            <p className="text-mirror-gray inline text-sm font-semibold">
               Generating Status:{" "}
             </p>
-            <p className="text-mirror-dark-blue text-sm font-normal">
+            <p className="text-mirror-dark-blue inline text-sm font-normal">
               {status === "idle" && "Waiting for generation..."}
               {status === "loading" && "Processing document..."}
               {status === "done" && "Template ready"}
               {status === "error" && "Generation failed"}
             </p>
           </div>
+
+          {/* Tab page selector */}
+          {status === "done" && pages.length > 1 && (
+            <div className="border-mirror-light-blue mb-4 flex flex-wrap gap-2 border-b pb-2 print:hidden">
+              {pages.map((p, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActivePageIndex(index)}
+                  className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition-all duration-200 ${
+                    activePageIndex === index
+                      ? "bg-mirror-cyan text-mirror-white shadow-sm"
+                      : "bg-mirror-light-blue text-mirror-dark-blue hover:bg-mirror-cyan/20"
+                  }`}
+                >
+                  {p.extractedData.title || `Page ${index + 1}`}
+                </button>
+              ))}
+            </div>
+          )}
 
           {status !== "done" ? (
             <div className="bg-mirror-light-blue border-mirror-light-blue flex min-h-[55vh] flex-col items-center justify-center gap-6 rounded-2xl border p-8">
@@ -167,13 +300,15 @@ const Mirror = ({ uploadedFile, onClear, onFileSelect }: MirrorProps) => {
               )}
             </div>
           ) : (
-            matchedTemplate &&
-            extractedData && (
+            pages[activePageIndex] && (
               <TemplateViewer
-                matchedTemplate={matchedTemplate}
-                extractedData={extractedData}
-                xlsxBlob={xlsxBlob}
-                xlsxName={xlsxName}
+                matchedTemplate={pages[activePageIndex].template}
+                extractedData={pages[activePageIndex].extractedData}
+                onExtractedDataChange={(newData) =>
+                  handlePageDataChange(activePageIndex, newData)
+                }
+                isRegeneratingExcel={isRegenerating}
+                onDownloadExcel={handleDownloadExcel}
               />
             )
           )}

@@ -1,10 +1,9 @@
-"""Extract text content from a document image using Claude.
+"""Extract text content from document images/PDFs using Claude.
 
-Outputs a flat JSON with title, section_header, header key/value pairs,
-and table rows. Layout is handled entirely by XLSXgen via templates.
+Outputs a unified JSON with a "pages" array containing extracted fields for each page.
 
 Usage:
-    python JSONgen.py <image_path> [output.json]
+    python JSONgen.py <input_path1> [<input_path2> ...] [output.json]
 
 Requires the ANTHROPIC_API_KEY environment variable to be set.
 """
@@ -12,10 +11,12 @@ import base64
 import io
 import json
 import sys
+import concurrent.futures
 from pathlib import Path
 
 import anthropic
 import cv2
+import fitz  # PyMuPDF
 import numpy as np
 from PIL import Image, ImageOps
 
@@ -124,8 +125,7 @@ def _deskew(img: Image.Image) -> Image.Image:
     return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
 
 
-def extract_text(image_path: str) -> dict:
-    img = Image.open(image_path)
+def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict:
     img = _deskew(img)
     img = img.convert("RGB")
     if max(img.size) > MAX_IMAGE_PX:
@@ -153,14 +153,11 @@ def extract_text(image_path: str) -> dict:
 
     while True:
         turn = len([m for m in messages if m["role"] == "user"])
-        chars = 0
         with client.messages.stream(
             model=MODEL, max_tokens=8192, temperature=0, messages=messages,
         ) as stream:
-            for text in stream.text_stream:
-                chars += len(text)
-                print(f"\r  Turn {turn} — {chars:,} chars...", end="", flush=True)
-            print()
+            for _ in stream.text_stream:
+                pass
             message = stream.get_final_message()
 
         total_input  += message.usage.input_tokens
@@ -182,47 +179,90 @@ def extract_text(image_path: str) -> dict:
     try:
         data = json.loads(text)
         if "error" in data:
-            raise ValueError(data.get("message") or "The uploaded image does not appear to be a valid manufacturing document.")
+            raise ValueError(data.get("message") or f"Invalid document in {debug_name}.")
 
         print(
-            f"Tokens — input: {total_input}, output: {total_output}, "
-            f"total: {total_input + total_output} "
-            f"(cache write: {total_cache_write}, read: {total_cache_read})",
+            f"[{debug_name}] Tokens — input: {total_input}, output: {total_output}, "
+            f"total: {total_input + total_output}",
             file=sys.stderr,
         )
         return data
     except json.JSONDecodeError as e:
-        raw_path = image_path + ".raw_response.txt"
-        with open(raw_path, "w", encoding="utf-8") as f:
-            f.write(text)
-        print(f"JSON parse error: {e}", file=sys.stderr)
-        print(f"Raw response saved to: {raw_path}", file=sys.stderr)
+        print(f"JSON parse error in {debug_name}: {e}", file=sys.stderr)
         raise
 
 
+def extract_all(paths: list[str]) -> dict:
+    tasks = []
+
+    for path_str in paths:
+        p = Path(path_str)
+        if not p.exists():
+            print(f"Error: path {path_str} does not exist", file=sys.stderr)
+            continue
+
+        if p.suffix.lower() == ".pdf":
+            try:
+                doc = fitz.open(p)
+                for page_idx in range(len(doc)):
+                    page = doc.load_page(page_idx)
+                    pix = page.get_pixmap(dpi=150)
+                    img_data = pix.tobytes("jpeg")
+                    img = Image.open(io.BytesIO(img_data))
+                    tasks.append((img, f"{p.name} (page {page_idx + 1})"))
+            except Exception as e:
+                print(f"Error reading PDF {path_str}: {e}", file=sys.stderr)
+                raise
+        else:
+            try:
+                img = Image.open(p)
+                tasks.append((img, p.name))
+            except Exception as e:
+                print(f"Error reading image {path_str}: {e}", file=sys.stderr)
+                raise
+
+    if not tasks:
+        raise ValueError("No valid images or PDF pages found to process.")
+
+    pages_data = []
+    # Run the extractions concurrently
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(extract_text_from_image, task[0], task[1]) for task in tasks]
+        for f in futures:
+            pages_data.append(f.result())
+
+    return {"pages": pages_data}
+
+
 def main():
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("image_path")
-    parser.add_argument("output_json", nargs="?")
-    args = parser.parse_args()
+    if len(sys.argv) < 2:
+        print("Usage: python JSONgen.py <input_path1> [<input_path2> ...] [output.json]", file=sys.stderr)
+        sys.exit(1)
+
+    args = sys.argv[1:]
+    output_json = None
+    if len(args) >= 2 and args[-1].endswith(".json"):
+        output_json = args[-1]
+        input_paths = args[:-1]
+    else:
+        input_paths = args
 
     try:
-        data = extract_text(args.image_path)
-    except ValueError as e:
+        data = extract_all(input_paths)
+    except Exception as e:
         print(str(e), file=sys.stderr)
         sys.exit(1)
 
     output = json.dumps(data, indent=2, ensure_ascii=False)
 
-    if args.output_json:
-        with open(args.output_json, "w", encoding="utf-8") as f:
+    if output_json:
+        with open(output_json, "w", encoding="utf-8") as f:
             f.write(output)
-        print(f"Saved to {args.output_json}", file=sys.stderr)
+        print(f"Saved to {output_json}", file=sys.stderr)
 
-        xlsx_path = str(Path(args.output_json).with_suffix(".xlsx"))
+        xlsx_path = str(Path(output_json).with_suffix(".xlsx"))
         from XLSXgen import json_to_xlsx
-        json_to_xlsx(args.output_json, xlsx_path)
+        json_to_xlsx(output_json, xlsx_path)
     else:
         print(output)
 
