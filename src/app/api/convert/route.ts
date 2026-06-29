@@ -15,6 +15,55 @@ interface LocalTemplate {
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
+  const contentType = req.headers.get("content-type") || "";
+
+  // Support JSON payload for edited template regeneration
+  if (contentType.includes("application/json")) {
+    const body = await req.json();
+    const { extractedData } = body;
+    if (!extractedData) {
+      return NextResponse.json(
+        { error: "No extractedData provided" },
+        { status: 400 },
+      );
+    }
+
+    const id = `mirror_edit_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const jsonPath = path.join(os.tmpdir(), `${id}.json`);
+    const xlsxPath = path.join(os.tmpdir(), `${id}.xlsx`);
+
+    try {
+      await writeFile(
+        jsonPath,
+        JSON.stringify(extractedData, null, 2),
+        "utf-8",
+      );
+      await runPython(process.cwd(), [
+        "pipeline/XLSXgen.py",
+        jsonPath,
+        xlsxPath,
+      ]);
+      const xlsxData = await readFile(xlsxPath);
+      const base64xlsx = xlsxData.toString("base64");
+      return NextResponse.json(
+        {
+          xlsx: base64xlsx,
+        },
+        { status: 200 },
+      );
+    } catch (err) {
+      console.error("XLSX regeneration error:", err);
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Regeneration failed" },
+        { status: 500 },
+      );
+    } finally {
+      unlink(jsonPath).catch(() => {});
+      unlink(xlsxPath).catch(() => {});
+    }
+  }
+
+  // Handle standard multipart image upload
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
 

@@ -6,7 +6,6 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Python](https://img.shields.io/badge/Python_3-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![OpenPyXL](https://img.shields.io/badge/OpenPyXL-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)
-![OpenAI](https://img.shields.io/badge/OpenAI_API-412991?style=for-the-badge&logo=openai&logoColor=white)
 ![Claude](https://img.shields.io/badge/Claude_API-D97757?style=for-the-badge&logo=anthropic&logoColor=white)
 
 An enterprise document verification dashboard that creates a high-fidelity digital twin of physical manufacturing documents for AI-powered OCR validation and automated Excel template generation.
@@ -16,11 +15,12 @@ An enterprise document verification dashboard that creates a high-fidelity digit
 ## Features
 
 - **Dual-Pane Verification:** Side-by-side desktop layout comparing physical source images with extracted data.
-- **LLM-Powered OCR:** Uses Claude API API to parse images into structured datasets.
+- **LLM-Powered OCR:** Uses Claude API to parse images into structured datasets.
 - **Dynamic Document Routing:** Automatically classifies incoming documents and maps JSON payloads to dedicated React templates.
-- **Automated Excel Generation:** Converts extracted JSON data and metadata into formatted Excel worksheets using Python and OpenPyXL.
-- **High-Fidelity UI:** Dynamic CSS grids and tables visually mirror the original paper layout.
-- **Template-Based Architecture:** Supports multiple manufacturing document types through reusable components.
+- **Interactive Browser Editing:** Directly modify text headers, product tags, data cells, and table rows within the high-fidelity preview pane.
+- **On-Demand Excel Export:** Automatically re-compiles edited layouts through the Python engine to export newly updated Excel spreadsheets.
+- **High-Fidelity UI:** Responsive modular layouts styled entirely with Tailwind CSS that visually mirror the original paper documents.
+- **Template-Based Architecture:** Supports multiple manufacturing document types through reusable component designs.
 
 ---
 
@@ -31,7 +31,7 @@ An enterprise document verification dashboard that creates a high-fidelity digit
 | **Frontend**           | React, Next.js (App Router), Tailwind CSS |
 | **Backend**            | Python, OpenPyXL                          |
 | **Type Safety**        | TypeScript                                |
-| **AI / OCR Engine**    | Claude API / OpenAI API                   |
+| **AI / OCR Engine**    | Claude API (Anthropic SDK)                |
 | **Storage**            | Local / In-Memory                         |
 | **Document Rendering** | Dynamic CSS Grid, HTML Tables             |
 
@@ -42,11 +42,12 @@ An enterprise document verification dashboard that creates a high-fidelity digit
 ### Prerequisites
 
 - Node.js 20+
-- Python 3.x+
+- Python 3.10+
+- Anthropic API Key (`ANTHROPIC_API_KEY` set in environment)
 
 ### Installation
 
-1. Clone the repository.
+1. Clone the repository and set up environment keys.
 
 2. Install frontend dependencies:
 
@@ -54,10 +55,10 @@ An enterprise document verification dashboard that creates a high-fidelity digit
 npm install
 ```
 
-3. Install backend dependencies:
+3. Install backend python dependencies:
 
 ```bash
-pip install openpyxl
+pip install -r requirements.txt
 ```
 
 4. Run the development server:
@@ -67,3 +68,16 @@ npm run dev
 ```
 
 5. Open http://localhost:3000 with your browser to see the result.
+
+---
+
+## Available Commands
+
+Here are the scripts available in the project:
+
+- `npm run dev`: Starts the local Next.js development server.
+- `npm run build`: Compiles the application for production deployment.
+- `npm run start`: Runs the compiled production server.
+- `npm run lint`: Performs code style analysis and type checking using ESLint.
+- `npm run format`: Formats all code files using Prettier.
+- `npx tsc --noEmit`: Runs static TypeScript compiler type assertions.
