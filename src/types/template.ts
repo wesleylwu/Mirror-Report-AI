@@ -1,0 +1,77 @@
+export interface BorderSpec {
+  top?: string | null;
+  bottom?: string | null;
+  left?: string | null;
+  right?: string | null;
+}
+
+export interface FontSpec {
+  bold?: boolean;
+  size?: number;
+}
+
+export interface AlignSpec {
+  h?: "center" | "right" | "left";
+  v?: "center" | "bottom" | "top";
+  wrap?: boolean;
+}
+
+export interface CellSpec {
+  fixed?: boolean;
+  value?: string;
+  key?: string;
+  col: number;
+  end_col: number;
+  border?: BorderSpec;
+  align?: AlignSpec;
+  font?: FontSpec;
+}
+
+export interface HeaderRowSpec {
+  height?: number;
+  cells: CellSpec[];
+}
+
+export interface ColumnSpec {
+  key?: string;
+  format?: string;
+  format_options?: {
+    code_to_type_spaces?: number;
+    type_internal_spaces?: number;
+  };
+  col: number;
+  end_col: number;
+  border?: BorderSpec;
+  first_row_border?: BorderSpec;
+  align?: AlignSpec;
+  font?: FontSpec;
+}
+
+export interface DataRowsSpec {
+  columns: ColumnSpec[];
+  count?: number;
+  row_height?: number;
+}
+
+export interface FooterSpec {
+  height?: number;
+  cells: CellSpec[];
+}
+
+export interface MatchedTemplate {
+  column_widths?: Record<string, number>;
+  header?: HeaderRowSpec[];
+  col_headers?: {
+    row_heights?: number[];
+    cells: CellSpec[];
+  };
+  data_rows?: DataRowsSpec;
+  footer?: FooterSpec;
+}
+
+export interface ExtractedData {
+  header?: Record<string, string>;
+  table?: {
+    rows?: Record<string, string>[];
+  };
+}
