@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import NavBar from "@/src/components/NavBar";
 import Mirror from "@/src/components/Mirror";
 import Footer from "@/src/components/Footer";

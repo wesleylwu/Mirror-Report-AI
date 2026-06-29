@@ -4,6 +4,14 @@ import { writeFile, readFile, unlink, readdir } from "fs/promises";
 import path from "path";
 import os from "os";
 
+interface LocalTemplate {
+  match?: {
+    title?: string;
+    section_header?: string;
+  };
+  [key: string]: unknown;
+}
+
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
@@ -35,8 +43,8 @@ export async function POST(req: NextRequest) {
 
     const templatesDir = path.join(process.cwd(), "pipeline", "templates");
     const templateFiles = await readdir(templatesDir);
-    let matchedTemplate: any = null;
-    const templates: any[] = [];
+    let matchedTemplate: LocalTemplate | null = null;
+    const templates: LocalTemplate[] = [];
 
     for (const f of templateFiles) {
       if (f.endsWith(".json")) {
