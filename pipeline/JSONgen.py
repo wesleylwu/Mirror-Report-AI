@@ -1,10 +1,9 @@
-"""Extract text content from a document image using Claude.
 
 Outputs a flat JSON with title, section_header, header key/value pairs,
 and table rows. Layout is handled entirely by XLSXgen via templates.
+Outputs a unified JSON with a "pages" array containing extracted fields for each page.
 
 Usage:
-    python JSONgen.py <image_path> [output.json]
 
 Requires the ANTHROPIC_API_KEY environment variable to be set.
 """
@@ -193,6 +192,8 @@ def extract_text(image_path: str, model: str = MODEL) -> dict:
                 chars += len(text)
                 print(f"\r  Turn {turn} — {chars:,} chars...", end="", flush=True)
             print()
+            for _ in stream.text_stream:
+                pass
             message = stream.get_final_message()
 
         total_input  += message.usage.input_tokens
@@ -290,12 +291,17 @@ def main():
 
     if args.output_json:
         with open(args.output_json, "w", encoding="utf-8") as f:
+    if output_json:
+        with open(output_json, "w", encoding="utf-8") as f:
             f.write(output)
         print(f"Saved to {args.output_json}", file=sys.stderr)
+        print(f"Saved to {output_json}", file=sys.stderr)
 
         xlsx_path = str(Path(args.output_json).with_suffix(".xlsx"))
+        xlsx_path = str(Path(output_json).with_suffix(".xlsx"))
         from XLSXgen import json_to_xlsx
         json_to_xlsx(args.output_json, xlsx_path)
+        json_to_xlsx(output_json, xlsx_path)
     else:
         print(output)
 

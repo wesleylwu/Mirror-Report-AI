@@ -857,6 +857,7 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
     fill_template(tmpl, data, ws)
     wb.save(xlsx_path)
     print(f"Saved {xlsx_path} (template: {tmpl['id']})", file=__import__('sys').stderr)
+    print(f"Saved {xlsx_path}", file=__import__('sys').stderr)
 
 
 def blank_xlsx(template_id: str, xlsx_path: str) -> None:
