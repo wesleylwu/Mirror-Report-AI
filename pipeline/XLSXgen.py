@@ -206,7 +206,6 @@ def _match_template(data: dict, templates: list[dict]) -> dict:
         hits         = sum(1 for s in signals if s in data_tokens)
         signal_score = hits / len(signals)
 
-<<<<<<< HEAD
         # Title + section similarity as tiebreaker (weighted 0..0.5)
         m          = tmpl.get("match", {})
         t_title    = (m.get("title") or "").strip()
@@ -219,19 +218,15 @@ def _match_template(data: dict, templates: list[dict]) -> dict:
             best_score = score
             best_tmpl  = tmpl
 
-    if best_tmpl is None:
-        raise ValueError(
-            f"No template found — no templates have match_signals. "
-            f"Available: {[t.get('id') for t in templates]}"
-        )
-    return best_tmpl
-=======
-    # Last resort fallback: default to the first template if available
+    if best_tmpl is not None:
+        return best_tmpl
+
+    # Last resort fallback: default to the first template with a warning
     if templates:
         import sys
         print(
-            f"Warning: No template found for title={title!r} section={section!r}. "
-            f"Falling back to default template: {templates[0].get('id')}",
+            f"Warning: No template matched for title={title!r} section={section!r}. "
+            f"Falling back to: {templates[0].get('id')}",
             file=sys.stderr
         )
         return templates[0]
@@ -240,7 +235,6 @@ def _match_template(data: dict, templates: list[dict]) -> dict:
         f"No template found for title={title!r} section={section!r}. "
         f"Available: {[t.get('id') for t in templates]}"
     )
->>>>>>> dev
 
 
 # ── Sheet builder ─────────────────────────────────────────────────────────────
@@ -282,26 +276,25 @@ def fill_grouped_template(tmpl: dict, data: dict, ws) -> None:
     n_groups    = tmpl.get("n_groups", 15)
 
     if month_source == "col":
-        # Split data_rows into groups at each row where month_key is non-empty
-        groups: list[list[dict]] = []
-        current: list[dict] = []
-        for rw in data_rows:
-            if rw.get(month_key):
-                if current:
-                    groups.append(current)
-                current = [rw]
-            else:
-                current.append(rw)
-        if current:
-            groups.append(current)
+        # Split into fixed-size chunks so summary rows (上半期合計 etc.) don't
+        # corrupt group boundaries — the month label may appear on any row in the group
+        groups: list[list[dict]] = [
+            data_rows[i:i + group_size] for i in range(0, len(data_rows), group_size)
+        ]
 
         def _fmt_month(name: str) -> str:
-            # Put 合計 on its own line for summary rows (e.g. 上半期合計 → 上半期\n合計)
             if name.endswith("合計"):
                 return name[:-2] + "\n合計"
             return name
 
-        month_names = [_fmt_month(g[0].get(month_key, "")) for g in groups]
+        def _get_month(grp: list[dict]) -> str:
+            for row in grp:
+                val = row.get(month_key, "")
+                if val:
+                    return val
+            return ""
+
+        month_names = [_fmt_month(_get_month(g)) for g in groups]
     else:
         groups = []
         month_names = []
@@ -413,6 +406,7 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
     """
     no_side = Side(style=None)
     pair_col = dr.get("pair_merge_col")   # 1-based col index to merge per pair
+    pair_col_labels = dr.get("pair_col_labels")  # fixed labels cycling per pair-in-block (overrides dynamic split)
     sections = dr.get("sections", [])
 
     # Build positional value list from each row
@@ -442,6 +436,14 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
                 extra = pos_vals[concat_idx] if concat_idx < len(pos_vals) else ""
                 if extra:
                     val = (val + " " + extra).strip() if val else extra
+            second_pair = col_def.get("second_pair_indices")
+            if second_pair:
+                lbl_idx, val_idx = second_pair
+                lbl = pos_vals[lbl_idx] if lbl_idx < len(pos_vals) else ""
+                v2  = pos_vals[val_idx] if val_idx < len(pos_vals) else ""
+                pair_text = (lbl + " " + v2).strip()
+                if pair_text:
+                    val = (val + "   " + pair_text).strip() if val else pair_text
             if not val:
                 for fb in col_def.get("fallback_col_indices", []):
                     val = pos_vals[fb] if fb < len(pos_vals) else ""
@@ -489,7 +491,9 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
                                start_column=pair_col, end_column=pair_col)
 
             # Pre-compute block C split: scan pair-tops from last to first; split evenly
-            if is_block_start and pair_col:
+            if is_block_start and pair_col and pair_col_labels:
+                block_c_chunks = [pair_col_labels[_i % len(pair_col_labels)] for _i in range(block_pairs)]
+            elif is_block_start and pair_col:
                 _blk_label = ""
                 for _bp in range(block_pairs - 1, -1, -1):
                     _td = row_idx + _bp * 2
@@ -687,11 +691,16 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
         r = row_spec["row"]
         ws.row_dimensions[r].height = row_spec.get("height", 15)
         for cell in row_spec["cells"]:
+            key = cell.get("key", "")
             if cell.get("fixed"):
                 value = cell.get("value", "")
+            elif key in ("title", "section_header"):
+                value = data.get(key, "")
+            elif "concat_keys" in cell:
+                parts = [_fuzzy_get(header_vals, k, _used=_used_header_keys) for k in cell["concat_keys"]]
+                value = " ".join(p for p in parts if p)
             else:
-                value = _fuzzy_get(header_vals, cell.get("key", ""),
-                                   _used=_used_header_keys)
+                value = _fuzzy_get(header_vals, key, _used=_used_header_keys)
             _write_cell(
                 ws, r, cell["col"], cell["end_col"], r,
                 value, cell["font"], cell["align"], cell["border"],
@@ -895,7 +904,6 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
         wb.remove(default_sheet)
 
     wb.save(xlsx_path)
-    print(f"Saved {xlsx_path} (template: {tmpl['id']})", file=__import__('sys').stderr)
     print(f"Saved {xlsx_path}", file=__import__('sys').stderr)
 
 

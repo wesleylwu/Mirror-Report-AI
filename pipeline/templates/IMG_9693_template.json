@@ -3,16 +3,16 @@
   "match": {"title": "基準客先別シンプルリスト", "section_header": ""},
   "match_signals": ["基準客先", "営業粗利額", "純売上額", "粗利率", "在庫額", "目標売上額"],
   "column_widths": {
-    "A": 8.4, "B": 53.68, "C": 6.22, "D": 15.92, "E": 11.12,
-    "F": 16.8, "G": 12.0, "H": 15.28, "I": 12.0, "J": 12.0,
-    "K": 12.0, "L": 12.0, "M": 14.18, "N": 15.28, "O": 16.8
+    "A": 9.1, "B": 58.15, "C": 6.74, "D": 17.25, "E": 12.05,
+    "F": 18.2, "G": 13.0, "H": 16.55, "I": 13.0, "J": 13.0,
+    "K": 13.0, "L": 13.0, "M": 15.36, "N": 16.55, "O": 18.2
   },
   "header": [
     {
       "row": 1, "height": 14,
       "cells": [
         {
-          "col": 1, "end_col": 3, "fixed": false, "key": "title",
+          "col": 1, "end_col": 3, "fixed": false, "key": "年月",
           "font": {"bold": true, "size": 9},
           "align": {"h": "left", "v": "center", "wrap": false},
           "border": {"top": null, "bottom": null, "left": null, "right": null}
@@ -24,7 +24,7 @@
           "border": {"top": null, "bottom": null, "left": null, "right": null}
         },
         {
-          "col": 13, "end_col": 15, "fixed": false, "key": "title",
+          "col": 13, "end_col": 15, "fixed": false, "concat_keys": ["日付", "PAGE"],
           "font": {"bold": false, "size": 8},
           "align": {"h": "right", "v": "center", "wrap": false},
           "border": {"top": null, "bottom": null, "left": null, "right": null}
@@ -57,6 +57,7 @@
     "start_row": 4,
     "row_height": 13,
     "pair_merge_col": 3,
+    "pair_col_labels": ["当月", "累計"],
     "sections": [
       {
         "pairs": 2,
@@ -90,7 +91,7 @@
     ],
     "columns": [
       {"col": 1,  "end_col": 1,  "col_index": 0,  "space_to_newline": true, "font": {"bold": false, "size": 8}, "align": {"h": "center", "v": "center", "wrap": false}},
-      {"col": 2,  "end_col": 2,  "col_index": 1,  "concat_col_index": 2, "fallback_col_indices": [3, 0], "font": {"bold": false, "size": 8}, "align": {"h": "left",  "v": "center", "wrap": false}},
+      {"col": 2,  "end_col": 2,  "col_index": 1,  "concat_col_index": 2, "second_pair_indices": [3, 4], "fallback_col_indices": [3, 0], "font": {"bold": false, "size": 8}, "align": {"h": "left",  "v": "center", "wrap": false}},
       {"col": 3,  "end_col": 3,  "col_index": 3,  "font": {"bold": false, "size": 8}, "align": {"h": "center", "v": "center", "wrap": false}},
       {"col": 4,  "end_col": 4,  "col_index": 5,  "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
       {"col": 5,  "end_col": 5,  "col_index": 6,  "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
