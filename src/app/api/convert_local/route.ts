@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
-import { writeFile, readFile, unlink, readdir } from "fs/promises";
+import { writeFile, readFile, unlink, readdir, stat } from "fs/promises";
 import path from "path";
 import os from "os";
 
@@ -182,9 +182,28 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function runPython(cwd: string, args: string[]): Promise<void> {
+async function getPythonCommand(): Promise<string> {
+  const candidates = [
+    "/Users/wesleywu/.pyenv/shims/python3",
+    "/Users/wesleywu/.pyenv/shims/python",
+    "/opt/homebrew/bin/python3",
+    "/usr/local/bin/python3",
+  ];
+  for (const pathStr of candidates) {
+    try {
+      await stat(pathStr);
+      return pathStr;
+    } catch {
+      // ignore
+    }
+  }
+  return "python3";
+}
+
+async function runPython(cwd: string, args: string[]): Promise<void> {
+  const pythonCmd = await getPythonCommand();
   return new Promise((resolve, reject) => {
-    const proc = spawn("python", args, {
+    const proc = spawn(pythonCmd, args, {
       cwd,
       env: { ...process.env, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY },
     });
