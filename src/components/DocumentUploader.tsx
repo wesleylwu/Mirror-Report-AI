@@ -9,6 +9,7 @@ interface DocumentUploaderProps {
 
 const DocumentUploader = ({ onFilesSelect }: DocumentUploaderProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const localInputRef = useRef<HTMLInputElement>(null);
 
   const validateAndSelect = (fileList: FileList | File[]) => {
@@ -21,28 +22,32 @@ const DocumentUploader = ({ onFilesSelect }: DocumentUploaderProps) => {
       "application/pdf",
     ];
     const allowedExts = ["jpg", "jpeg", "png", "webp", "pdf"];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
     const validFiles: File[] = [];
-    const invalidFiles: string[] = [];
+    const errors: string[] = [];
 
     for (const file of list) {
       const ext = file.name.split(".").pop()?.toLowerCase();
-      if (
-        allowedTypes.includes(file.type) ||
-        (ext && allowedExts.includes(ext))
-      ) {
-        validFiles.push(file);
+      const isAllowedType =
+        allowedTypes.includes(file.type) || (ext && allowedExts.includes(ext));
+
+      if (!isAllowedType) {
+        errors.push(
+          `"${file.name}" is not supported (use JPEG, PNG, WebP, PDF)`,
+        );
+      } else if (file.size > MAX_FILE_SIZE) {
+        const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+        errors.push(`"${file.name}" exceeds 5MB size limit (${sizeInMB}MB)`);
       } else {
-        invalidFiles.push(file.name);
+        validFiles.push(file);
       }
     }
 
-    if (invalidFiles.length > 0) {
-      alert(
-        `Some files are not allowed: ${invalidFiles.join(
-          ", ",
-        )}. Only JPEG, PNG, WebP, or PDF files are permitted.`,
-      );
+    if (errors.length > 0) {
+      setErrorMessage(errors.join(" | "));
+    } else {
+      setErrorMessage(null);
     }
 
     if (validFiles.length > 0) {
@@ -83,6 +88,11 @@ const DocumentUploader = ({ onFilesSelect }: DocumentUploaderProps) => {
               processing.
             </p>
           </div>
+          {errorMessage && (
+            <div className="bg-mirror-red/10 border-mirror-red/20 text-mirror-red max-w-md rounded-lg border px-4 py-2.5 text-center text-xs font-semibold">
+              {errorMessage}
+            </div>
+          )}
           <p className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white inline-flex cursor-pointer items-center rounded-lg px-4 py-2 text-xs font-bold shadow-sm transition-colors duration-200">
             Select Files
           </p>
