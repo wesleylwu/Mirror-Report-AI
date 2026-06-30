@@ -854,6 +854,8 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
                     value = " ".join(tokens[:-1]) if len(tokens) > 1 else tokens[0]
             else:
                 value = _fuzzy_get(header_vals, key, _used=_used_header_keys)
+                if cell.get("label_prefix") and value:
+                    value = f"{key} {value}"
             _write_cell(
                 ws, r, cell["col"], cell["end_col"], r,
                 value, cell["font"], cell["align"], cell["border"],

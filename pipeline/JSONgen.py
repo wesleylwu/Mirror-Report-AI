@@ -22,7 +22,7 @@ import anthropic
 import cv2
 import fitz  # PyMuPDF
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image, ImageDraw, ImageOps
 
 MODEL_HAIKU  = "claude-haiku-4-5-20251001"
 MODEL_SONNET = "claude-sonnet-4-6"
@@ -83,6 +83,7 @@ Return ONLY the raw JSON object. No explanation, no markdown fences."""
 MAX_IMAGE_PX = 3000
 
 
+<<<<<<< Updated upstream
 def _auto_orient(img: Image.Image) -> Image.Image:
     """Pick the rotation (0/90/180/270) where text lines are horizontal and
     the document is right-side up. Axis (portrait vs sideways) is picked by
@@ -118,10 +119,138 @@ def _auto_orient(img: Image.Image) -> Image.Image:
         img = img.rotate(180, expand=True)
 
     return img
+=======
+def _heuristic_rotation(img: Image.Image) -> int:
+    """Pixel-statistics rotation guess: axis (portrait vs sideways) from
+    row/col projection variance, then CW vs CCW and upside-down checks from
+    ink density in top vs bottom strips. Independent signal from the model-
+    based detector, used to cross-check it."""
+    gray = np.array(img.convert("L"))
+    inv = (255 - gray).astype(float)
+    row_var = float(np.var(inv.sum(axis=1)))
+    col_var = float(np.var(inv.sum(axis=0)))
+
+    def _strip_ratio(candidate: Image.Image, pct: int) -> float:
+        g = np.array(candidate.convert("L"))
+        v = (255 - g).astype(float)
+        rs = v.sum(axis=1)
+        rh = len(rs)
+        m = max(1, rh * pct // 100)
+        bot = float(rs[rh - m:].mean()) or 1.0
+        return float(rs[:m].mean()) / bot
+
+    angle = 0
+    base = img
+    if col_var > row_var:
+        cw  = img.rotate(270, expand=True)
+        ccw = img.rotate(90,  expand=True)
+        if _strip_ratio(cw, 25) >= _strip_ratio(ccw, 25):
+            angle, base = 270, cw
+        else:
+            angle, base = 90, ccw
+
+    if _strip_ratio(base, 5) > 1.5:
+        angle = (angle + 180) % 360
+
+    return angle
 
 
-def _deskew(img: Image.Image) -> Image.Image:
-    img = _auto_orient(img)
+_LETTERS = "ABCD"
+
+
+def _model_pick_rotation(img: Image.Image, candidates: list[int], model: str = MODEL_HAIKU) -> tuple[int, int, int]:
+    """Ask the model to pick which of the given candidate rotations reads
+    correctly, using a cropped high-res strip of just the top edge of each
+    (where a title/header normally sits) rather than a shrunk full-page
+    thumbnail — full-page thumbnails made dense tables illegible, causing
+    the model to effectively guess.
+    Returns (angle, input_tokens, output_tokens); first candidate on failure."""
+    letters = _LETTERS[:len(candidates)]
+    angle_by_letter = dict(zip(letters, candidates))
+    strip_w = 900
+    strips = []
+    for letter, angle in angle_by_letter.items():
+        cand = img.rotate(angle, expand=True).convert("RGB")
+        # top ~22% of the page height, full width
+        crop_h = max(1, int(cand.height * 0.22))
+        crop = cand.crop((0, 0, cand.width, crop_h))
+        scale = strip_w / crop.width
+        crop = crop.resize((strip_w, max(1, int(crop.height * scale))), Image.LANCZOS)
+        strips.append((letter, crop))
+
+    label_w = 40
+    total_h = sum(c.height for _, c in strips)
+    grid = Image.new("RGB", (label_w + strip_w, total_h), "white")
+    draw = ImageDraw.Draw(grid)
+    y = 0
+    for letter, crop in strips:
+        draw.text((8, y + crop.height // 2 - 8), letter, fill="black")
+        grid.paste(crop, (label_w, y))
+        y += crop.height
+
+    prompt = (
+        f"This image stacks {len(candidates)} horizontal strips, each a crop of the "
+        "very top edge of the same document page rotated differently, labeled at "
+        f"the left: {', '.join(letters)} from top to bottom. Exactly one strip has "
+        "text that reads upright, left-to-right (titles/headers, not sideways or "
+        f"upside-down). Which one is it? Reply with ONLY the letter: {'/'.join(letters)}."
+    )
+
+    buf = io.BytesIO()
+    grid.save(buf, format="JPEG", quality=90)
+    image_data = base64.standard_b64encode(buf.getvalue()).decode("utf-8")
+
+    try:
+        client = anthropic.Anthropic()
+        message = client.messages.create(
+            model=model, max_tokens=10, temperature=0,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": image_data}},
+                    {"type": "text", "text": prompt},
+                ],
+            }],
+        )
+        in_tok = message.usage.input_tokens
+        out_tok = message.usage.output_tokens
+        text = message.content[0].text.strip().upper()
+        m = re.search(f"[{letters}]", text)
+        if m:
+            return angle_by_letter[m.group()], in_tok, out_tok
+        return candidates[0], in_tok, out_tok
+    except Exception as e:
+        print(f"Rotation detection failed, defaulting to candidates[0]: {e}", file=sys.stderr)
+    return candidates[0], 0, 0
+
+
+def _auto_orient(img: Image.Image) -> tuple[Image.Image, int, int, int, int]:
+    """Correct orientation by cross-checking a pixel-statistics heuristic
+    against the model's own reading of the text. When they agree, that's a
+    strong signal and costs nothing extra. When they disagree, a focused
+    2-way comparison on Sonnet (stronger than Haiku, which has shown a
+    specific blind spot on some images even with an unambiguous 2-way
+    choice) breaks the tie — fully automatic, no manual review.
+    Returns (img, base_input_tokens, base_output_tokens, tiebreak_input_tokens,
+    tiebreak_output_tokens) — tiebreak counters are 0 when not triggered."""
+    img = ImageOps.exif_transpose(img)
+    heuristic_angle = _heuristic_rotation(img)
+    model_angle, in_tok, out_tok = _model_pick_rotation(img, [0, 90, 180, 270])
+
+    tie_in = tie_out = 0
+    if heuristic_angle == model_angle:
+        angle = model_angle
+    else:
+        angle, tie_in, tie_out = _model_pick_rotation(img, [heuristic_angle, model_angle], model=MODEL_SONNET)
+
+    if angle:
+        img = img.rotate(angle, expand=True)
+    return img, in_tok, out_tok, tie_in, tie_out
+>>>>>>> Stashed changes
+
+
+def _deskew(img: Image.Image) -> tuple[Image.Image, int, int, int, int]:
+    img, orient_in, orient_out, tie_in, tie_out = _auto_orient(img)
     cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     gray = cv2.cvtColor(cv, cv2.COLOR_BGR2GRAY)
     gray = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -141,7 +270,7 @@ def _deskew(img: Image.Image) -> Image.Image:
             quad = approx.reshape(4, 2).astype(np.float32)
             break
     if quad is None:
-        return img
+        return img, orient_in, orient_out, tie_in, tie_out
     s = quad.sum(axis=1)
     diff = np.diff(quad, axis=1)
     ordered = np.array([
@@ -167,11 +296,11 @@ def _deskew(img: Image.Image) -> Image.Image:
     ], dtype=np.float32)
     M = cv2.getPerspectiveTransform(ordered, dst)
     warped = cv2.warpPerspective(cv, M, (canvas_w, canvas_h))
-    return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
+    return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)), orient_in, orient_out, tie_in, tie_out
 
 
 def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict:
-    img = _deskew(img)
+    img, orient_in, orient_out, tie_in, tie_out = _deskew(img)
     img = img.convert("RGB")
     if max(img.size) > MAX_IMAGE_PX:
         img.thumbnail((MAX_IMAGE_PX, MAX_IMAGE_PX), Image.LANCZOS)
@@ -221,6 +350,16 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
         tail = accumulated[-120:].replace('"', '\\"')
         messages.append({"role": "user", "content": f'The JSON was cut off. Continue outputting raw JSON from exactly where it stopped. The last characters output were: "...{tail}". Do NOT restart. Do NOT repeat any output. Continue from that exact point.'})
 
+    print(
+        f"[{debug_name}] Orientation tokens — input: {orient_in}, output: {orient_out}, "
+        f"total: {orient_in + orient_out}",
+        file=sys.stderr,
+    )
+    print(
+        f"[{debug_name}] Orientation tiebreak tokens (Sonnet, only when heuristic and "
+        f"Haiku disagree) — input: {tie_in}, output: {tie_out}, total: {tie_in + tie_out}",
+        file=sys.stderr,
+    )
     print(
         f"[{debug_name}] Tokens — input: {total_input}, output: {total_output}, "
         f"total: {total_input + total_output} "
