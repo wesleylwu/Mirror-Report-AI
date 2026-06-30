@@ -25,6 +25,21 @@ interface PageResult {
   template: MatchedTemplate;
 }
 
+interface VirtualFileSpec {
+  name: string;
+  size: number;
+  type: string;
+}
+
+interface HistoryEntry {
+  id: string;
+  filename: string;
+  timestamp: string;
+  pages: PageResult[];
+  xlsx: string;
+  virtualFiles: VirtualFileSpec[];
+}
+
 const LOADING_STEPS = [
   "Uploading manufacturing document to secure server...",
   "Correcting document rotation & perspective (deskewing)...",
@@ -46,7 +61,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [isDirty, setIsDirty] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
-  const [historyEntries, setHistoryEntries] = useState<any[]>([]);
+  const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -65,8 +80,8 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       try {
         const historyJson = localStorage.getItem("mirror_generation_history");
         if (historyJson) {
-          const history = JSON.parse(historyJson);
-          const updated = history.map((entry: any) => {
+          const history = JSON.parse(historyJson) as HistoryEntry[];
+          const updated = history.map((entry: HistoryEntry) => {
             if (entry.id === id) {
               return {
                 ...entry,
@@ -143,7 +158,9 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
 
       try {
         const historyJson = localStorage.getItem("mirror_generation_history");
-        const history = historyJson ? JSON.parse(historyJson) : [];
+        const history = historyJson
+          ? (JSON.parse(historyJson) as HistoryEntry[])
+          : [];
         const newEntry = {
           id: newId,
           filename: result.filename,
@@ -301,10 +318,10 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     } finally {
       setIsRegenerating(false);
     }
-  }, [isDirty, xlsxBlob, xlsxName, pages]);
+  }, [isDirty, xlsxBlob, xlsxName, pages, currentHistoryId, updateHistoryEntry]);
 
   const handleLoadHistory = useCallback(
-    (entry: any) => {
+    (entry: HistoryEntry) => {
       const binaryString = window.atob(entry.xlsx);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
@@ -321,7 +338,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       setIsDirty(false);
       setCurrentHistoryId(entry.id);
 
-      const reconstructedFiles = entry.virtualFiles.map((vf: any) => {
+      const reconstructedFiles = entry.virtualFiles.map((vf: VirtualFileSpec) => {
         return new File([new Uint8Array(vf.size)], vf.name, { type: vf.type });
       });
       onFilesSelect(reconstructedFiles);
@@ -336,8 +353,10 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       try {
         const historyJson = localStorage.getItem("mirror_generation_history");
         if (historyJson) {
-          const history = JSON.parse(historyJson);
-          const updated = history.filter((entry: any) => entry.id !== id);
+          const history = JSON.parse(historyJson) as HistoryEntry[];
+          const updated = history.filter(
+            (entry: HistoryEntry) => entry.id !== id,
+          );
           localStorage.setItem(
             "mirror_generation_history",
             JSON.stringify(updated),
