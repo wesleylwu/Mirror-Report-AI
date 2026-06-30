@@ -197,7 +197,7 @@ async function getPythonCommand(): Promise<string> {
       // ignore
     }
   }
-  return "python3";
+  return process.platform === "win32" ? "python" : "python3";
 }
 
 async function runPython(cwd: string, args: string[]): Promise<void> {
