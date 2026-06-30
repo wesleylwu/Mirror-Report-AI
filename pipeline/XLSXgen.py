@@ -104,11 +104,17 @@ def _side_white(weight="medium"):
 
 
 def _border(spec: dict) -> Border:
+    def _s(side: str):
+        style = spec.get(side)
+        color = spec.get(f"{side}_color")
+        if style is None:
+            return Side(style=None)
+        return Side(style=style, color=color) if color else _side(style)
     return Border(
-        top=_side(spec.get("top")),
-        bottom=_side(spec.get("bottom")),
-        left=_side(spec.get("left")),
-        right=_side(spec.get("right")),
+        top=_s("top"),
+        bottom=_s("bottom"),
+        left=_s("left"),
+        right=_s("right"),
     )
 
 
@@ -151,6 +157,22 @@ def _write_cell(ws, row: int, col: int, end_col: int, end_row: int,
             )
             if fill_spec:
                 cell.fill = PatternFill("solid", fgColor=fill_spec.get("color", "FFFFFF"))
+
+
+def _split_title_3(title: str) -> tuple[str, str, str]:
+    """Split a top-line title string into (left, center, right) parts.
+    Left = leading period like '2026年2月'; right = trailing date/page marker
+    like '2026/6/22 PAGE:1'; center = whatever document-name text remains."""
+    title = (title or "").strip()
+    left = right = ""
+    center = title
+    m = _re.match(r'^(\d{4}年\d{1,2}月)\s+(.*)$', center)
+    if m:
+        left, center = m.group(1), m.group(2)
+    m = _re.search(r'^(.*?)\s+(\d{4}/\d{1,2}/\d{1,2}.*)$', center)
+    if m:
+        center, right = m.group(1), m.group(2)
+    return left, center.strip(), right.strip()
 
 
 def _fuzzy_get(d: dict, key: str, cutoff: float = 0.45,
@@ -411,6 +433,19 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
 
     # Build positional value list from each row
     col_names = data.get("table", {}).get("columns", [])
+    if pair_col_labels:
+        # The model sometimes emits its own redundant 当月/累計-style column even though
+        # we already render that via pair_col_labels — drop it so positional indices
+        # for the numeric columns don't shift.
+        def _is_pair_label_col(cn: str) -> bool:
+            if not cn:
+                return False
+            stripped = cn
+            for lbl in pair_col_labels:
+                stripped = stripped.replace(lbl, "")
+            stripped = _re.sub(r'[/\s　,、]+', '', stripped)
+            return stripped == ""
+        col_names = [cn for cn in col_names if not _is_pair_label_col(cn)]
 
     def _pos_values(row_data: dict) -> list:
         seen: dict[str, int] = {}
@@ -435,20 +470,29 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
             if concat_idx is not None:
                 extra = pos_vals[concat_idx] if concat_idx < len(pos_vals) else ""
                 if extra:
-                    val = (val + " " + extra).strip() if val else extra
+                    sep = col_def.get("concat_sep", " ")
+                    val = (val + sep + extra).strip() if val else extra
             second_pair = col_def.get("second_pair_indices")
-            if second_pair:
+            if second_pair and val:
                 lbl_idx, val_idx = second_pair
                 lbl = pos_vals[lbl_idx] if lbl_idx < len(pos_vals) else ""
                 v2  = pos_vals[val_idx] if val_idx < len(pos_vals) else ""
                 pair_text = (lbl + " " + v2).strip()
                 if pair_text:
-                    val = (val + "   " + pair_text).strip() if val else pair_text
+                    pad_to = col_def.get("second_pair_pad_to")
+                    if pad_to and len(val) < pad_to:
+                        val = val.ljust(pad_to, "　")
+                    sep = col_def.get("second_pair_sep", "   ")
+                    val = val + sep + pair_text
             if not val:
-                for fb in col_def.get("fallback_col_indices", []):
-                    val = pos_vals[fb] if fb < len(pos_vals) else ""
-                    if val:
-                        break
+                guard_idx = col_def.get("fallback_guard_index")
+                guard_blocks = (guard_idx is not None and guard_idx < len(pos_vals)
+                                and pos_vals[guard_idx])
+                if not guard_blocks:
+                    for fb in col_def.get("fallback_col_indices", []):
+                        val = pos_vals[fb] if fb < len(pos_vals) else ""
+                        if val:
+                            break
             return val
         key = col_def.get("key", "")
         return _fuzzy_get(row_data, key) if row_data else ""
@@ -484,6 +528,7 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
 
             pair_start = excel_row
             pair_end   = excel_row + 1
+            _a_carry   = ""  # holds the 2nd token of a split col-A value for the pair's bottom row
 
             # Apply pair merge for col_C etc.
             if pair_col:
@@ -579,9 +624,23 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
                                 bot_a = _side("medium")
                             else:
                                 bot_a = _side_colored(col_a_border, hidden_color)
-                            a_val = value
-                            if col_def.get("space_to_newline") and a_val:
-                                a_val = a_val.replace(" ", "\n")
+                            if col_def.get("split_rows"):
+                                if is_pair_top:
+                                    tokens = _re.split(r'[ 　]+', value) if value else [""]
+                                    if len(tokens) > 1:
+                                        a_val = " ".join(tokens[:-1])
+                                        _a_carry = tokens[-1]
+                                    else:
+                                        a_val = tokens[0]
+                                        _a_carry = ""
+                                else:
+                                    # Fall back to this row's own value if the top row had
+                                    # nothing to carry down (model may put it here directly)
+                                    a_val = _a_carry or value
+                            else:
+                                a_val = value
+                                if col_def.get("space_to_newline") and a_val:
+                                    a_val = a_val.replace(" ", "\n")
                             a_cell = ws.cell(row=r, column=1, value=a_val or None)
                             a_cell.font      = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 8))
                             a_cell.alignment = Alignment(horizontal=align_spec.get("h","left"),
@@ -593,8 +652,8 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
                                 a_cell.fill = PatternFill("solid", fgColor=fill_spec["color"])
                         continue
 
-                    # ── Column B ──────────────────────────────────────────────
-                    if c == 2:
+                    # ── Free-text columns between A and the pair-merge column ──
+                    if 1 < c < pair_col:
                         # Top: section outer at start; medium at block start (pair_top); else hidden
                         if is_sec_top:
                             top_b = _side(col_a_border)
@@ -611,32 +670,34 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
                         else:
                             bot_b = _side_colored("thin", hidden_color)
                         b_fill = fill_spec
-                        b_cell = ws.cell(row=r, column=2, value=value or None)
+                        b_cell = ws.cell(row=r, column=c, value=value or None)
                         b_cell.font      = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 8))
                         b_cell.alignment = Alignment(horizontal=align_spec.get("h","left"),
                                                      vertical=align_spec.get("v","center"), wrap_text=False)
+                        left_side  = _side("medium") if c == 2 else _side_colored("thin", hidden_color)
+                        right_side = _side("medium") if c == pair_col - 1 else _side_colored("thin", hidden_color)
                         b_cell.border    = Border(top=top_b, bottom=bot_b,
-                                                  left=_side("medium"), right=_side("medium"))
+                                                  left=left_side, right=right_side)
                         if b_fill:
                             b_cell.fill = PatternFill("solid", fgColor=b_fill["color"])
                         continue
 
-                    # ── Column C (pair_merge_col) ─────────────────────────────
-                    if c == 3:
+                    # ── Pair-merge column (e.g. 当月/累計) ──────────────────────
+                    if c == pair_col:
                         if is_pair_top:
                             # Top row of merged pair; use pre-split block chunk for this pair
                             pair_pos_in_block = pair_idx % block_pairs
                             c_val = block_c_chunks[pair_pos_in_block] if pair_pos_in_block < len(block_c_chunks) else value
                             top_c = col_a_border if is_sec_top else ("medium" if is_block_start else None)
                             c_fill = fill_spec
-                            _write_cell(ws, r, 3, 3, r, c_val, font_spec, align_spec,
+                            _write_cell(ws, r, pair_col, pair_col, r, c_val, font_spec, align_spec,
                                         {"top": top_c, "bottom": "thin",
                                          "left": None, "right": "thin"},
                                         c_fill)
                         else:
                             # Bottom row of merged pair
                             bot_c = sec.get("last_outer_bottom", col_a_border) if is_sec_bottom else "thin"
-                            _write_cell(ws, r, 3, 3, r, "", font_spec, align_spec,
+                            _write_cell(ws, r, pair_col, pair_col, r, "", font_spec, align_spec,
                                         {"top": None, "bottom": bot_c,
                                          "left": None, "right": "thin"})
                         continue
@@ -645,7 +706,7 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
                     # In filled rows, dashed dividers use gray so they're visible but harmonious
                     dash_color = "808080" if fill_color else "000000"
                     is_last_col = (ec == col_defs[-1]["end_col"])
-                    left_b  = "medium" if c == col_defs[3]["col"] else "thin"  # D col = medium left
+                    left_b  = "medium" if c == pair_col + 1 else "thin"  # first numeric col = medium left
                     right_b = col_right if is_last_col else "thin"
                     if is_pair_top:
                         top_b  = col_a_border if is_sec_top else ("medium" if is_block_start else "dashed")
@@ -696,6 +757,9 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
                 value = cell.get("value", "")
             elif key in ("title", "section_header"):
                 value = data.get(key, "")
+            elif "title_part" in cell:
+                left, center, right = _split_title_3(data.get("title", ""))
+                value = {"left": left, "center": center, "right": right}[cell["title_part"]]
             elif "concat_keys" in cell:
                 parts = [_fuzzy_get(header_vals, k, _used=_used_header_keys) for k in cell["concat_keys"]]
                 value = " ".join(p for p in parts if p)

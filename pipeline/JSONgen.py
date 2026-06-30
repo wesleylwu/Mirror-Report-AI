@@ -60,6 +60,7 @@ Return a single JSON object with this exact schema:
 RULES:
 
 TITLE: The full-width text spanning the top of the document (e.g. 製造指図書). Do not include it in header.
+- If this top line contains several distinct pieces of plain, unlabeled text (e.g. a period like "2026年2月", the document name, and a print-date/page marker like "2026/6/22 PAGE:1"), capture the ENTIRE line as ONE string in title, left-to-right, with the original spacing between pieces preserved. Do not split unlabeled pieces like these into header fields — header is only for fields that have their own printed label (e.g. "手配No.").
 
 HEADER FIELDS: Every label/value pair in the metadata section above the data table.
 - Use the EXACT printed label text as the key (e.g. "手配No.", "発行日", "品目CD").
@@ -75,7 +76,7 @@ TABLE ROWS: Each data row as an object keyed by column header.
 - Do NOT emit a row whose values are just the column header names.
 - Include subtotal and grand total rows — do not skip rows because they contain summary labels like 計 or 合計.
 - Blank cells: "".
-- If two or more columns share the same header text, append _2, _3, etc. to the duplicates (e.g. "達成%" and "達成%_2") so every key in a row object is unique. This applies even when the shared header text is "".
+- If two or more columns share the same header text, append _2, _3, etc. to the duplicates (e.g. "達成%" and "達成%_2") so every key in a row object is unique. This applies even when the shared header text is "" — e.g. four blank-header columns use the literal keys "", "_2", "_3", "_4" in BOTH the columns list and EVERY row object. Never write the bare "" key more than once in the same row object — JSON objects silently drop earlier duplicate keys, destroying data, so each of the 4 values needs its own distinct suffixed key even though all 4 columns are visually unlabeled.
 - The last row(s) of the table may be a full-width text row spanning all columns — output it as a special entry: {"_full_width": "<text>"}.
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
