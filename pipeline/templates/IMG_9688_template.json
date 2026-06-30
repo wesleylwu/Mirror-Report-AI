@@ -4,6 +4,7 @@
     "title": "製造指図書",
     "section_header": "調合票"
   },
+  "match_signals": ["成分名", "分量", "原単位", "手配No.", "品目CD"],
   "n_cols": 24,
   "column_widths": {
     "A": 5.7265625,
@@ -25,7 +26,7 @@
       "cells": [
         {
           "col": 1, "end_col": 24,
-          "fixed": true, "value": "製造指図書",
+          "fixed": false, "key": "title",
           "font": {"bold": true, "size": 12},
           "align": {"h": "center", "v": "center", "wrap": true},
           "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
@@ -389,7 +390,7 @@
     "cells": [
       {
         "col": 1, "end_col": 24,
-        "fixed": true, "value": "調合票",
+        "fixed": false, "key": "_full_width",
         "font": {"bold": true, "size": 11},
         "align": {"h": "left", "v": "top", "wrap": true},
         "border": {"top": "thin", "bottom": "medium", "left": "medium", "right": "medium"}

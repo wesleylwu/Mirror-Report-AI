@@ -1,5 +1,7 @@
 """Extract text content from document images/PDFs using Claude.
 
+Outputs a flat JSON with title, section_header, header key/value pairs,
+and table rows. Layout is handled entirely by XLSXgen via templates.
 Outputs a unified JSON with a "pages" array containing extracted fields for each page.
 
 Usage:
@@ -10,8 +12,10 @@ Requires the ANTHROPIC_API_KEY environment variable to be set.
 import base64
 import io
 import json
+import re
 import sys
 import concurrent.futures
+import time
 from pathlib import Path
 
 import anthropic
@@ -20,17 +24,15 @@ import fitz  # PyMuPDF
 import numpy as np
 from PIL import Image, ImageOps
 
-MODEL = "claude-haiku-4-5-20251001"
+MODEL_HAIKU  = "claude-haiku-4-5-20251001"
+MODEL_SONNET = "claude-sonnet-4-6"
+MODEL = MODEL_HAIKU  # default; overridden by --sonnet flag at runtime
 
 PROMPT = """You are a precise document digitizer. Extract ONLY the text visible in the image. Do not infer, guess, or fill in values.
 
-VALIDATION RULE:
-- Inspect the image first. If the image is not a printed document or manufacturing report (e.g., if it is a photo of a person, animal, food, scenery, or any random physical object/scene), or if it is too blurry or dark to read, you MUST return a JSON with an "error" key:
-  {"error": "invalid_document", "message": "The uploaded image does not appear to be a valid manufacturing document."}
-
 CRITICAL RULES:
 - Transcribe ONLY pre-printed text. Ignore handwriting, stamps, and pen marks.
-- If a field value is blank, output "".
+- If a field value is blank or illegible, output "".
 - Read every character directly from the image. Do NOT approximate, simplify, or substitute similar-looking characters — transcribe exactly what is printed, including every kanji, kana, alphanumeric character, symbol, and punctuation mark.
 - Pay close attention to characters that look similar: e.g. ン vs ソ, サ vs セ, 両 vs 吋, ド vs ト. Zoom in mentally on each character before committing.
 - Product names, codes, and field values must be transcribed in full — do not truncate or paraphrase.
@@ -71,15 +73,46 @@ TABLE COLUMNS: Column header strings in left-to-right order.
 
 TABLE ROWS: Each data row as an object keyed by column header.
 - Do NOT emit a row whose values are just the column header names.
+- Include subtotal and grand total rows — do not skip rows because they contain summary labels like 計 or 合計.
 - Blank cells: "".
+- If two or more columns share the same header text, append _2, _3, etc. to the duplicates (e.g. "達成%" and "達成%_2") so every key in a row object is unique. This applies even when the shared header text is "".
 - The last row(s) of the table may be a full-width text row spanning all columns — output it as a special entry: {"_full_width": "<text>"}.
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
 MAX_IMAGE_PX = 3000
 
 
-def _deskew(img: Image.Image) -> Image.Image:
+def _auto_orient(img: Image.Image) -> Image.Image:
     img = ImageOps.exif_transpose(img)
+    gray = np.array(img.convert("L"))
+    inv  = (255 - gray).astype(float)
+    row_var = float(np.var(inv.sum(axis=1)))
+    col_var = float(np.var(inv.sum(axis=0)))
+    def _strip_ratio(candidate: Image.Image, pct: int) -> float:
+        g = np.array(candidate.convert("L"))
+        v = (255 - g).astype(float)
+        rs = v.sum(axis=1)
+        rh = len(rs)
+        m = max(1, rh * pct // 100)
+        bot = float(rs[rh - m:].mean()) or 1.0
+        return float(rs[:m].mean()) / bot
+
+    if col_var > row_var:
+        # Sideways document — pick CW vs CCW by which puts more ink in the top quarter
+        cw  = img.rotate(270, expand=True)
+        ccw = img.rotate(90,  expand=True)
+        img = cw if _strip_ratio(cw, 25) >= _strip_ratio(ccw, 25) else ccw
+
+    # Upside-down check: blank page margin sits at the bottom when the doc is upside-down,
+    # making the top 5% significantly denser than the bottom 5%.
+    if _strip_ratio(img, 5) > 1.5:
+        img = img.rotate(180, expand=True)
+
+    return img
+
+
+def _deskew(img: Image.Image) -> Image.Image:
+    img = _auto_orient(img)
     cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     gray = cv2.cvtColor(cv, cv2.COLOR_BGR2GRAY)
     gray = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -111,17 +144,20 @@ def _deskew(img: Image.Image) -> Image.Image:
     h_left = np.linalg.norm(ordered[3] - ordered[0])
     h_right= np.linalg.norm(ordered[2] - ordered[1])
     out_w, out_h = int(max(w_top, w_bot)), int(max(h_left, h_right))
-    dst = np.array([[0,0],[out_w,0],[out_w,out_h],[0,out_h]], dtype=np.float32)
+    # Add output padding so edge content isn't clipped — extra vertical padding
+    # since title/page-info text often sits just outside the table's own border
+    pad_px_x = int(out_w * 0.03)
+    pad_px_y = int(out_h * 0.15)
+    canvas_w = out_w + 2 * pad_px_x
+    canvas_h = out_h + 2 * pad_px_y
+    dst = np.array([
+        [pad_px_x,         pad_px_y        ],
+        [pad_px_x + out_w, pad_px_y        ],
+        [pad_px_x + out_w, pad_px_y + out_h],
+        [pad_px_x,         pad_px_y + out_h],
+    ], dtype=np.float32)
     M = cv2.getPerspectiveTransform(ordered, dst)
-    warped = cv2.warpPerspective(cv, M, (out_w, out_h))
-    warped_gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
-    _, paper_mask = cv2.threshold(warped_gray, 200, 255, cv2.THRESH_BINARY)
-    paper_coords = cv2.findNonZero(paper_mask)
-    if paper_coords is not None:
-        x, y, bw, bh = cv2.boundingRect(paper_coords)
-        pad = 10
-        warped = warped[max(0,y-pad):min(out_h,y+bh+pad),
-                        max(0,x-pad):min(out_w,x+bw+pad)]
+    warped = cv2.warpPerspective(cv, M, (canvas_w, canvas_h))
     return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
 
 
@@ -153,11 +189,14 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
 
     while True:
         turn = len([m for m in messages if m["role"] == "user"])
+        chars = 0
         with client.messages.stream(
             model=MODEL, max_tokens=8192, temperature=0, messages=messages,
         ) as stream:
-            for _ in stream.text_stream:
-                pass
+            for text in stream.text_stream:
+                chars += len(text)
+                print(f"\r  Turn {turn} — {chars:,} chars...", end="", flush=True)
+            print()
             message = stream.get_final_message()
 
         total_input  += message.usage.input_tokens
@@ -170,26 +209,71 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
         if message.stop_reason != "max_tokens":
             break
         messages.append({"role": "assistant", "content": chunk})
-        messages.append({"role": "user", "content": "Continue the JSON exactly from where you left off. Output only raw JSON continuation."})
+        tail = accumulated[-120:].replace('"', '\\"')
+        messages.append({"role": "user", "content": f'The JSON was cut off. Continue outputting raw JSON from exactly where it stopped. The last characters output were: "...{tail}". Do NOT restart. Do NOT repeat any output. Continue from that exact point.'})
+
+    print(
+        f"Tokens — input: {total_input}, output: {total_output}, "
+        f"total: {total_input + total_output} "
+        f"(cache write: {total_cache_write}, read: {total_cache_read})",
+        file=sys.stderr,
+    )
 
     text = accumulated.strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+    # Strip stray code-fence markers and invalid control characters
+    text = re.sub(r"```[a-z]*\n?", "", text)
+    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", text)
 
     try:
-        data = json.loads(text)
-        if "error" in data:
-            raise ValueError(data.get("message") or f"Invalid document in {debug_name}.")
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
 
-        print(
-            f"[{debug_name}] Tokens — input: {total_input}, output: {total_output}, "
-            f"total: {total_input + total_output}",
-            file=sys.stderr,
-        )
-        return data
+    # Model may have restarted mid-stream — find the last top-level { and try it
+    last_start = text.rfind('\n{')
+    if last_start > 0:
+        try:
+            return json.loads(text[last_start + 1:])
+        except json.JSONDecodeError:
+            pass
+
+    # Truncate at the last complete row and close the JSON structure
+    try:
+        err_pos = None
+        try:
+            json.loads(text)
+        except json.JSONDecodeError as e:
+            err_pos = e.pos
+        if err_pos:
+            for pattern, closing in [
+                ('\n      },', '\n    ]\n  }\n}'),
+                ('\n      }',  '\n    ]\n  }\n}'),
+                ('\n    },',   '\n  }\n}'),
+                ('\n    }',    '\n  }\n}'),
+            ]:
+                pos = text.rfind(pattern, 0, err_pos)
+                if pos > 0:
+                    fixed = text[:pos + len(pattern.rstrip(','))] + closing
+                    try:
+                        data = json.loads(fixed)
+                        print(f"Warning: JSON truncated at pos {err_pos}, recovered {len(data.get('table',{}).get('rows',[]))} rows", file=sys.stderr)
+                        return data
+                    except json.JSONDecodeError:
+                        continue
+    except Exception:
+        pass
+
+    # Save raw response and return empty shell so the program can continue
+    raw_path = debug_name + ".raw_response.txt"
+    with open(raw_path, "w", encoding="utf-8") as f:
+        f.write(text)
+    try:
+        json.loads(text)
     except json.JSONDecodeError as e:
-        print(f"JSON parse error in {debug_name}: {e}", file=sys.stderr)
-        raise
+        print(f"JSON parse error in {debug_name}: {e} — raw response saved to {raw_path}", file=sys.stderr)
+    return {"title": "", "section_header": "", "header": {}, "table": {"columns": [], "rows": []}}
 
 
 def extract_all(paths: list[str]) -> dict:
@@ -225,7 +309,6 @@ def extract_all(paths: list[str]) -> dict:
         raise ValueError("No valid images or PDF pages found to process.")
 
     pages_data = []
-    # Run the extractions concurrently
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(extract_text_from_image, task[0], task[1]) for task in tasks]
         for f in futures:
@@ -235,23 +318,31 @@ def extract_all(paths: list[str]) -> dict:
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python JSONgen.py <input_path1> [<input_path2> ...] [output.json]", file=sys.stderr)
-        sys.exit(1)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("paths", nargs="+", help="input image/PDF paths; if last arg ends in .json it is the output path")
+    parser.add_argument("--sonnet", action="store_true", help="Use claude-sonnet-4-6 instead of Haiku")
+    args = parser.parse_args()
 
-    args = sys.argv[1:]
+    global MODEL
+    MODEL = MODEL_SONNET if args.sonnet else MODEL_HAIKU
+    print(f"Using model: {MODEL}", file=sys.stderr)
+
+    paths = args.paths
     output_json = None
-    if len(args) >= 2 and args[-1].endswith(".json"):
-        output_json = args[-1]
-        input_paths = args[:-1]
+    if paths and paths[-1].endswith(".json"):
+        output_json = paths[-1]
+        input_paths = paths[:-1]
     else:
-        input_paths = args
+        input_paths = paths
 
+    t0 = time.time()
     try:
         data = extract_all(input_paths)
     except Exception as e:
         print(str(e), file=sys.stderr)
         sys.exit(1)
+    print(f"Elapsed: {time.time() - t0:.1f}s", file=sys.stderr)
 
     output = json.dumps(data, indent=2, ensure_ascii=False)
 

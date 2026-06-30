@@ -1,0 +1,110 @@
+{
+  "id": "基準客先別シンプルリスト",
+  "match": {"title": "基準客先別シンプルリスト", "section_header": ""},
+  "match_signals": ["基準客先", "営業粗利額", "純売上額", "粗利率", "在庫額", "目標売上額"],
+  "column_widths": {
+    "A": 9.1, "B": 58.15, "C": 6.74, "D": 17.25, "E": 12.05,
+    "F": 18.2, "G": 13.0, "H": 16.55, "I": 13.0, "J": 13.0,
+    "K": 13.0, "L": 13.0, "M": 15.36, "N": 16.55, "O": 18.2
+  },
+  "header": [
+    {
+      "row": 1, "height": 14,
+      "cells": [
+        {
+          "col": 1, "end_col": 3, "fixed": false, "key": "年月",
+          "font": {"bold": true, "size": 9},
+          "align": {"h": "left", "v": "center", "wrap": false},
+          "border": {"top": null, "bottom": null, "left": null, "right": null}
+        },
+        {
+          "col": 4, "end_col": 12, "fixed": false, "key": "title",
+          "font": {"bold": true, "size": 10},
+          "align": {"h": "center", "v": "center", "wrap": false},
+          "border": {"top": null, "bottom": null, "left": null, "right": null}
+        },
+        {
+          "col": 13, "end_col": 15, "fixed": false, "concat_keys": ["日付", "PAGE"],
+          "font": {"bold": false, "size": 8},
+          "align": {"h": "right", "v": "center", "wrap": false},
+          "border": {"top": null, "bottom": null, "left": null, "right": null}
+        }
+      ]
+    }
+  ],
+  "col_headers": {
+    "start_row": 2, "end_row": 3, "row_heights": [14, 14],
+    "fill": {"color": "D9D9D9"},
+    "cells": [
+      {"col": 1,  "end_col": 1,  "merge_rows": true,  "value": "",                    "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "medium", "left": "medium", "right": "thin"}},
+      {"col": 2,  "end_col": 2,  "merge_rows": true,  "value": "基準客先",            "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "medium", "left": "thin",   "right": "thin"}},
+      {"col": 3,  "end_col": 3,  "merge_rows": true,  "value": "",                    "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "medium", "left": "thin",   "right": "thin"}},
+      {"col": 4,  "end_col": 4,  "merge_rows": false, "value": "営業粗利額",          "row2_value": "粗利達成率",          "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 5,  "end_col": 5,  "merge_rows": false, "value": "粗利率",              "row2_value": "可処率",              "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 6,  "end_col": 6,  "merge_rows": false, "value": "純売上額",            "row2_value": "売上達成率",          "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 7,  "end_col": 7,  "merge_rows": false, "value": "上進預り＋正式買品",  "row2_value": "上海扱い分の割合",    "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 8,  "end_col": 8,  "merge_rows": false, "value": "本部売上",            "row2_value": "緑資認裁粗利率",      "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 9,  "end_col": 9,  "merge_rows": false, "value": "デザイン経費",        "row2_value": "品質検査経費",        "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 10, "end_col": 10, "merge_rows": false, "value": "在庫額",              "row2_value": "在庫準備期間",        "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 11, "end_col": 11, "merge_rows": false, "value": "死蔵品額",            "row2_value": "死蔵品比率",          "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 12, "end_col": 12, "merge_rows": false, "value": "印字仕入額",          "row2_value": "印字仕入数",          "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 13, "end_col": 13, "merge_rows": false, "value": "発送件数",            "row2_value": "運賃",                "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 14, "end_col": 14, "merge_rows": false, "value": "物流経費",            "row2_value": "システム経費",        "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "thin"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "thin"}},
+      {"col": 15, "end_col": 15, "merge_rows": false, "value": "",                    "row2_value": "目標売上額",          "font": {"bold": true, "size": 8}, "align": {"h": "center", "v": "center", "wrap": true}, "border": {"top": "medium", "bottom": "thin",   "left": "thin",   "right": "medium"}, "row2_border": {"top": "thin", "bottom": "medium", "left": "thin", "right": "medium"}}
+    ]
+  },
+  "data_rows": {
+    "start_row": 4,
+    "row_height": 13,
+    "pair_merge_col": 3,
+    "pair_col_labels": ["当月", "累計"],
+    "sections": [
+      {
+        "pairs": 2,
+        "block_pairs": 2,
+        "fill": null,
+        "col_A_border": "medium",
+        "col_A_span": false,
+        "col_right": "medium"
+      },
+      {
+        "pairs": 4,
+        "block_pairs": 2,
+        "fill": "D9D9D9",
+        "col_A_border": "medium",
+        "col_A_span": false,
+        "col_right": "medium",
+        "last_outer_bottom": "thick"
+      },
+      {
+        "pairs": 6,
+        "block_pairs": 2,
+        "col_A_border": "thick",
+        "col_A_span": true,
+        "col_A_span_value": "",
+        "col_right": "thick",
+        "sub_sections": [
+          {"pairs": 2, "fill": null},
+          {"pairs": 4, "fill": "D9D9D9"}
+        ]
+      }
+    ],
+    "columns": [
+      {"col": 1,  "end_col": 1,  "col_index": 0,  "space_to_newline": true, "font": {"bold": false, "size": 8}, "align": {"h": "center", "v": "center", "wrap": false}},
+      {"col": 2,  "end_col": 2,  "col_index": 1,  "concat_col_index": 2, "second_pair_indices": [3, 4], "fallback_col_indices": [3, 0], "font": {"bold": false, "size": 8}, "align": {"h": "left",  "v": "center", "wrap": false}},
+      {"col": 3,  "end_col": 3,  "col_index": 3,  "font": {"bold": false, "size": 8}, "align": {"h": "center", "v": "center", "wrap": false}},
+      {"col": 4,  "end_col": 4,  "col_index": 5,  "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 5,  "end_col": 5,  "col_index": 6,  "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 6,  "end_col": 6,  "col_index": 7,  "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 7,  "end_col": 7,  "col_index": 8,  "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 8,  "end_col": 8,  "col_index": 9,  "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 9,  "end_col": 9,  "col_index": 10, "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 10, "end_col": 10, "col_index": 11, "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 11, "end_col": 11, "col_index": 12, "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 12, "end_col": 12, "col_index": 13, "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 13, "end_col": 13, "col_index": 14, "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 14, "end_col": 14, "col_index": 15, "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
+      {"col": 15, "end_col": 15, "col_index": 16, "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}}
+    ]
+  }
+}

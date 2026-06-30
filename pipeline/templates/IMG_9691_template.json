@@ -1,0 +1,575 @@
+{
+  "id": "売上実績表",
+  "match": {
+    "title": "売上実績表",
+    "section_header": ""
+  },
+  "match_signals": [
+    "月別",
+    "区分",
+    "前々年度当月",
+    "本年度累計",
+    "目標値累計",
+    "前々基準値目",
+    "本年度値計"
+  ],
+  "group_table": true,
+  "group_size": 4,
+  "n_groups": 15,
+  "month_source": "col",
+  "month_key": "月別",
+  "data_start_row": 3,
+  "row_height": 14.0,
+  "n_cols": 12,
+  "column_widths": {
+    "A": 12.0,
+    "B": 12.0,
+    "C": 13.0,
+    "D": 13.0,
+    "E": 13.0,
+    "F": 13.0,
+    "G": 12.0,
+    "H": 13.0,
+    "I": 13.0,
+    "J": 13.0,
+    "K": 13.0,
+    "L": 12.0
+  },
+  "header": [
+    {
+      "row": 1,
+      "height": 14,
+      "cells": [
+        {
+          "col": 1,
+          "end_col": 12,
+          "fixed": false,
+          "font": {
+            "bold": true,
+            "size": 12
+          },
+          "align": {
+            "h": "center",
+            "v": "center",
+            "wrap": false
+          },
+          "border": {
+            "top": null,
+            "bottom": "medium",
+            "left": "thin",
+            "right": null
+          },
+          "key": "title"
+        }
+      ]
+    }
+  ],
+  "col_headers": {
+    "row": 2,
+    "height": 14,
+    "cells": [
+      {
+        "col": 1,
+        "end_col": 1,
+        "value": "月別",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 2,
+        "end_col": 2,
+        "value": "区分",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 3,
+        "end_col": 3,
+        "value": "前々年度当月",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 4,
+        "end_col": 4,
+        "value": "前年度当月",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 5,
+        "end_col": 5,
+        "value": "本年度当月",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 6,
+        "end_col": 6,
+        "value": "本年度目標",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 7,
+        "end_col": 7,
+        "value": "達成%",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 8,
+        "end_col": 8,
+        "value": "前々年度累計",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 9,
+        "end_col": 9,
+        "value": "前年度累計",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 10,
+        "end_col": 10,
+        "value": "本年度累計",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 11,
+        "end_col": 11,
+        "value": "目標値累計",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      },
+      {
+        "col": 12,
+        "end_col": 12,
+        "value": "達成%",
+        "font": {
+          "bold": true,
+          "size": 8
+        },
+        "align": {
+          "h": "center",
+          "v": "center",
+          "wrap": true
+        },
+        "border": {
+          "top": "medium",
+          "bottom": "medium",
+          "left": "medium",
+          "right": "medium"
+        }
+      }
+    ]
+  },
+  "group_col": {
+    "col": 1,
+    "end_col": 1,
+    "key": "月別",
+    "font": {
+      "bold": false,
+      "size": 8
+    },
+    "align": {
+      "h": "center",
+      "v": "center"
+    },
+    "border": {
+      "top": "medium",
+      "bottom": "medium",
+      "left": "medium",
+      "right": "thin"
+    }
+  },
+  "columns": [
+    {
+      "col": 2,
+      "end_col": 2,
+      "key": "区分",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "center",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": "thin",
+        "right": "medium"
+      }
+    },
+    {
+      "col": 3,
+      "end_col": 3,
+      "key": "前々年度当月",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "right",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": null,
+        "right": "medium"
+      },
+      "key_aliases": [
+        "前々基準値目"
+      ]
+    },
+    {
+      "col": 4,
+      "end_col": 4,
+      "key": "前年度当月",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "right",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": "medium",
+        "right": "medium"
+      },
+      "key_aliases": [
+        "前年度値目"
+      ]
+    },
+    {
+      "col": 5,
+      "end_col": 5,
+      "key": "本年度当月",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "right",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": "medium",
+        "right": "medium"
+      },
+      "key_aliases": [
+        "本年度値目"
+      ]
+    },
+    {
+      "col": 6,
+      "end_col": 6,
+      "key": "本年度目標",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "right",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": "medium",
+        "right": "medium"
+      },
+      "key_aliases": [
+        "本年度目目"
+      ]
+    },
+    {
+      "col": 7,
+      "end_col": 7,
+      "key": "達成%",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "right",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": "medium",
+        "right": "medium"
+      }
+    },
+    {
+      "col": 8,
+      "end_col": 8,
+      "key": "前々年度累計",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "right",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": "medium",
+        "right": "medium"
+      },
+      "key_aliases": [
+        "前々基準値計"
+      ]
+    },
+    {
+      "col": 9,
+      "end_col": 9,
+      "key": "前年度累計",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "right",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": "medium",
+        "right": "medium"
+      },
+      "key_aliases": [
+        "前年度値計"
+      ]
+    },
+    {
+      "col": 10,
+      "end_col": 10,
+      "key": "本年度累計",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "right",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": "medium",
+        "right": "medium"
+      },
+      "key_aliases": [
+        "本年度値計"
+      ]
+    },
+    {
+      "col": 11,
+      "end_col": 11,
+      "key": "目標値累計",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "right",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": "medium",
+        "right": "medium"
+      }
+    },
+    {
+      "col": 12,
+      "end_col": 12,
+      "key": "達成%_2",
+      "font": {
+        "bold": false,
+        "size": 8
+      },
+      "align": {
+        "h": "right",
+        "v": "center",
+        "wrap": false
+      },
+      "border": {
+        "top": "thin",
+        "bottom": "thin",
+        "left": "medium",
+        "right": "medium"
+      }
+    }
+  ]
+}
