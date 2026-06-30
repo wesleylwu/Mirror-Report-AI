@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useCallback } from "react";
-import { FaFileExcel } from "react-icons/fa";
+import { FaFileExcel, FaSpinner } from "react-icons/fa";
 import {
   MatchedTemplate,
   ExtractedData,
@@ -15,13 +15,19 @@ import { fuzzyGet, formatItemCode } from "../utils/template";
 interface TemplateViewerProps {
   matchedTemplate: MatchedTemplate;
   extractedData: ExtractedData;
-  xlsxBlob: Blob | null;
-  xlsxName: string;
+  onExtractedDataChange?: (newData: ExtractedData) => void;
+  isRegeneratingExcel?: boolean;
+  onDownloadExcel?: () => void;
+  xlsxBlob?: Blob | null;
+  xlsxName?: string;
 }
 
 const TemplateViewer = ({
   matchedTemplate,
   extractedData,
+  onExtractedDataChange,
+  isRegeneratingExcel = false,
+  onDownloadExcel,
   xlsxBlob,
   xlsxName,
 }: TemplateViewerProps) => {
@@ -48,23 +54,6 @@ const TemplateViewer = ({
     [colWidths],
   );
 
-  const getBorderStyle = useCallback((b: BorderSpec | null | undefined) => {
-    if (!b) return {};
-    const style: Record<string, string> = {};
-    const mapSide = (side: string | null | undefined) => {
-      if (!side || side === "none") return "none";
-      if (side === "thin") return "1px solid #111827";
-      if (side === "medium") return "2px solid #111827";
-      if (side === "double") return "3px double #111827";
-      return "1px solid #111827";
-    };
-    style.borderTop = mapSide(b.top);
-    style.borderBottom = mapSide(b.bottom);
-    style.borderLeft = mapSide(b.left);
-    style.borderRight = mapSide(b.right);
-    return style;
-  }, []);
-
   const triggerDownload = useCallback((blob: Blob, name: string) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -88,6 +77,70 @@ const TemplateViewer = ({
     }, 10000);
   }, []);
 
+  const handleDownload = useCallback(() => {
+    if (onDownloadExcel) {
+      onDownloadExcel();
+    } else if (xlsxBlob) {
+      triggerDownload(xlsxBlob, xlsxName || "export.xlsx");
+    }
+  }, [onDownloadExcel, xlsxBlob, xlsxName, triggerDownload]);
+
+  const getBorderStyle = useCallback((b: BorderSpec | null | undefined) => {
+    if (!b) return {};
+    const style: Record<string, string> = {};
+    const mapSide = (side: string | null | undefined) => {
+      if (!side || side === "none") return "none";
+      if (side === "thin") return "1px solid #111827";
+      if (side === "medium") return "2px solid #111827";
+      if (side === "double") return "3px double #111827";
+      return "1px solid #111827";
+    };
+    style.borderTop = mapSide(b.top);
+    style.borderBottom = mapSide(b.bottom);
+    style.borderLeft = mapSide(b.left);
+    style.borderRight = mapSide(b.right);
+    return style;
+  }, []);
+
+  const handleHeaderChange = useCallback(
+    (key: string, value: string) => {
+      const newData = {
+        ...extractedData,
+        header: {
+          ...extractedData.header,
+          [key]: value,
+        },
+      };
+      if (onExtractedDataChange) {
+        onExtractedDataChange(newData);
+      }
+    },
+    [extractedData, onExtractedDataChange],
+  );
+
+  const handleRowChange = useCallback(
+    (rIndex: number, key: string, value: string) => {
+      const rows = [...(extractedData.table?.rows || [])];
+      if (rows[rIndex]) {
+        rows[rIndex] = {
+          ...rows[rIndex],
+          [key]: value,
+        };
+      }
+      const newData = {
+        ...extractedData,
+        table: {
+          ...extractedData.table,
+          rows,
+        },
+      };
+      if (onExtractedDataChange) {
+        onExtractedDataChange(newData);
+      }
+    },
+    [extractedData, onExtractedDataChange],
+  );
+
   return (
     <div className="flex w-full flex-col gap-4">
       <div className="border-mirror-light-blue max-h-[70vh] w-full overflow-auto rounded-2xl border bg-slate-100 p-4 shadow-inner print:max-h-none print:border-none print:bg-white print:p-0 print:shadow-none">
@@ -105,13 +158,16 @@ const TemplateViewer = ({
                 >
                   {rowSpec.cells.map((cell: CellSpec, cellIndex: number) => {
                     const val = cell.fixed
-                      ? cell.value
+                      ? cell.value || ""
                       : fuzzyGet(extractedData.header, cell.key || "");
                     const widthPercent = getCellWidthPercent(
                       cell.col,
                       cell.end_col,
                     );
                     const borderStyle = getBorderStyle(cell.border);
+                    const isEditable =
+                      !cell.fixed && cell.key && !!onExtractedDataChange;
+
                     return (
                       <div
                         key={cellIndex}
@@ -137,9 +193,25 @@ const TemplateViewer = ({
                           ...borderStyle,
                         }}
                       >
-                        <span className="max-w-full truncate leading-tight">
-                          {val}
-                        </span>
+                        {isEditable ? (
+                          <span
+                            contentEditable={true}
+                            suppressContentEditableWarning={true}
+                            onBlur={(e) =>
+                              handleHeaderChange(
+                                cell.key!,
+                                e.currentTarget.textContent || "",
+                              )
+                            }
+                            className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 max-w-full cursor-text truncate rounded border border-dashed border-transparent px-0.5 leading-tight transition-colors outline-none"
+                          >
+                            {val}
+                          </span>
+                        ) : (
+                          <span className="max-w-full truncate leading-tight">
+                            {val}
+                          </span>
+                        )}
                       </div>
                     );
                   })}
@@ -201,9 +273,17 @@ const TemplateViewer = ({
                   const colSpecs = dr.columns || [];
                   const tableData = extractedData.table || {};
                   const rows = tableData.rows || [];
-                  const maxRows = Math.max(dr.count || 0, rows.length);
+                  const filteredRows = rows.filter(
+                    (r) =>
+                      !(
+                        "_full_width" in r &&
+                        typeof r._full_width === "string" &&
+                        r._full_width.replace(/\s+/g, "") === "備考"
+                      ),
+                  );
+                  const maxRows = Math.max(dr.count || 0, filteredRows.length);
                   return Array.from({ length: maxRows }).map((_, rowIndex) => {
-                    const rowData = rows[rowIndex] || {};
+                    const rowData = filteredRows[rowIndex] || {};
                     const isFirst = rowIndex === 0;
 
                     if ("_full_width" in rowData) {
@@ -214,9 +294,21 @@ const TemplateViewer = ({
                           style={{ height: `${dr.row_height || 25}px` }}
                         >
                           <div
-                            className="flex items-center justify-center bg-slate-50 p-1 text-center text-[9px] font-bold"
+                            contentEditable={!!onExtractedDataChange}
+                            suppressContentEditableWarning={true}
+                            onBlur={(e) =>
+                              handleRowChange(
+                                rowIndex,
+                                "_full_width",
+                                e.currentTarget.textContent || "",
+                              )
+                            }
+                            className={
+                              onExtractedDataChange
+                                ? "hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 flex w-full cursor-text items-center justify-center border border-dashed border-transparent bg-slate-50 p-1 text-center text-[9px] font-bold transition-colors outline-none"
+                                : "flex w-full items-center justify-center bg-slate-50 p-1 text-center text-[9px] font-bold"
+                            }
                             style={{
-                              width: "100%",
                               boxSizing: "border-box",
                               ...getBorderStyle(colSpecs[0]?.border),
                             }}
@@ -251,6 +343,9 @@ const TemplateViewer = ({
                               ? colSpec.first_row_border || colSpec.border
                               : colSpec.border;
                             const borderStyle = getBorderStyle(borderSpec);
+                            const isEditable =
+                              !!colSpec.key && !!onExtractedDataChange;
+
                             return (
                               <div
                                 key={colIndex}
@@ -280,9 +375,26 @@ const TemplateViewer = ({
                                   ...borderStyle,
                                 }}
                               >
-                                <span className="max-w-full truncate leading-tight">
-                                  {val}
-                                </span>
+                                {isEditable ? (
+                                  <span
+                                    contentEditable={true}
+                                    suppressContentEditableWarning={true}
+                                    onBlur={(e) =>
+                                      handleRowChange(
+                                        rowIndex,
+                                        colSpec.key!,
+                                        e.currentTarget.textContent || "",
+                                      )
+                                    }
+                                    className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 max-w-full cursor-text truncate rounded border border-dashed border-transparent px-0.5 leading-tight transition-colors outline-none"
+                                  >
+                                    {val}
+                                  </span>
+                                ) : (
+                                  <span className="max-w-full truncate leading-tight">
+                                    {val}
+                                  </span>
+                                )}
                               </div>
                             );
                           },
@@ -343,10 +455,15 @@ const TemplateViewer = ({
 
       <div className="mt-2 flex w-full justify-center gap-4 print:hidden">
         <button
-          onClick={() => xlsxBlob && triggerDownload(xlsxBlob, xlsxName)}
-          className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white flex cursor-pointer items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold shadow-sm transition-colors duration-200"
+          onClick={handleDownload}
+          disabled={isRegeneratingExcel}
+          className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white flex cursor-pointer items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold shadow-sm transition-colors duration-200 disabled:opacity-60"
         >
-          <FaFileExcel className="h-5 w-5" />
+          {isRegeneratingExcel ? (
+            <FaSpinner className="h-5 w-5 animate-spin" />
+          ) : (
+            <FaFileExcel className="h-5 w-5" />
+          )}
           Excel
         </button>
         <button

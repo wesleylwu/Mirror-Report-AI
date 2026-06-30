@@ -8,37 +8,38 @@ import Capture from "@/src/components/Capture";
 import { AnimatePresence } from "motion/react";
 
 const Page = () => {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
 
-  const handleFileSelect = useCallback((file: File) => {
-    setUploadedFile(file);
+  const handleFilesSelect = useCallback((files: File[]) => {
+    setUploadedFiles(files);
   }, []);
 
   const handleClear = useCallback(() => {
-    setUploadedFile(null);
+    setUploadedFiles([]);
   }, []);
 
-  const handleFileSelectFromMirror = useCallback((f: File) => {
-    setUploadedFile(f);
+  const handleCaptureFileSelect = useCallback((file: File) => {
+    setUploadedFiles([file]);
+    setIsCapturing(false);
   }, []);
 
   return (
     <div className="bg-mirror-white font-mirror-noto flex min-h-screen flex-col">
       <NavBar
-        onFileSelect={handleFileSelect}
+        onFilesSelect={handleFilesSelect}
         onCaptureClick={() => setIsCapturing(true)}
       />
       <Mirror
-        uploadedFile={uploadedFile}
+        uploadedFiles={uploadedFiles}
         onClear={handleClear}
-        onFileSelect={handleFileSelectFromMirror}
+        onFilesSelect={handleFilesSelect}
       />
       <Footer />
       <AnimatePresence>
         {isCapturing && (
           <Capture
-            onFileSelect={handleFileSelect}
+            onFileSelect={handleCaptureFileSelect}
             onClose={() => setIsCapturing(false)}
           />
         )}

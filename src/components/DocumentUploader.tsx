@@ -4,15 +4,14 @@ import { useRef, useState } from "react";
 import { FaPaperclip } from "react-icons/fa";
 
 interface DocumentUploaderProps {
-  onFileSelect: (file: File) => void;
+  onFilesSelect: (files: File[]) => void;
 }
 
-const DocumentUploader = ({ onFileSelect }: DocumentUploaderProps) => {
+const DocumentUploader = ({ onFilesSelect }: DocumentUploaderProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const localInputRef = useRef<HTMLInputElement>(null);
 
-  const validateAndSelect = (file: File) => {
-    const ext = file.name.split(".").pop()?.toLowerCase();
+  const validateAndSelect = (files: File[]) => {
     const allowedTypes = [
       "image/jpeg",
       "image/jpg",
@@ -21,13 +20,21 @@ const DocumentUploader = ({ onFileSelect }: DocumentUploaderProps) => {
       "application/pdf",
     ];
     const allowedExts = ["jpg", "jpeg", "png", "webp", "pdf"];
-    if (
-      allowedTypes.includes(file.type) ||
-      (ext && allowedExts.includes(ext))
-    ) {
-      onFileSelect(file);
-    } else {
-      alert("Only JPEG, PNG, WebP, or PDF files are allowed.");
+
+    const validFiles = files.filter((file) => {
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      return (
+        allowedTypes.includes(file.type) || (ext && allowedExts.includes(ext))
+      );
+    });
+
+    if (validFiles.length > 0) {
+      onFilesSelect(validFiles);
+    }
+    if (validFiles.length < files.length) {
+      alert(
+        "Some files were ignored. Only JPEG, PNG, WebP, or PDF files are allowed.",
+      );
     }
   };
 
@@ -43,8 +50,8 @@ const DocumentUploader = ({ onFileSelect }: DocumentUploaderProps) => {
         onDrop={(e) => {
           e.preventDefault();
           setIsDragging(false);
-          const f = e.dataTransfer.files?.[0];
-          if (f) validateAndSelect(f);
+          const files = Array.from(e.dataTransfer.files || []);
+          if (files.length > 0) validateAndSelect(files);
         }}
         className={`bg-mirror-light-blue flex min-h-[55vh] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300 ${
           isDragging
@@ -65,7 +72,7 @@ const DocumentUploader = ({ onFileSelect }: DocumentUploaderProps) => {
             </p>
           </div>
           <p className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white inline-flex cursor-pointer items-center rounded-lg px-4 py-2 text-xs font-bold shadow-sm transition-colors duration-200">
-            Select File
+            Select Files
           </p>
         </div>
       </div>
@@ -73,10 +80,11 @@ const DocumentUploader = ({ onFileSelect }: DocumentUploaderProps) => {
         type="file"
         ref={localInputRef}
         onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) validateAndSelect(f);
+          const files = Array.from(e.target.files || []);
+          if (files.length > 0) validateAndSelect(files);
         }}
         accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+        multiple
         className="hidden"
       />
     </div>

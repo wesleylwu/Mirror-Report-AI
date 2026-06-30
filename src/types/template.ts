@@ -70,6 +70,7 @@ export interface MatchedTemplate {
 }
 
 export interface ExtractedData {
+  title?: string;
   header?: Record<string, string>;
   table?: {
     rows?: Record<string, string>[];

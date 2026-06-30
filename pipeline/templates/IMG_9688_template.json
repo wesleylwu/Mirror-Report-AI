@@ -21,14 +21,14 @@
   "header": [
     {
       "row": 1,
-      "height": 45,
+      "height": 50,
       "cells": [
         {
           "col": 1, "end_col": 24,
           "fixed": true, "value": "製造指図書",
-          "font": {"bold": true, "size": 12},
+          "font": {"bold": false, "size": 22},
           "align": {"h": "center", "v": "center", "wrap": true},
-          "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
+          "border": {"top": null, "bottom": null, "left": null, "right": null}
         }
       ]
     },
@@ -44,32 +44,47 @@
           "border": {"top": "thin", "bottom": null, "left": "thin", "right": "thin"}
         },
         {
-          "col": 4, "end_col": 8,
+          "col": 4, "end_col": 7,
           "fixed": false, "key": "手配No.",
           "font": {"bold": false, "size": 10},
           "align": {"h": "left", "v": "center", "wrap": true},
           "border": {"top": "thin", "bottom": null, "left": null, "right": "thin"}
         },
         {
+          "col": 8, "end_col": 8,
+          "fixed": false, "key": "手配No._sub",
+          "value": "1",
+          "font": {"bold": false, "size": 10},
+          "align": {"h": "center", "v": "center", "wrap": false},
+          "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
+        },
+        {
           "col": 9, "end_col": 10,
-          "fixed": true, "value": "発行日",
-          "font": {"bold": false, "size": 10},
-          "align": {"h": "left", "v": "center", "wrap": true},
-          "border": {"top": "thin", "bottom": null, "left": "thin", "right": "thin"}
-        },
-        {
-          "col": 11, "end_col": 14,
-          "fixed": false, "key": "発行日",
-          "font": {"bold": false, "size": 10},
-          "align": {"h": "left", "v": "center", "wrap": true},
-          "border": {"top": "thin", "bottom": null, "left": null, "right": "thin"}
-        },
-        {
-          "col": 15, "end_col": 24,
           "fixed": true, "value": "",
           "font": {"bold": false, "size": 10},
           "align": {"h": "left", "v": "center", "wrap": true},
-          "border": {"top": "thin", "bottom": null, "left": "thin", "right": "thin"}
+          "border": {"top": null, "bottom": null, "left": null, "right": null}
+        },
+        {
+          "col": 11, "end_col": 12,
+          "fixed": true, "value": "発行日",
+          "font": {"bold": false, "size": 10},
+          "align": {"h": "left", "v": "center", "wrap": true},
+          "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
+        },
+        {
+          "col": 13, "end_col": 16,
+          "fixed": false, "key": "発行日",
+          "font": {"bold": false, "size": 10},
+          "align": {"h": "left", "v": "center", "wrap": true},
+          "border": {"top": "thin", "bottom": "thin", "left": null, "right": "thin"}
+        },
+        {
+          "col": 17, "end_col": 24,
+          "fixed": true, "value": "",
+          "font": {"bold": false, "size": 10},
+          "align": {"h": "left", "v": "center", "wrap": true},
+          "border": {"top": null, "bottom": null, "left": null, "right": null}
         }
       ]
     },
@@ -78,11 +93,32 @@
       "height": 20,
       "cells": [
         {
-          "col": 1, "end_col": 24,
+          "col": 1, "end_col": 8,
           "fixed": true, "value": "",
           "font": {"bold": false, "size": 10},
           "align": {"h": "left", "v": "center", "wrap": false},
           "border": {"top": "thin", "bottom": "thin", "left": null, "right": null}
+        },
+        {
+          "col": 9, "end_col": 10,
+          "fixed": true, "value": "",
+          "font": {"bold": false, "size": 10},
+          "align": {"h": "left", "v": "center", "wrap": false},
+          "border": {"top": null, "bottom": "thin", "left": null, "right": null}
+        },
+        {
+          "col": 11, "end_col": 16,
+          "fixed": true, "value": "",
+          "font": {"bold": false, "size": 10},
+          "align": {"h": "left", "v": "center", "wrap": false},
+          "border": {"top": null, "bottom": "thin", "left": null, "right": null}
+        },
+        {
+          "col": 17, "end_col": 24,
+          "fixed": true, "value": "",
+          "font": {"bold": false, "size": 10},
+          "align": {"h": "left", "v": "center", "wrap": false},
+          "border": {"top": null, "bottom": "thin", "left": null, "right": null}
         }
       ]
     },
@@ -279,7 +315,7 @@
           "fixed": true, "value": "調合票",
           "font": {"bold": false, "size": 22},
           "align": {"h": "center", "v": "center", "wrap": true},
-          "border": {"top": null, "bottom": "medium", "left": null, "right": null}
+          "border": {"top": null, "bottom": "thin", "left": null, "right": null}
         }
       ]
     }
@@ -294,42 +330,35 @@
         "value": "成分名",
         "font": {"bold": true, "size": 11},
         "align": {"h": "center", "v": "center", "wrap": true},
-        "border": {"top": "medium", "bottom": "medium", "left": "medium", "right": "thin"}
+        "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
         "col": 12, "end_col": 13,
         "value": "原単位",
         "font": {"bold": true, "size": 11},
         "align": {"h": "center", "v": "center", "wrap": true},
-        "border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
+        "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
         "col": 14, "end_col": 15,
         "value": "分量",
         "font": {"bold": true, "size": 11},
         "align": {"h": "center", "v": "center", "wrap": true},
-        "border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
+        "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
         "col": 16, "end_col": 17,
         "value": "検量者",
         "font": {"bold": true, "size": 11},
         "align": {"h": "center", "v": "center", "wrap": true},
-        "border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
+        "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
-        "col": 18, "end_col": 22,
+        "col": 18, "end_col": 24,
         "value": "原料ロット",
         "font": {"bold": true, "size": 11},
         "align": {"h": "center", "v": "center", "wrap": true},
-        "border": {"top": "medium", "bottom": "medium", "left": "thin", "right": "thin"}
-      },
-      {
-        "col": 23, "end_col": 24,
-        "value": "備考",
-        "font": {"bold": true, "size": 11},
-        "align": {"h": "center", "v": "center", "wrap": true},
-        "border": {"top": "medium", "bottom": "medium", "left": null, "right": "thin"}
+        "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       }
     ]
   },
@@ -343,43 +372,36 @@
         "format_options": {"code_to_type_spaces": 8, "type_internal_spaces": 1},
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
-        "border": {"top": "thin", "bottom": "thin", "left": "medium", "right": "thin"},
-        "first_row_border": {"top": "medium", "bottom": "thin", "left": "medium", "right": "thin"}
+        "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
+        "first_row_border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
         "col": 12, "end_col": 13, "key": "原単位",
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
         "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
-        "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
+        "first_row_border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
         "col": 14, "end_col": 15, "key": "分量",
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
         "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
-        "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
+        "first_row_border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
         "col": 16, "end_col": 17, "key": "検量者",
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
         "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
-        "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
+        "first_row_border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
-        "col": 18, "end_col": 22, "key": "原料ロット",
+        "col": 18, "end_col": 24, "key": "原料ロット",
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
         "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
-        "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
-      },
-      {
-        "col": 23, "end_col": 24, "key": "備考",
-        "font": {"bold": false, "size": 10},
-        "align": {"h": "left", "v": "center", "wrap": true},
-        "border": {"top": "thin", "bottom": "thin", "left": null, "right": "thin"},
-        "first_row_border": {"top": "medium", "bottom": "thin", "left": null, "right": "thin"}
+        "first_row_border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       }
     ]
   },
@@ -389,10 +411,11 @@
     "cells": [
       {
         "col": 1, "end_col": 24,
-        "fixed": true, "value": "調合票",
-        "font": {"bold": true, "size": 11},
+        "fixed": false, "key": "備考",
+        "value": "備考\n",
+        "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "top", "wrap": true},
-        "border": {"top": "thin", "bottom": "medium", "left": "medium", "right": "medium"}
+        "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
       }
     ]
   }

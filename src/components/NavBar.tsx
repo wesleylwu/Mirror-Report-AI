@@ -1,15 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FaPaperclip, FaCamera, FaUser, FaBars, FaTimes } from "react-icons/fa";
+import { FaPaperclip, FaCamera, FaBars, FaTimes } from "react-icons/fa";
 import { motion, AnimatePresence } from "motion/react";
 
 interface NavBarProps {
-  onFileSelect: (file: File) => void;
+  onFilesSelect: (files: File[]) => void;
   onCaptureClick: () => void;
 }
 
-const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
+const NavBar = ({ onFilesSelect, onCaptureClick }: NavBarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -24,25 +24,21 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const allowedTypes = [
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/webp",
-        "application/pdf",
-      ];
-      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
       const allowedExtensions = ["jpg", "jpeg", "png", "webp", "pdf"];
+      const validFiles = files.filter((file) => {
+        const ext = file.name.split(".").pop()?.toLowerCase();
+        return ext && allowedExtensions.includes(ext);
+      });
 
-      if (
-        allowedTypes.includes(file.type) ||
-        (fileExtension && allowedExtensions.includes(fileExtension))
-      ) {
-        onFileSelect(file);
-      } else {
-        alert("Only JPEG, PNG, PDF, and WebP files are allowed.");
+      if (validFiles.length > 0) {
+        onFilesSelect(validFiles);
+      }
+      if (validFiles.length < files.length) {
+        alert(
+          "Some files were ignored. Only JPEG, PNG, WebP, and PDF files are allowed.",
+        );
       }
     }
   };
@@ -64,10 +60,6 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
             <FaPaperclip className="mr-2 h-4 w-4" />
             <p>Upload</p>
           </button>
-
-          <button className="bg-mirror-white/10 hover:bg-mirror-white/20 border-mirror-white/20 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border transition-all duration-200 focus:outline-none">
-            <FaUser className="text-mirror-white h-4 w-4" />
-          </button>
         </div>
 
         <button
@@ -83,6 +75,7 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
         ref={fileInputRef}
         onChange={handleFileChange}
         accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+        multiple
         className="hidden"
       />
 
@@ -130,15 +123,6 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
                   <FaCamera className="mr-4 h-5 w-5" />
                   <p>Capture Document</p>
                 </button>
-
-                <div className="border-mirror-white/10 my-4 flex items-center justify-between border-t pt-4">
-                  <p className="text-mirror-light-gray text-sm">
-                    Account Profile
-                  </p>
-                  <button className="bg-mirror-white/10 hover:bg-mirror-white/20 border-mirror-white/20 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border transition-all duration-200 focus:outline-none">
-                    <FaUser className="text-mirror-white h-5 w-5" />
-                  </button>
-                </div>
               </div>
             </motion.div>
           </>

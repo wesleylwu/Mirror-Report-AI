@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
-import { writeFile, readFile, unlink, readdir } from "fs/promises";
+import { writeFile, readFile, unlink, readdir, stat } from "fs/promises";
 import path from "path";
 import os from "os";
 
@@ -15,35 +15,81 @@ interface LocalTemplate {
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
-  const formData = await req.formData();
-  const file = formData.get("file") as File | null;
+  const contentType = req.headers.get("content-type") || "";
 
-  if (!file) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  // Support JSON payload for edited template regeneration
+  if (contentType.includes("application/json")) {
+    const { extractedData } = await req.json();
+    if (!extractedData) {
+      return NextResponse.json({ error: "No data provided" }, { status: 400 });
+    }
+    const id = `mirror_edit_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const jsonPath = path.join(os.tmpdir(), `${id}.json`);
+    const xlsxPath = path.join(os.tmpdir(), `${id}.xlsx`);
+    try {
+      await writeFile(
+        jsonPath,
+        JSON.stringify(extractedData, null, 2),
+        "utf-8",
+      );
+      await runPython(process.cwd(), [
+        "pipeline/XLSXgen.py",
+        jsonPath,
+        xlsxPath,
+      ]);
+      const xlsxData = await readFile(xlsxPath);
+      const base64xlsx = xlsxData.toString("base64");
+      return NextResponse.json({ xlsx: base64xlsx }, { status: 200 });
+    } catch (err) {
+      console.error("Regeneration error:", err);
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Regeneration failed" },
+        { status: 500 },
+      );
+    } finally {
+      unlink(jsonPath).catch(() => {});
+      unlink(xlsxPath).catch(() => {});
+    }
+  }
+
+  // Handle multipart form upload with batch support
+  const formData = await req.formData();
+  const files = formData.getAll("file") as File[];
+
+  if (files.length === 0) {
+    return NextResponse.json({ error: "No files provided" }, { status: 400 });
   }
 
   const id = `mirror_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const ext = path.extname(file.name) || ".jpg";
-  const imagePath = path.join(os.tmpdir(), `${id}${ext}`);
+  const tempFiles: string[] = [];
   const jsonPath = path.join(os.tmpdir(), `${id}.json`);
   const xlsxPath = path.join(os.tmpdir(), `${id}.xlsx`);
 
   try {
-    await writeFile(imagePath, Buffer.from(await file.arrayBuffer()));
+    // Write all uploaded files to temp locations
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const ext = path.extname(file.name) || ".jpg";
+      const filePath = path.join(os.tmpdir(), `${id}_${i}${ext}`);
+      await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
+      tempFiles.push(filePath);
+    }
 
+    // Run Python JSONgen on all files concurrently
     await runPython(process.cwd(), [
       "pipeline/JSONgen.py",
-      imagePath,
+      ...tempFiles,
       jsonPath,
     ]);
+
+    // Run Python XLSXgen to generate multi-sheet workbook
     await runPython(process.cwd(), ["pipeline/XLSXgen.py", jsonPath, xlsxPath]);
 
     const jsonContent = await readFile(jsonPath, "utf-8");
-    const extractedData = JSON.parse(jsonContent);
+    const extractedData = JSON.parse(jsonContent); // structured as { pages: [...] } or { ... }
 
     const templatesDir = path.join(process.cwd(), "pipeline", "templates");
     const templateFiles = await readdir(templatesDir);
-    let matchedTemplate: LocalTemplate | null = null;
     const templates: LocalTemplate[] = [];
 
     for (const f of templateFiles) {
@@ -53,50 +99,58 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const title = (extractedData.title || "").trim();
-    const section = (extractedData.section_header || "").trim();
+    // Process matched templates for each page
+    const pagesResult = [];
+    const pagesList = extractedData.pages || [extractedData];
 
-    for (const tmpl of templates) {
-      const m = tmpl.match || {};
-      if (
-        (m.title || "").trim() === title &&
-        (m.section_header || "").trim() === section
-      ) {
-        matchedTemplate = tmpl;
-        break;
-      }
-    }
+    for (const pageData of pagesList) {
+      const title = (pageData.title || "").trim();
+      const section = (pageData.section_header || "").trim();
+      let matchedTemplate: LocalTemplate | null = null;
 
-    if (!matchedTemplate) {
       for (const tmpl of templates) {
         const m = tmpl.match || {};
-        if ((m.title || "").trim() === title) {
+        if (
+          (m.title || "").trim() === title &&
+          (m.section_header || "").trim() === section
+        ) {
           matchedTemplate = tmpl;
           break;
         }
       }
+
+      if (!matchedTemplate) {
+        for (const tmpl of templates) {
+          const m = tmpl.match || {};
+          if ((m.title || "").trim() === title) {
+            matchedTemplate = tmpl;
+            break;
+          }
+        }
+      }
+
+      if (!matchedTemplate && templates.length > 0) {
+        matchedTemplate = templates[0];
+      }
+
+      pagesResult.push({
+        extractedData: pageData,
+        template: matchedTemplate,
+      });
     }
 
-    if (!matchedTemplate && templates.length > 0) {
-      matchedTemplate = templates[0];
+    let outName = "batch_export.xlsx";
+    if (files.length === 1) {
+      const ext = path.extname(files[0].name);
+      outName = `${path.basename(files[0].name, ext)}.xlsx`;
     }
 
-    const rawPath = `${imagePath}.raw_response.txt`;
-    const xlsxData = await readFile(xlsxPath).catch(async () => {
-      const raw = await readFile(rawPath, "utf-8").catch(() => "");
-      unlink(rawPath).catch(() => {});
-      throw new Error(
-        `XLSX not produced. Raw Claude response:\n${raw.slice(0, 2000)}`,
-      );
-    });
-    const outName = `${path.basename(file.name, ext)}.xlsx`;
-
+    const xlsxData = await readFile(xlsxPath);
     const base64xlsx = xlsxData.toString("base64");
 
     return NextResponse.json(
       {
-        extractedData,
-        template: matchedTemplate,
+        pages: pagesResult,
         xlsx: base64xlsx,
         filename: outName,
       },
@@ -109,15 +163,36 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   } finally {
-    for (const p of [imagePath, jsonPath, xlsxPath]) {
+    unlink(jsonPath).catch(() => {});
+    unlink(xlsxPath).catch(() => {});
+    for (const p of tempFiles) {
       unlink(p).catch(() => {});
     }
   }
 }
 
-function runPython(cwd: string, args: string[]): Promise<void> {
+async function getPythonCommand(): Promise<string> {
+  const candidates = [
+    "/Users/wesleywu/.pyenv/shims/python3",
+    "/Users/wesleywu/.pyenv/shims/python",
+    "/opt/homebrew/bin/python3",
+    "/usr/local/bin/python3",
+  ];
+  for (const pathStr of candidates) {
+    try {
+      await stat(pathStr);
+      return pathStr;
+    } catch {
+      // ignore
+    }
+  }
+  return process.platform === "win32" ? "python" : "python3";
+}
+
+async function runPython(cwd: string, args: string[]): Promise<void> {
+  const pythonCmd = await getPythonCommand();
   return new Promise((resolve, reject) => {
-    const proc = spawn("python", args, {
+    const proc = spawn(pythonCmd, args, {
       cwd,
       env: { ...process.env, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY },
     });
