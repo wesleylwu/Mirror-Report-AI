@@ -24,20 +24,75 @@ interface PageResult {
   extractedData: ExtractedDataPage;
   template: MatchedTemplate;
 }
-
-interface VirtualFileSpec {
-  name: string;
-  size: number;
-  type: string;
-}
-
 interface HistoryEntry {
   id: string;
   filename: string;
   timestamp: string;
   pages: PageResult[];
-  xlsx: string;
-  virtualFiles: VirtualFileSpec[];
+  xlsxBlob: Blob;
+  files: File[];
+}
+
+const DB_NAME = "mirror_report_db";
+const DB_VERSION = 1;
+const STORE_NAME = "history";
+
+function getDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined" || !window.indexedDB) {
+      reject(new Error("IndexedDB is not supported on the server"));
+      return;
+    }
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: "id" });
+      }
+    };
+  });
+}
+
+function saveHistoryDB(entry: HistoryEntry): Promise<void> {
+  return getDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      store.put(entry);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  });
+}
+
+function getHistoryDB(): Promise<HistoryEntry[]> {
+  return getDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const result = (request.result || []) as HistoryEntry[];
+        result.sort((a, b) => Number(b.id) - Number(a.id));
+        resolve(result);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  });
+}
+
+function deleteHistoryDB(id: string): Promise<void> {
+  return getDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      store.delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  });
 }
 
 const LOADING_STEPS = [
@@ -57,7 +112,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [xlsxName, setXlsxName] = useState("");
   const [pages, setPages] = useState<PageResult[]>([]);
   const [activePageIndex, setActivePageIndex] = useState(0);
-
   const [isDirty, setIsDirty] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -65,37 +119,27 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const historyJson = localStorage.getItem("mirror_generation_history");
-      if (historyJson) {
-        setHistoryEntries(JSON.parse(historyJson));
-      }
-    } catch (e) {
-      console.error("Failed to load history:", e);
-    }
+    getHistoryDB()
+      .then((entries) => {
+        setHistoryEntries(entries);
+      })
+      .catch((err) => console.error("Failed to load history:", err));
   }, []);
 
   const updateHistoryEntry = useCallback(
-    (id: string, updatedPages: PageResult[], updatedXlsx: string) => {
+    async (id: string, updatedPages: PageResult[], updatedXlsxBlob: Blob) => {
       try {
-        const historyJson = localStorage.getItem("mirror_generation_history");
-        if (historyJson) {
-          const history = JSON.parse(historyJson) as HistoryEntry[];
-          const updated = history.map((entry: HistoryEntry) => {
-            if (entry.id === id) {
-              return {
-                ...entry,
-                pages: updatedPages,
-                xlsx: updatedXlsx,
-              };
-            }
-            return entry;
-          });
-          localStorage.setItem(
-            "mirror_generation_history",
-            JSON.stringify(updated),
-          );
-          setHistoryEntries(updated);
+        const entries = await getHistoryDB();
+        const entry = entries.find((e) => e.id === id);
+        if (entry) {
+          const updatedEntry = {
+            ...entry,
+            pages: updatedPages,
+            xlsxBlob: updatedXlsxBlob,
+          };
+          await saveHistoryDB(updatedEntry);
+          const updatedList = await getHistoryDB();
+          setHistoryEntries(updatedList);
         }
       } catch (err) {
         console.error("Failed to update history:", err);
@@ -157,28 +201,24 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       setCurrentHistoryId(newId);
 
       try {
-        const historyJson = localStorage.getItem("mirror_generation_history");
-        const history = historyJson
-          ? (JSON.parse(historyJson) as HistoryEntry[])
-          : [];
-        const newEntry = {
+        const newEntry: HistoryEntry = {
           id: newId,
           filename: result.filename,
           timestamp: new Date().toLocaleString(),
           pages: result.pages || [],
-          xlsx: result.xlsx,
-          virtualFiles: uploadedFiles.map((f) => ({
-            name: f.name,
-            size: f.size,
-            type: f.type,
-          })),
+          xlsxBlob: blob,
+          files: uploadedFiles,
         };
-        const updatedHistory = [newEntry, ...history].slice(0, 5);
-        localStorage.setItem(
-          "mirror_generation_history",
-          JSON.stringify(updatedHistory),
-        );
-        setHistoryEntries(updatedHistory);
+        await saveHistoryDB(newEntry);
+        const entries = await getHistoryDB();
+        if (entries.length > 5) {
+          const toDelete = entries.slice(5);
+          for (const entry of toDelete) {
+            await deleteHistoryDB(entry.id);
+          }
+        }
+        const updated = await getHistoryDB();
+        setHistoryEntries(updated);
       } catch (e) {
         console.error("Failed to save history:", e);
       }
@@ -195,11 +235,11 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       );
       if (currentEntry) {
         const matches =
-          uploadedFiles.length === currentEntry.virtualFiles.length &&
+          uploadedFiles.length === currentEntry.files.length &&
           uploadedFiles.every(
             (uf, i) =>
-              uf.name === currentEntry.virtualFiles[i].name &&
-              uf.size === currentEntry.virtualFiles[i].size,
+              uf.name === currentEntry.files[i].name &&
+              uf.size === currentEntry.files[i].size,
           );
         if (matches) {
           return;
@@ -289,7 +329,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       setIsDirty(false);
 
       if (currentHistoryId) {
-        updateHistoryEntry(currentHistoryId, pages, result.xlsx);
+        updateHistoryEntry(currentHistoryId, pages, blob);
       }
 
       const url = URL.createObjectURL(blob);
@@ -318,54 +358,39 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     } finally {
       setIsRegenerating(false);
     }
-  }, [isDirty, xlsxBlob, xlsxName, pages, currentHistoryId, updateHistoryEntry]);
+  }, [
+    isDirty,
+    xlsxBlob,
+    xlsxName,
+    pages,
+    currentHistoryId,
+    updateHistoryEntry,
+  ]);
 
   const handleLoadHistory = useCallback(
     (entry: HistoryEntry) => {
-      const binaryString = window.atob(entry.xlsx);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-
-      setXlsxBlob(blob);
+      setXlsxBlob(entry.xlsxBlob);
       setXlsxName(entry.filename);
       setPages(entry.pages);
       setActivePageIndex(0);
       setIsDirty(false);
       setCurrentHistoryId(entry.id);
-
-      const reconstructedFiles = entry.virtualFiles.map((vf: VirtualFileSpec) => {
-        return new File([new Uint8Array(vf.size)], vf.name, { type: vf.type });
-      });
-      onFilesSelect(reconstructedFiles);
+      onFilesSelect(entry.files);
       setStatus("done");
     },
     [onFilesSelect],
   );
 
   const handleDeleteHistory = useCallback(
-    (id: string, e: React.MouseEvent) => {
+    async (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
       try {
-        const historyJson = localStorage.getItem("mirror_generation_history");
-        if (historyJson) {
-          const history = JSON.parse(historyJson) as HistoryEntry[];
-          const updated = history.filter(
-            (entry: HistoryEntry) => entry.id !== id,
-          );
-          localStorage.setItem(
-            "mirror_generation_history",
-            JSON.stringify(updated),
-          );
-          setHistoryEntries(updated);
-          if (currentHistoryId === id) {
-            setCurrentHistoryId(null);
-            onClear();
-          }
+        await deleteHistoryDB(id);
+        const updated = await getHistoryDB();
+        setHistoryEntries(updated);
+        if (currentHistoryId === id) {
+          setCurrentHistoryId(null);
+          onClear();
         }
       } catch (err) {
         console.error("Failed to delete history:", err);
