@@ -196,7 +196,7 @@ const TemplateViewer = ({
                     return (
                       <div
                         key={`ch-${cellIndex}`}
-                        className="flex overflow-hidden bg-slate-50 p-1"
+                        className="bg-mirror-light-blue/30 flex overflow-hidden p-1"
                         style={{
                           width: `${widthPercent}%`,
                           justifyContent:
@@ -255,7 +255,7 @@ const TemplateViewer = ({
                                 e.currentTarget.textContent || "",
                               )
                             }
-                            className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 flex w-full cursor-text items-center justify-center border border-dashed border-transparent bg-slate-50 p-1 text-center text-[9px] font-bold transition-colors outline-none"
+                            className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 bg-mirror-light-blue/30 flex w-full cursor-text items-center justify-center border border-dashed border-transparent p-1 text-center text-[9px] font-bold transition-colors outline-none"
                             style={{
                               boxSizing: "border-box",
                               ...getBorderStyle(colSpecs[0]?.border),
@@ -368,7 +368,7 @@ const TemplateViewer = ({
                     return (
                       <div
                         key={`f-${cellIndex}`}
-                        className="flex bg-slate-50 p-1"
+                        className="bg-mirror-light-blue/30 flex p-1"
                         style={{
                           width: `${widthPercent}%`,
                           justifyContent:

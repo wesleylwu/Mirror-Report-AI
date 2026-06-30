@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { FaSpinner, FaExclamationCircle } from "react-icons/fa";
+import {
+  FaSpinner,
+  FaExclamationCircle,
+  FaFileExcel,
+  FaTrash,
+} from "react-icons/fa";
 import { ExtractedDataPage, MatchedTemplate } from "../types/template";
 import DocumentUploader from "./DocumentUploader";
 import DocumentPreview from "./DocumentPreview";
@@ -19,6 +24,86 @@ interface PageResult {
   extractedData: ExtractedDataPage;
   template: MatchedTemplate;
 }
+interface HistoryEntry {
+  id: string;
+  filename: string;
+  timestamp: string;
+  pages: PageResult[];
+  xlsxBlob: Blob;
+  files: File[];
+}
+
+const DB_NAME = "mirror_report_db";
+const DB_VERSION = 1;
+const STORE_NAME = "history";
+
+function getDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined" || !window.indexedDB) {
+      reject(new Error("IndexedDB is not supported on the server"));
+      return;
+    }
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: "id" });
+      }
+    };
+  });
+}
+
+function saveHistoryDB(entry: HistoryEntry): Promise<void> {
+  return getDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      store.put(entry);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  });
+}
+
+function getHistoryDB(): Promise<HistoryEntry[]> {
+  return getDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const result = (request.result || []) as HistoryEntry[];
+        result.sort((a, b) => Number(b.id) - Number(a.id));
+        resolve(result);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  });
+}
+
+function deleteHistoryDB(id: string): Promise<void> {
+  return getDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      store.delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  });
+}
+
+const LOADING_STEPS = [
+  "Uploading manufacturing document to secure server...",
+  "Correcting document rotation & perspective (deskewing)...",
+  "Connecting to Anthropic Claude 3.5 Haiku Vision API...",
+  "Analyzing report layout and reading text characters...",
+  "Fuzzy-matching OCR results against layout schemas...",
+  "Building custom sheets and styling Excel borders...",
+  "Finalizing Excel spreadsheet binary generation...",
+];
 
 const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [status, setStatus] = useState<ConvertStatus>("idle");
@@ -27,10 +112,54 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [xlsxName, setXlsxName] = useState("");
   const [pages, setPages] = useState<PageResult[]>([]);
   const [activePageIndex, setActivePageIndex] = useState(0);
-
-  // Editing state trackers
   const [isDirty, setIsDirty] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
+  const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getHistoryDB()
+      .then((entries) => {
+        setHistoryEntries(entries);
+      })
+      .catch((err) => console.error("Failed to load history:", err));
+  }, []);
+
+  const updateHistoryEntry = useCallback(
+    async (id: string, updatedPages: PageResult[], updatedXlsxBlob: Blob) => {
+      try {
+        const entries = await getHistoryDB();
+        const entry = entries.find((e) => e.id === id);
+        if (entry) {
+          const updatedEntry = {
+            ...entry,
+            pages: updatedPages,
+            xlsxBlob: updatedXlsxBlob,
+          };
+          await saveHistoryDB(updatedEntry);
+          const updatedList = await getHistoryDB();
+          setHistoryEntries(updatedList);
+        }
+      } catch (err) {
+        console.error("Failed to update history:", err);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (status !== "loading") {
+      setLoadingStep(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingStep((prev) =>
+        prev < LOADING_STEPS.length - 1 ? prev + 1 : prev,
+      );
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [status]);
 
   const handleGenerate = useCallback(async () => {
     if (uploadedFiles.length === 0) return;
@@ -67,6 +196,32 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       setXlsxName(result.filename);
       setPages(result.pages || []);
       setStatus("done");
+
+      const newId = Date.now().toString();
+      setCurrentHistoryId(newId);
+
+      try {
+        const newEntry: HistoryEntry = {
+          id: newId,
+          filename: result.filename,
+          timestamp: new Date().toLocaleString(),
+          pages: result.pages || [],
+          xlsxBlob: blob,
+          files: uploadedFiles,
+        };
+        await saveHistoryDB(newEntry);
+        const entries = await getHistoryDB();
+        if (entries.length > 5) {
+          const toDelete = entries.slice(5);
+          for (const entry of toDelete) {
+            await deleteHistoryDB(entry.id);
+          }
+        }
+        const updated = await getHistoryDB();
+        setHistoryEntries(updated);
+      } catch (e) {
+        console.error("Failed to save history:", e);
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Unknown error");
       setStatus("error");
@@ -74,13 +229,32 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   }, [uploadedFiles]);
 
   useEffect(() => {
+    if (currentHistoryId) {
+      const currentEntry = historyEntries.find(
+        (e) => e.id === currentHistoryId,
+      );
+      if (currentEntry) {
+        const matches =
+          uploadedFiles.length === currentEntry.files.length &&
+          uploadedFiles.every(
+            (uf, i) =>
+              uf.name === currentEntry.files[i].name &&
+              uf.size === currentEntry.files[i].size,
+          );
+        if (matches) {
+          return;
+        }
+      }
+    }
+
     setStatus("idle");
     setXlsxBlob(null);
     setPages([]);
     setActivePageIndex(0);
     setErrorMsg(null);
     setIsDirty(false);
-  }, [uploadedFiles]);
+    setCurrentHistoryId(null);
+  }, [uploadedFiles, historyEntries, currentHistoryId]);
 
   const handlePageDataChange = useCallback(
     (index: number, newPageData: ExtractedDataPage) => {
@@ -98,7 +272,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   );
 
   const handleDownloadExcel = useCallback(async () => {
-    // If the data hasn't been edited, download the cached XLSX file
     if (!isDirty && xlsxBlob) {
       const url = URL.createObjectURL(xlsxBlob);
       const a = document.createElement("a");
@@ -125,7 +298,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
 
     if (pages.length === 0) return;
 
-    // If edited, regenerate the Excel sheet with the new values
     setIsRegenerating(true);
     try {
       const res = await fetch("/api/convert", {
@@ -156,6 +328,10 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       setXlsxBlob(blob);
       setIsDirty(false);
 
+      if (currentHistoryId) {
+        updateHistoryEntry(currentHistoryId, pages, blob);
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -182,7 +358,46 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     } finally {
       setIsRegenerating(false);
     }
-  }, [isDirty, xlsxBlob, xlsxName, pages]);
+  }, [
+    isDirty,
+    xlsxBlob,
+    xlsxName,
+    pages,
+    currentHistoryId,
+    updateHistoryEntry,
+  ]);
+
+  const handleLoadHistory = useCallback(
+    (entry: HistoryEntry) => {
+      setXlsxBlob(entry.xlsxBlob);
+      setXlsxName(entry.filename);
+      setPages(entry.pages);
+      setActivePageIndex(0);
+      setIsDirty(false);
+      setCurrentHistoryId(entry.id);
+      onFilesSelect(entry.files);
+      setStatus("done");
+    },
+    [onFilesSelect],
+  );
+
+  const handleDeleteHistory = useCallback(
+    async (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      try {
+        await deleteHistoryDB(id);
+        const updated = await getHistoryDB();
+        setHistoryEntries(updated);
+        if (currentHistoryId === id) {
+          setCurrentHistoryId(null);
+          onClear();
+        }
+      } catch (err) {
+        console.error("Failed to delete history:", err);
+      }
+    },
+    [currentHistoryId, onClear],
+  );
 
   return (
     <div className="mx-auto w-full max-w-[90vw] grow px-6 py-8 md:px-12 print:m-0 print:w-full print:max-w-none print:p-0">
@@ -227,6 +442,47 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
               )}
             </div>
           )}
+
+          {historyEntries.length > 0 && (
+            <div className="mt-8 flex flex-col gap-3">
+              <p className="text-mirror-dark-blue text-sm font-bold tracking-wide uppercase">
+                Recent Generations
+              </p>
+              <div className="flex flex-col gap-2">
+                {historyEntries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    onClick={() => handleLoadHistory(entry)}
+                    className={`border-mirror-light-blue hover:border-mirror-cyan/50 bg-mirror-white flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all duration-200 ${
+                      currentHistoryId === entry.id
+                        ? "border-mirror-cyan bg-mirror-light-blue/20"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="text-mirror-cyan bg-mirror-cyan/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+                        <FaFileExcel className="h-4.5 w-4.5" />
+                      </div>
+                      <div className="flex flex-col overflow-hidden">
+                        <p className="text-mirror-dark-blue truncate text-xs font-bold">
+                          {entry.filename}
+                        </p>
+                        <p className="text-mirror-gray text-[10px]">
+                          {entry.timestamp}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteHistory(entry.id, e)}
+                      className="text-mirror-gray hover:text-mirror-red p-1.5 transition-colors focus:outline-none"
+                    >
+                      <FaTrash className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex flex-col md:pl-4 print:w-full print:p-0">
           <div className="mb-2 flex items-center justify-between print:hidden">
@@ -246,7 +502,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
             </p>
           </div>
 
-          {/* Tab page selector */}
           {status === "done" && pages.length > 1 && (
             <div className="border-mirror-light-blue mb-4 flex flex-wrap gap-2 border-b pb-2 print:hidden">
               {pages.map((p, index) => (
@@ -265,7 +520,70 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
             </div>
           )}
 
-          {status !== "done" ? (
+          {status === "loading" ? (
+            <div className="flex w-full flex-col gap-6">
+              <div className="bg-mirror-light-blue border-mirror-light-blue flex flex-col gap-3 rounded-2xl border p-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-mirror-dark-blue flex items-center gap-2 text-sm font-bold">
+                    <FaSpinner className="text-mirror-cyan h-4 w-4 animate-spin" />
+                    {LOADING_STEPS[loadingStep]}
+                  </span>
+                  <span className="text-mirror-gray text-xs font-semibold">
+                    Step {loadingStep + 1} of {LOADING_STEPS.length}
+                  </span>
+                </div>
+                <div className="bg-mirror-light-gray h-2 w-full overflow-hidden rounded-full">
+                  <div
+                    className="bg-mirror-cyan h-full transition-all duration-500 ease-out"
+                    style={{
+                      width: `${((loadingStep + 1) / LOADING_STEPS.length) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="border-mirror-light-blue bg-mirror-light-blue max-h-[70vh] w-full overflow-hidden rounded-2xl border p-4 shadow-inner">
+                <div className="bg-mirror-white border-mirror-light-gray relative mx-auto flex aspect-[210/297] w-full max-w-4xl animate-pulse flex-col border p-6 shadow-md">
+                  <div className="bg-mirror-light-gray/60 mx-auto mb-6 h-6 w-48 rounded" />
+
+                  <div className="mb-6 grid grid-cols-4 gap-4">
+                    <div className="bg-mirror-light-gray/60 h-4 rounded" />
+                    <div className="bg-mirror-light-gray/40 h-4 w-3/4 rounded" />
+                    <div className="bg-mirror-light-gray/40 h-4 w-5/6 rounded" />
+                    <div className="bg-mirror-light-gray/60 h-4 rounded" />
+                    <div className="bg-mirror-light-gray/60 h-4 w-2/3 rounded" />
+                    <div className="bg-mirror-light-gray/60 h-4 rounded" />
+                    <div className="bg-mirror-light-gray/40 h-4 w-1/2 rounded" />
+                    <div className="bg-mirror-light-gray/40 h-4 w-3/4 rounded" />
+                  </div>
+
+                  <div className="border-mirror-light-gray mb-3 grid grid-cols-6 gap-2 border-y py-3">
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="border-mirror-light-blue grid grid-cols-6 gap-2 border-b pb-2"
+                      >
+                        <div className="bg-mirror-light-gray/40 h-4 w-2/3 rounded" />
+                        <div className="bg-mirror-light-gray/40 h-4 w-5/6 rounded" />
+                        <div className="bg-mirror-light-gray/40 h-4 w-1/2 rounded" />
+                        <div className="bg-mirror-light-gray/40 h-4 w-3/4 rounded" />
+                        <div className="bg-mirror-light-gray/40 h-4 rounded" />
+                        <div className="bg-mirror-light-gray/40 h-4 w-2/3 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : status !== "done" ? (
             <div className="bg-mirror-light-blue border-mirror-light-blue flex min-h-[55vh] flex-col items-center justify-center gap-6 rounded-2xl border p-8">
               {status === "idle" && (
                 <p className="text-mirror-gray text-sm font-medium">
@@ -273,21 +591,9 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
                 </p>
               )}
 
-              {status === "loading" && (
-                <div className="flex flex-col items-center gap-4">
-                  <FaSpinner className="text-mirror-cyan h-12 w-12 animate-spin" />
-                  <p className="text-mirror-dark-blue text-sm font-semibold">
-                    Running OCR pipeline...
-                  </p>
-                  <p className="text-mirror-gray text-xs">
-                    This may take up to a minute
-                  </p>
-                </div>
-              )}
-
               {status === "error" && (
                 <div className="flex flex-col items-center gap-4">
-                  <FaExclamationCircle className="h-12 w-12 text-red-500" />
+                  <FaExclamationCircle className="text-mirror-red h-12 w-12" />
                   <p className="text-mirror-dark-blue text-sm font-semibold">
                     Generation failed
                   </p>
