@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { FaSpinner, FaExclamationCircle } from "react-icons/fa";
+import {
+  FaSpinner,
+  FaExclamationCircle,
+  FaFileExcel,
+  FaTrash,
+} from "react-icons/fa";
 import { ExtractedDataPage, MatchedTemplate } from "../types/template";
 import DocumentUploader from "./DocumentUploader";
 import DocumentPreview from "./DocumentPreview";
@@ -41,6 +46,48 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [isDirty, setIsDirty] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [historyEntries, setHistoryEntries] = useState<any[]>([]);
+  const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const historyJson = localStorage.getItem("mirror_generation_history");
+      if (historyJson) {
+        setHistoryEntries(JSON.parse(historyJson));
+      }
+    } catch (e) {
+      console.error("Failed to load history:", e);
+    }
+  }, []);
+
+  const updateHistoryEntry = useCallback(
+    (id: string, updatedPages: PageResult[], updatedXlsx: string) => {
+      try {
+        const historyJson = localStorage.getItem("mirror_generation_history");
+        if (historyJson) {
+          const history = JSON.parse(historyJson);
+          const updated = history.map((entry: any) => {
+            if (entry.id === id) {
+              return {
+                ...entry,
+                pages: updatedPages,
+                xlsx: updatedXlsx,
+              };
+            }
+            return entry;
+          });
+          localStorage.setItem(
+            "mirror_generation_history",
+            JSON.stringify(updated),
+          );
+          setHistoryEntries(updated);
+        }
+      } catch (err) {
+        console.error("Failed to update history:", err);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (status !== "loading") {
@@ -90,6 +137,34 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       setXlsxName(result.filename);
       setPages(result.pages || []);
       setStatus("done");
+
+      const newId = Date.now().toString();
+      setCurrentHistoryId(newId);
+
+      try {
+        const historyJson = localStorage.getItem("mirror_generation_history");
+        const history = historyJson ? JSON.parse(historyJson) : [];
+        const newEntry = {
+          id: newId,
+          filename: result.filename,
+          timestamp: new Date().toLocaleString(),
+          pages: result.pages || [],
+          xlsx: result.xlsx,
+          virtualFiles: uploadedFiles.map((f) => ({
+            name: f.name,
+            size: f.size,
+            type: f.type,
+          })),
+        };
+        const updatedHistory = [newEntry, ...history].slice(0, 5);
+        localStorage.setItem(
+          "mirror_generation_history",
+          JSON.stringify(updatedHistory),
+        );
+        setHistoryEntries(updatedHistory);
+      } catch (e) {
+        console.error("Failed to save history:", e);
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Unknown error");
       setStatus("error");
@@ -97,13 +172,32 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   }, [uploadedFiles]);
 
   useEffect(() => {
+    if (currentHistoryId) {
+      const currentEntry = historyEntries.find(
+        (e) => e.id === currentHistoryId,
+      );
+      if (currentEntry) {
+        const matches =
+          uploadedFiles.length === currentEntry.virtualFiles.length &&
+          uploadedFiles.every(
+            (uf, i) =>
+              uf.name === currentEntry.virtualFiles[i].name &&
+              uf.size === currentEntry.virtualFiles[i].size,
+          );
+        if (matches) {
+          return;
+        }
+      }
+    }
+
     setStatus("idle");
     setXlsxBlob(null);
     setPages([]);
     setActivePageIndex(0);
     setErrorMsg(null);
     setIsDirty(false);
-  }, [uploadedFiles]);
+    setCurrentHistoryId(null);
+  }, [uploadedFiles, historyEntries, currentHistoryId]);
 
   const handlePageDataChange = useCallback(
     (index: number, newPageData: ExtractedDataPage) => {
@@ -177,6 +271,10 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       setXlsxBlob(blob);
       setIsDirty(false);
 
+      if (currentHistoryId) {
+        updateHistoryEntry(currentHistoryId, pages, result.xlsx);
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -204,6 +302,58 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       setIsRegenerating(false);
     }
   }, [isDirty, xlsxBlob, xlsxName, pages]);
+
+  const handleLoadHistory = useCallback(
+    (entry: any) => {
+      const binaryString = window.atob(entry.xlsx);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      setXlsxBlob(blob);
+      setXlsxName(entry.filename);
+      setPages(entry.pages);
+      setActivePageIndex(0);
+      setIsDirty(false);
+      setCurrentHistoryId(entry.id);
+
+      const reconstructedFiles = entry.virtualFiles.map((vf: any) => {
+        return new File([new Uint8Array(vf.size)], vf.name, { type: vf.type });
+      });
+      onFilesSelect(reconstructedFiles);
+      setStatus("done");
+    },
+    [onFilesSelect],
+  );
+
+  const handleDeleteHistory = useCallback(
+    (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      try {
+        const historyJson = localStorage.getItem("mirror_generation_history");
+        if (historyJson) {
+          const history = JSON.parse(historyJson);
+          const updated = history.filter((entry: any) => entry.id !== id);
+          localStorage.setItem(
+            "mirror_generation_history",
+            JSON.stringify(updated),
+          );
+          setHistoryEntries(updated);
+          if (currentHistoryId === id) {
+            setCurrentHistoryId(null);
+            onClear();
+          }
+        }
+      } catch (err) {
+        console.error("Failed to delete history:", err);
+      }
+    },
+    [currentHistoryId, onClear],
+  );
 
   return (
     <div className="mx-auto w-full max-w-[90vw] grow px-6 py-8 md:px-12 print:m-0 print:w-full print:max-w-none print:p-0">
@@ -246,6 +396,47 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
                   Generate Template
                 </button>
               )}
+            </div>
+          )}
+
+          {historyEntries.length > 0 && (
+            <div className="mt-8 flex flex-col gap-3">
+              <p className="text-mirror-dark-blue text-sm font-bold tracking-wide uppercase">
+                Recent Generations
+              </p>
+              <div className="flex flex-col gap-2">
+                {historyEntries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    onClick={() => handleLoadHistory(entry)}
+                    className={`border-mirror-light-blue hover:border-mirror-cyan/50 bg-mirror-white flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all duration-200 ${
+                      currentHistoryId === entry.id
+                        ? "border-mirror-cyan bg-mirror-light-blue/20"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="text-mirror-cyan bg-mirror-cyan/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+                        <FaFileExcel className="h-4.5 w-4.5" />
+                      </div>
+                      <div className="flex flex-col overflow-hidden">
+                        <p className="text-mirror-dark-blue truncate text-xs font-bold">
+                          {entry.filename}
+                        </p>
+                        <p className="text-mirror-gray text-[10px]">
+                          {entry.timestamp}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteHistory(entry.id, e)}
+                      className="text-mirror-gray hover:text-mirror-red p-1.5 transition-colors focus:outline-none"
+                    >
+                      <FaTrash className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
