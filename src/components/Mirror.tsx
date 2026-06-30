@@ -20,6 +20,16 @@ interface PageResult {
   template: MatchedTemplate;
 }
 
+const LOADING_STEPS = [
+  "Uploading manufacturing document to secure server...",
+  "Correcting document rotation & perspective (deskewing)...",
+  "Connecting to Anthropic Claude 3.5 Haiku Vision API...",
+  "Analyzing report layout and reading text characters...",
+  "Fuzzy-matching OCR results against layout schemas...",
+  "Building custom sheets and styling Excel borders...",
+  "Finalizing Excel spreadsheet binary generation...",
+];
+
 const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [status, setStatus] = useState<ConvertStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -31,6 +41,20 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   // Editing state trackers
   const [isDirty, setIsDirty] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+
+  useEffect(() => {
+    if (status !== "loading") {
+      setLoadingStep(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingStep((prev) =>
+        prev < LOADING_STEPS.length - 1 ? prev + 1 : prev,
+      );
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [status]);
 
   const handleGenerate = useCallback(async () => {
     if (uploadedFiles.length === 0) return;
@@ -265,24 +289,83 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
             </div>
           )}
 
-          {status !== "done" ? (
+          {status === "loading" ? (
+            <div className="flex w-full flex-col gap-6">
+              {/* Progress UI */}
+              <div className="bg-mirror-light-blue border-mirror-light-blue flex flex-col gap-3 rounded-2xl border p-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-mirror-dark-blue flex items-center gap-2 text-sm font-bold">
+                    <FaSpinner className="text-mirror-cyan h-4 w-4 animate-spin" />
+                    {LOADING_STEPS[loadingStep]}
+                  </span>
+                  <span className="text-mirror-gray text-xs font-semibold">
+                    Step {loadingStep + 1} of {LOADING_STEPS.length}
+                  </span>
+                </div>
+                {/* Progress Bar */}
+                <div className="bg-mirror-light-gray h-2 w-full overflow-hidden rounded-full">
+                  <div
+                    className="bg-mirror-cyan h-full transition-all duration-500 ease-out"
+                    style={{
+                      width: `${((loadingStep + 1) / LOADING_STEPS.length) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Excel Skeleton Pulse */}
+              <div className="border-mirror-light-blue max-h-[70vh] w-full overflow-hidden rounded-2xl border bg-slate-100 p-4 shadow-inner">
+                <div className="bg-mirror-white relative mx-auto flex aspect-[210/297] w-full max-w-4xl animate-pulse flex-col border border-slate-200 p-6 shadow-md">
+                  {/* Fake Document Title */}
+                  <div className="mx-auto mb-6 h-6 w-48 rounded bg-slate-200" />
+
+                  {/* Fake Header Fields */}
+                  <div className="mb-6 grid grid-cols-4 gap-4">
+                    <div className="h-4 rounded bg-slate-200" />
+                    <div className="h-4 w-3/4 rounded bg-slate-200/60" />
+                    <div className="h-4 w-5/6 rounded bg-slate-200/60" />
+                    <div className="h-4 rounded bg-slate-200" />
+                    <div className="h-4 w-2/3 rounded bg-slate-200" />
+                    <div className="h-4 rounded bg-slate-200" />
+                    <div className="h-4 w-1/2 rounded bg-slate-200/60" />
+                    <div className="h-4 w-3/4 rounded bg-slate-200/60" />
+                  </div>
+
+                  {/* Fake Excel Grid Headers */}
+                  <div className="mb-3 grid grid-cols-6 gap-2 border-y border-slate-200 py-3">
+                    <div className="h-5 rounded bg-slate-300" />
+                    <div className="h-5 rounded bg-slate-300" />
+                    <div className="h-5 rounded bg-slate-300" />
+                    <div className="h-5 rounded bg-slate-300" />
+                    <div className="h-5 rounded bg-slate-300" />
+                    <div className="h-5 rounded bg-slate-300" />
+                  </div>
+
+                  {/* Fake Excel Grid Rows */}
+                  <div className="flex flex-col gap-3">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="grid grid-cols-6 gap-2 border-b border-slate-100 pb-2"
+                      >
+                        <div className="h-4 w-2/3 rounded bg-slate-200/60" />
+                        <div className="h-4 w-5/6 rounded bg-slate-200/60" />
+                        <div className="h-4 w-1/2 rounded bg-slate-200/60" />
+                        <div className="h-4 w-3/4 rounded bg-slate-200/60" />
+                        <div className="h-4 rounded bg-slate-200/60" />
+                        <div className="h-4 w-2/3 rounded bg-slate-200/60" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : status !== "done" ? (
             <div className="bg-mirror-light-blue border-mirror-light-blue flex min-h-[55vh] flex-col items-center justify-center gap-6 rounded-2xl border p-8">
               {status === "idle" && (
                 <p className="text-mirror-gray text-sm font-medium">
                   No template generated yet
                 </p>
-              )}
-
-              {status === "loading" && (
-                <div className="flex flex-col items-center gap-4">
-                  <FaSpinner className="text-mirror-cyan h-12 w-12 animate-spin" />
-                  <p className="text-mirror-dark-blue text-sm font-semibold">
-                    Running OCR pipeline...
-                  </p>
-                  <p className="text-mirror-gray text-xs">
-                    This may take up to a minute
-                  </p>
-                </div>
               )}
 
               {status === "error" && (
