@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FaPaperclip, FaCamera, FaUser, FaBars, FaTimes } from "react-icons/fa";
+import { FaPaperclip, FaCamera, FaBars, FaTimes } from "react-icons/fa";
 import { motion, AnimatePresence } from "motion/react";
 
 interface NavBarProps {
@@ -63,10 +63,6 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
           >
             <FaPaperclip className="mr-2 h-4 w-4" />
             <p>Upload</p>
-          </button>
-
-          <button className="bg-mirror-white/10 hover:bg-mirror-white/20 border-mirror-white/20 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border transition-all duration-200 focus:outline-none">
-            <FaUser className="text-mirror-white h-4 w-4" />
           </button>
         </div>
 
@@ -130,15 +126,6 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
                   <FaCamera className="mr-4 h-5 w-5" />
                   <p>Capture Document</p>
                 </button>
-
-                <div className="border-mirror-white/10 my-4 flex items-center justify-between border-t pt-4">
-                  <p className="text-mirror-light-gray text-sm">
-                    Account Profile
-                  </p>
-                  <button className="bg-mirror-white/10 hover:bg-mirror-white/20 border-mirror-white/20 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border transition-all duration-200 focus:outline-none">
-                    <FaUser className="text-mirror-white h-5 w-5" />
-                  </button>
-                </div>
               </div>
             </motion.div>
           </>
