@@ -1,5 +1,5 @@
 {
-  "id": "課別基準客先別売上粗利",
+  "id": "課別基準客先別売上粗利_9697",
   "match": {"title": "課別基準客先別売上粗利", "section_header": ""},
   "match_signals": ["部門名", "基準客", "基準客名", "営業粗利額", "目標粗利額達成率", "目標売上額"],
   "column_widths": {
@@ -40,7 +40,7 @@
   },
   "data_rows": {
     "start_row": 4,
-    "count": 37,
+    "count": 39,
     "row_height": 13,
     "last_row_is_footer": true,
     "columns": [

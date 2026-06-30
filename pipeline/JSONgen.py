@@ -53,10 +53,8 @@ Return a single JSON object with this exact schema:
   "table": {
     "columns": ["<column header 1>", "<column header 2>", ...],
     "rows": [
-      {
-        "<column header>": "<cell text, or empty string if blank>",
-        ...
-      }
+      ["<cell text for column 1>", "<cell text for column 2>", ...],
+      ...
     ]
   }
 }
@@ -73,14 +71,13 @@ HEADER FIELDS: Every label/value pair in the metadata section above the data tab
 
 SECTION HEADER: A full-width label separating the header fields from the data table (e.g. 調合票). Empty string if none.
 
-TABLE COLUMNS: Column header strings in left-to-right order.
+TABLE COLUMNS: Column header strings in left-to-right order. Blank/unlabeled columns are still counted — include an empty string "" at their position.
 
-TABLE ROWS: Each data row as an object keyed by column header.
+TABLE ROWS: Each data row as an ARRAY of cell-text strings, in the exact same left-to-right order as TABLE COLUMNS. Every row array must have exactly as many entries as TABLE COLUMNS has — one entry per column position, including blank/unlabeled columns. This positional format means you never need to invent or repeat a key, so just transcribe what you see in each column, left to right.
 - Do NOT emit a row whose values are just the column header names.
 - Include subtotal and grand total rows — do not skip rows because they contain summary labels like 計 or 合計.
 - Blank cells: "".
-- If two or more columns share the same header text, append _2, _3, etc. to the duplicates (e.g. "達成%" and "達成%_2") so every key in a row object is unique. This applies even when the shared header text is "".
-- The last row(s) of the table may be a full-width text row spanning all columns — output it as a special entry: {"_full_width": "<text>"}.
+- The last row(s) of the table may be a full-width text row spanning all columns — output it as a special entry: {"_full_width": "<text>"} (an object, not an array) instead of a normal row.
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
 MAX_IMAGE_PX = 3000
@@ -88,30 +85,39 @@ MAX_IMAGE_PX = 3000
 
 def _auto_orient(img: Image.Image) -> Image.Image:
     """Pick the rotation (0/90/180/270) where text lines are horizontal and
-    the document is top-heavy (title/headers at top have more ink than bottom).
-    Variance of horizontal projection picks the correct axis; top-vs-bottom ink
-    density breaks the 0° vs 180° tie."""
+    the document is right-side up. Axis (portrait vs sideways) is picked by
+    comparing row-sum vs column-sum variance (text creates more variance along
+    the axis perpendicular to the lines). The 0°/180° tie is then broken by
+    checking whether the bottom-edge strip is much sparser than the top-edge
+    strip — a blank page margin sits at the bottom when a document is upside
+    down, regardless of how dense the data table itself is."""
     img = ImageOps.exif_transpose(img)
-    candidates = []
-    for angle in (0, 90, 180, 270):
-        rotated = img.rotate(angle, expand=True)
-        gray = np.array(rotated.convert("L"))
-        inv = (255 - gray).astype(float)
-        h = inv.shape[0]
-        row_sums = inv.sum(axis=1)
-        var_score = float(np.var(row_sums))
-        top_density = inv[:h // 4].mean()
-        bot_density = inv[3 * h // 4:].mean()
-        top_bias = float(top_density - bot_density)
-        # Variance of row sums in top quarter: lower = better (correct top is
-        # consistent header area; wrong orientation's top has background contrast)
-        top_q_var = float(np.var(row_sums[:h // 4]))
-        candidates.append((var_score, top_bias, top_q_var, rotated))
+    gray = np.array(img.convert("L"))
+    inv  = (255 - gray).astype(float)
+    row_var = float(np.var(inv.sum(axis=1)))
+    col_var = float(np.var(inv.sum(axis=0)))
 
-    max_var = max(c[0] for c in candidates) or 1.0
-    max_tqv = max(c[2] for c in candidates) or 1.0
-    best = max(candidates, key=lambda c: c[0] / max_var + c[1] / 255 - 0.05 * c[2] / max_tqv)
-    return best[3]
+    def _strip_ratio(candidate: Image.Image, pct: int) -> float:
+        g = np.array(candidate.convert("L"))
+        v = (255 - g).astype(float)
+        rs = v.sum(axis=1)
+        rh = len(rs)
+        m = max(1, rh * pct // 100)
+        bot = float(rs[rh - m:].mean()) or 1.0
+        return float(rs[:m].mean()) / bot
+
+    if col_var > row_var:
+        # Sideways document — pick CW vs CCW by which puts more ink in the top quarter
+        cw  = img.rotate(270, expand=True)
+        ccw = img.rotate(90,  expand=True)
+        img = cw if _strip_ratio(cw, 25) >= _strip_ratio(ccw, 25) else ccw
+
+    # Upside-down check: blank page margin sits at the bottom when the doc is upside-down,
+    # making the top 5% significantly denser than the bottom 5%.
+    if _strip_ratio(img, 5) > 1.5:
+        img = img.rotate(180, expand=True)
+
+    return img
 
 
 def _deskew(img: Image.Image) -> Image.Image:

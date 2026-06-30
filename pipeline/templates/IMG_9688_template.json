@@ -45,28 +45,42 @@
           "border": {"top": "thin", "bottom": null, "left": "thin", "right": "thin"}
         },
         {
-          "col": 4, "end_col": 8,
-          "fixed": false, "key": "手配No.",
+          "col": 4, "end_col": 7,
+          "fixed": false, "key": "手配No.", "value_part": "main",
           "font": {"bold": false, "size": 10},
           "align": {"h": "left", "v": "center", "wrap": true},
           "border": {"top": "thin", "bottom": null, "left": null, "right": "thin"}
         },
         {
-          "col": 9, "end_col": 10,
+          "col": 8, "end_col": 8,
+          "fixed": false, "key": "手配No.", "value_part": "tail",
+          "font": {"bold": false, "size": 10},
+          "align": {"h": "center", "v": "center", "wrap": true},
+          "border": {"top": "thin", "bottom": null, "left": null, "right": "thin"}
+        },
+        {
+          "col": 9, "end_col": 9,
+          "fixed": true, "value": "",
+          "font": {"bold": false, "size": 10},
+          "align": {"h": "left", "v": "center", "wrap": true},
+          "border": {"top": "thin", "bottom": null, "left": null, "right": null}
+        },
+        {
+          "col": 10, "end_col": 11,
           "fixed": true, "value": "発行日",
           "font": {"bold": false, "size": 10},
           "align": {"h": "left", "v": "center", "wrap": true},
           "border": {"top": "thin", "bottom": null, "left": "thin", "right": "thin"}
         },
         {
-          "col": 11, "end_col": 14,
+          "col": 12, "end_col": 15,
           "fixed": false, "key": "発行日",
           "font": {"bold": false, "size": 10},
           "align": {"h": "left", "v": "center", "wrap": true},
           "border": {"top": "thin", "bottom": null, "left": null, "right": "thin"}
         },
         {
-          "col": 15, "end_col": 24,
+          "col": 16, "end_col": 24,
           "fixed": true, "value": "",
           "font": {"bold": false, "size": 10},
           "align": {"h": "left", "v": "center", "wrap": true},
