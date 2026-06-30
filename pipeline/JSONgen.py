@@ -14,8 +14,8 @@ import io
 import json
 import re
 import sys
-import concurrent.futures
 import time
+import concurrent.futures
 from pathlib import Path
 
 import anthropic
@@ -26,9 +26,13 @@ from PIL import Image, ImageOps
 
 MODEL_HAIKU  = "claude-haiku-4-5-20251001"
 MODEL_SONNET = "claude-sonnet-4-6"
-MODEL = MODEL_HAIKU  # default; overridden by --sonnet flag at runtime
+MODEL = MODEL_SONNET  # default; overridden by --sonnet flag at runtime
 
 PROMPT = """You are a precise document digitizer. Extract ONLY the text visible in the image. Do not infer, guess, or fill in values.
+
+VALIDATION RULE:
+- Inspect the image first. If the image is not a printed document or manufacturing report (e.g., if it is a photo of a person, animal, food, scenery, or any random physical object/scene), or if it is too blurry or dark to read, you MUST return a JSON with an "error" key:
+  {"error": "invalid_document", "message": "The uploaded image does not appear to be a valid manufacturing document."}
 
 CRITICAL RULES:
 - Transcribe ONLY pre-printed text. Ignore handwriting, stamps, and pen marks.
@@ -60,7 +64,6 @@ Return a single JSON object with this exact schema:
 RULES:
 
 TITLE: The full-width text spanning the top of the document (e.g. 製造指図書). Do not include it in header.
-- If this top line contains several distinct pieces of plain, unlabeled text (e.g. a period like "2026年2月", the document name, and a print-date/page marker like "2026/6/22 PAGE:1"), capture the ENTIRE line as ONE string in title, left-to-right, with the original spacing between pieces preserved. Do not split unlabeled pieces like these into header fields — header is only for fields that have their own printed label (e.g. "手配No.").
 
 HEADER FIELDS: Every label/value pair in the metadata section above the data table.
 - Use the EXACT printed label text as the key (e.g. "手配No.", "発行日", "品目CD").
@@ -76,7 +79,7 @@ TABLE ROWS: Each data row as an object keyed by column header.
 - Do NOT emit a row whose values are just the column header names.
 - Include subtotal and grand total rows — do not skip rows because they contain summary labels like 計 or 合計.
 - Blank cells: "".
-- If two or more columns share the same header text, append _2, _3, etc. to the duplicates (e.g. "達成%" and "達成%_2") so every key in a row object is unique. This applies even when the shared header text is "" — e.g. four blank-header columns use the literal keys "", "_2", "_3", "_4" in BOTH the columns list and EVERY row object. Never write the bare "" key more than once in the same row object — JSON objects silently drop earlier duplicate keys, destroying data, so each of the 4 values needs its own distinct suffixed key even though all 4 columns are visually unlabeled.
+- If two or more columns share the same header text, append _2, _3, etc. to the duplicates (e.g. "達成%" and "達成%_2") so every key in a row object is unique. This applies even when the shared header text is "".
 - The last row(s) of the table may be a full-width text row spanning all columns — output it as a special entry: {"_full_width": "<text>"}.
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
@@ -84,32 +87,31 @@ MAX_IMAGE_PX = 3000
 
 
 def _auto_orient(img: Image.Image) -> Image.Image:
+    """Pick the rotation (0/90/180/270) where text lines are horizontal and
+    the document is top-heavy (title/headers at top have more ink than bottom).
+    Variance of horizontal projection picks the correct axis; top-vs-bottom ink
+    density breaks the 0° vs 180° tie."""
     img = ImageOps.exif_transpose(img)
-    gray = np.array(img.convert("L"))
-    inv  = (255 - gray).astype(float)
-    row_var = float(np.var(inv.sum(axis=1)))
-    col_var = float(np.var(inv.sum(axis=0)))
-    def _strip_ratio(candidate: Image.Image, pct: int) -> float:
-        g = np.array(candidate.convert("L"))
-        v = (255 - g).astype(float)
-        rs = v.sum(axis=1)
-        rh = len(rs)
-        m = max(1, rh * pct // 100)
-        bot = float(rs[rh - m:].mean()) or 1.0
-        return float(rs[:m].mean()) / bot
+    candidates = []
+    for angle in (0, 90, 180, 270):
+        rotated = img.rotate(angle, expand=True)
+        gray = np.array(rotated.convert("L"))
+        inv = (255 - gray).astype(float)
+        h = inv.shape[0]
+        row_sums = inv.sum(axis=1)
+        var_score = float(np.var(row_sums))
+        top_density = inv[:h // 4].mean()
+        bot_density = inv[3 * h // 4:].mean()
+        top_bias = float(top_density - bot_density)
+        # Variance of row sums in top quarter: lower = better (correct top is
+        # consistent header area; wrong orientation's top has background contrast)
+        top_q_var = float(np.var(row_sums[:h // 4]))
+        candidates.append((var_score, top_bias, top_q_var, rotated))
 
-    if col_var > row_var:
-        # Sideways document — pick CW vs CCW by which puts more ink in the top quarter
-        cw  = img.rotate(270, expand=True)
-        ccw = img.rotate(90,  expand=True)
-        img = cw if _strip_ratio(cw, 25) >= _strip_ratio(ccw, 25) else ccw
-
-    # Upside-down check: blank page margin sits at the bottom when the doc is upside-down,
-    # making the top 5% significantly denser than the bottom 5%.
-    if _strip_ratio(img, 5) > 1.5:
-        img = img.rotate(180, expand=True)
-
-    return img
+    max_var = max(c[0] for c in candidates) or 1.0
+    max_tqv = max(c[2] for c in candidates) or 1.0
+    best = max(candidates, key=lambda c: c[0] / max_var + c[1] / 255 - 0.05 * c[2] / max_tqv)
+    return best[3]
 
 
 def _deskew(img: Image.Image) -> Image.Image:
@@ -214,7 +216,7 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
         messages.append({"role": "user", "content": f'The JSON was cut off. Continue outputting raw JSON from exactly where it stopped. The last characters output were: "...{tail}". Do NOT restart. Do NOT repeat any output. Continue from that exact point.'})
 
     print(
-        f"Tokens — input: {total_input}, output: {total_output}, "
+        f"[{debug_name}] Tokens — input: {total_input}, output: {total_output}, "
         f"total: {total_input + total_output} "
         f"(cache write: {total_cache_write}, read: {total_cache_read})",
         file=sys.stderr,
@@ -227,8 +229,13 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
     text = re.sub(r"```[a-z]*\n?", "", text)
     text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", text)
 
+    def _check_error(data: dict) -> dict:
+        if "error" in data:
+            raise ValueError(data.get("message") or f"Invalid document in {debug_name}.")
+        return data
+
     try:
-        return json.loads(text)
+        return _check_error(json.loads(text))
     except json.JSONDecodeError:
         pass
 
@@ -236,7 +243,7 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
     last_start = text.rfind('\n{')
     if last_start > 0:
         try:
-            return json.loads(text[last_start + 1:])
+            return _check_error(json.loads(text[last_start + 1:]))
         except json.JSONDecodeError:
             pass
 
@@ -322,11 +329,12 @@ def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("paths", nargs="+", help="input image/PDF paths; if last arg ends in .json it is the output path")
-    parser.add_argument("--sonnet", action="store_true", help="Use claude-sonnet-4-6 instead of Haiku")
+    parser.add_argument("--sonnet", action="store_true", help="Use claude-sonnet-4-6 (already the default)")
+    parser.add_argument("--haiku", action="store_true", help="Use claude-haiku-4-5 instead of the default Sonnet")
     args = parser.parse_args()
 
     global MODEL
-    MODEL = MODEL_SONNET if args.sonnet else MODEL_HAIKU
+    MODEL = MODEL_HAIKU if args.haiku else MODEL_SONNET
     print(f"Using model: {MODEL}", file=sys.stderr)
 
     paths = args.paths
