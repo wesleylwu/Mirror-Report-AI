@@ -70,7 +70,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
       }
     };
 
-    // Only run camera if we're not currently inspecting a preview image
     if (previewIndex === null) {
       startCamera();
     } else {
@@ -100,7 +99,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
         const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
         setCapturedPhotos((prev) => [...prev, dataUrl]);
 
-        // Trigger shutter flash
         setIsFlashing(true);
         setTimeout(() => setIsFlashing(false), 150);
       }
@@ -148,7 +146,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
       transition={{ duration: 0.25 }}
       className="bg-mirror-black text-mirror-white fixed inset-0 z-50 flex flex-col transition-all duration-300 select-none"
     >
-      {/* Top Header */}
       <div className="from-mirror-black/80 absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-linear-to-b to-transparent px-6 py-4">
         <button
           onClick={onClose}
@@ -176,7 +173,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
         </button>
       </div>
 
-      {/* Main Viewport */}
       <div className="bg-mirror-black relative flex flex-1 items-center justify-center overflow-hidden">
         {loading && !error && previewIndex === null && (
           <div className="z-10 flex flex-col items-center justify-center gap-3">
@@ -208,7 +204,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
           </div>
         )}
 
-        {/* Live Video Feed */}
         {previewIndex === null && !error && (
           <video
             ref={videoRef}
@@ -225,7 +220,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
           />
         )}
 
-        {/* Full screen preview for captured photo */}
         {previewIndex !== null && capturedPhotos[previewIndex] && (
           <div className="relative flex h-full w-full items-center justify-center p-4">
             <Image
@@ -245,7 +239,7 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
               </button>
               <button
                 onClick={(e) => handleDeletePhoto(previewIndex, e)}
-                className="text-mirror-white flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 font-bold shadow-md transition-all hover:bg-red-500 active:scale-95"
+                className="text-mirror-white bg-mirror-red hover:bg-mirror-red/90 flex items-center gap-2 rounded-xl px-5 py-2.5 font-bold shadow-md transition-all active:scale-95"
               >
                 <FaTrash className="h-3.5 w-3.5" />
                 Delete Photo
@@ -254,7 +248,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
           </div>
         )}
 
-        {/* Grid Overlay */}
         {previewIndex === null && !loading && !error && showGrid && (
           <div className="border-mirror-white/5 pointer-events-none absolute inset-0 z-10 grid grid-cols-3 grid-rows-3 border">
             <div className="border-mirror-white/15 border-r border-b"></div>
@@ -269,7 +262,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
           </div>
         )}
 
-        {/* Alignment Border Guide */}
         {previewIndex === null && !loading && !error && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
             <div className="border-mirror-cyan/50 bg-mirror-black/5 relative flex aspect-3/4 w-full max-w-[85vw] items-center justify-center rounded-2xl border-2 border-dashed">
@@ -286,7 +278,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
         )}
       </div>
 
-      {/* Captured Thumbnails Bar */}
       {capturedPhotos.length > 0 && previewIndex === null && (
         <div className="bg-mirror-black/90 border-mirror-dark-gray/30 z-10 flex max-h-24 scrollbar-none gap-3 overflow-x-auto border-t px-6 py-3">
           {capturedPhotos.map((photo, index) => (
@@ -307,7 +298,7 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
               </div>
               <button
                 onClick={(e) => handleDeletePhoto(index, e)}
-                className="absolute top-1 right-1 rounded-full bg-red-600/90 p-1 text-white shadow-sm transition-colors hover:bg-red-500"
+                className="bg-mirror-red/90 hover:bg-mirror-red absolute top-1 right-1 rounded-full p-1 text-white shadow-sm transition-colors"
               >
                 <FaTimes className="h-2 w-2" />
               </button>
@@ -319,10 +310,8 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
         </div>
       )}
 
-      {/* Bottom Camera Action Bar */}
       {previewIndex === null && (
         <div className="bg-mirror-black border-mirror-dark-gray/60 z-10 flex min-h-36 items-center justify-between border-t px-6 py-8">
-          {/* Switch Camera */}
           <button
             onClick={toggleFacingMode}
             disabled={loading || !!error}
@@ -332,7 +321,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
             <FaSyncAlt className="text-mirror-light-gray h-5 w-5" />
           </button>
 
-          {/* Capture Trigger */}
           <button
             onClick={handleCapture}
             disabled={loading || !!error}
@@ -341,7 +329,6 @@ const Capture = ({ onFilesSelect, onClose }: CaptureProps) => {
             <div className="bg-mirror-white hover:bg-mirror-light-blue h-14 w-14 rounded-full transition-colors"></div>
           </button>
 
-          {/* Finish & Upload Batch */}
           {capturedPhotos.length > 0 ? (
             <button
               onClick={handleUploadAll}

@@ -40,20 +40,18 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* File list header */}
       <div className="flex items-center justify-between">
         <p className="text-mirror-gray text-xs font-semibold">
           Uploaded Files ({uploadedFiles.length})
         </p>
         <button
           onClick={onClear}
-          className="text-mirror-gray flex cursor-pointer items-center justify-center gap-1 rounded p-1 text-xs transition-colors hover:text-red-500 focus:outline-none"
+          className="text-mirror-gray hover:text-mirror-red flex cursor-pointer items-center justify-center gap-1 rounded p-1 text-xs transition-colors focus:outline-none"
         >
           <FaTimes className="h-3.5 w-3.5" /> Clear All
         </button>
       </div>
 
-      {/* File chips/cards list */}
       <div className="flex scrollbar-thin gap-2 overflow-x-auto pb-2">
         {uploadedFiles.map((file, idx) => {
           const fileIsImage = file.type.startsWith("image/");
@@ -65,14 +63,14 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
               className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition-all duration-200 ${
                 isActive
                   ? "bg-mirror-light-blue border-mirror-cyan shadow-sm"
-                  : "bg-mirror-white border-mirror-light-blue hover:bg-slate-50"
+                  : "bg-mirror-white border-mirror-light-blue hover:bg-mirror-light-blue/20"
               }`}
             >
               <div
                 className={`flex h-7 w-7 items-center justify-center rounded-lg ${
                   isActive
                     ? "bg-mirror-cyan/20 text-mirror-cyan"
-                    : "text-mirror-gray bg-slate-100"
+                    : "text-mirror-gray bg-mirror-light-blue/60"
                 }`}
               >
                 {fileIsImage ? (
@@ -94,7 +92,6 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
         })}
       </div>
 
-      {/* Main Preview Container */}
       <div className="bg-mirror-dark-blue/95 border-mirror-light-blue relative flex min-h-[55vh] items-center justify-center overflow-hidden rounded-2xl border p-4">
         {isImage && imageUrl ? (
           <div className="relative h-[48vh] w-full">
@@ -115,9 +112,6 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
                 Non-Image Source Loaded
               </p>
               <div className="bg-mirror-dark-blue/80 text-mirror-green border-mirror-gray max-h-[25vh] w-full max-w-[25vw] overflow-auto rounded-xl border p-4 text-left font-mono text-xs shadow-lg">
-                <p className="text-mirror-gray border-mirror-gray mb-2 border-b pb-1">
-                  {"// Metadata Registry"}
-                </p>
                 <div className="text-mirror-white">
                   <p className="text-mirror-cyan inline">File Name:</p> &quot;
                   {activeFile.name}&quot;

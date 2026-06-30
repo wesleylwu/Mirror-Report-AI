@@ -38,7 +38,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [pages, setPages] = useState<PageResult[]>([]);
   const [activePageIndex, setActivePageIndex] = useState(0);
 
-  // Editing state trackers
   const [isDirty, setIsDirty] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -122,7 +121,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   );
 
   const handleDownloadExcel = useCallback(async () => {
-    // If the data hasn't been edited, download the cached XLSX file
     if (!isDirty && xlsxBlob) {
       const url = URL.createObjectURL(xlsxBlob);
       const a = document.createElement("a");
@@ -149,7 +147,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
 
     if (pages.length === 0) return;
 
-    // If edited, regenerate the Excel sheet with the new values
     setIsRegenerating(true);
     try {
       const res = await fetch("/api/convert", {
@@ -270,7 +267,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
             </p>
           </div>
 
-          {/* Tab page selector */}
           {status === "done" && pages.length > 1 && (
             <div className="border-mirror-light-blue mb-4 flex flex-wrap gap-2 border-b pb-2 print:hidden">
               {pages.map((p, index) => (
@@ -291,7 +287,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
 
           {status === "loading" ? (
             <div className="flex w-full flex-col gap-6">
-              {/* Progress UI */}
               <div className="bg-mirror-light-blue border-mirror-light-blue flex flex-col gap-3 rounded-2xl border p-6">
                 <div className="flex items-center justify-between">
                   <span className="text-mirror-dark-blue flex items-center gap-2 text-sm font-bold">
@@ -302,7 +297,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
                     Step {loadingStep + 1} of {LOADING_STEPS.length}
                   </span>
                 </div>
-                {/* Progress Bar */}
                 <div className="bg-mirror-light-gray h-2 w-full overflow-hidden rounded-full">
                   <div
                     className="bg-mirror-cyan h-full transition-all duration-500 ease-out"
@@ -312,48 +306,42 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
                   />
                 </div>
               </div>
+              <div className="border-mirror-light-blue bg-mirror-light-blue max-h-[70vh] w-full overflow-hidden rounded-2xl border p-4 shadow-inner">
+                <div className="bg-mirror-white border-mirror-light-gray relative mx-auto flex aspect-[210/297] w-full max-w-4xl animate-pulse flex-col border p-6 shadow-md">
+                  <div className="bg-mirror-light-gray/60 mx-auto mb-6 h-6 w-48 rounded" />
 
-              {/* Excel Skeleton Pulse */}
-              <div className="border-mirror-light-blue max-h-[70vh] w-full overflow-hidden rounded-2xl border bg-slate-100 p-4 shadow-inner">
-                <div className="bg-mirror-white relative mx-auto flex aspect-[210/297] w-full max-w-4xl animate-pulse flex-col border border-slate-200 p-6 shadow-md">
-                  {/* Fake Document Title */}
-                  <div className="mx-auto mb-6 h-6 w-48 rounded bg-slate-200" />
-
-                  {/* Fake Header Fields */}
                   <div className="mb-6 grid grid-cols-4 gap-4">
-                    <div className="h-4 rounded bg-slate-200" />
-                    <div className="h-4 w-3/4 rounded bg-slate-200/60" />
-                    <div className="h-4 w-5/6 rounded bg-slate-200/60" />
-                    <div className="h-4 rounded bg-slate-200" />
-                    <div className="h-4 w-2/3 rounded bg-slate-200" />
-                    <div className="h-4 rounded bg-slate-200" />
-                    <div className="h-4 w-1/2 rounded bg-slate-200/60" />
-                    <div className="h-4 w-3/4 rounded bg-slate-200/60" />
+                    <div className="bg-mirror-light-gray/60 h-4 rounded" />
+                    <div className="bg-mirror-light-gray/40 h-4 w-3/4 rounded" />
+                    <div className="bg-mirror-light-gray/40 h-4 w-5/6 rounded" />
+                    <div className="bg-mirror-light-gray/60 h-4 rounded" />
+                    <div className="bg-mirror-light-gray/60 h-4 w-2/3 rounded" />
+                    <div className="bg-mirror-light-gray/60 h-4 rounded" />
+                    <div className="bg-mirror-light-gray/40 h-4 w-1/2 rounded" />
+                    <div className="bg-mirror-light-gray/40 h-4 w-3/4 rounded" />
                   </div>
 
-                  {/* Fake Excel Grid Headers */}
-                  <div className="mb-3 grid grid-cols-6 gap-2 border-y border-slate-200 py-3">
-                    <div className="h-5 rounded bg-slate-300" />
-                    <div className="h-5 rounded bg-slate-300" />
-                    <div className="h-5 rounded bg-slate-300" />
-                    <div className="h-5 rounded bg-slate-300" />
-                    <div className="h-5 rounded bg-slate-300" />
-                    <div className="h-5 rounded bg-slate-300" />
+                  <div className="border-mirror-light-gray mb-3 grid grid-cols-6 gap-2 border-y py-3">
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
+                    <div className="bg-mirror-gray/30 h-5 rounded" />
                   </div>
 
-                  {/* Fake Excel Grid Rows */}
                   <div className="flex flex-col gap-3">
                     {Array.from({ length: 8 }).map((_, i) => (
                       <div
                         key={i}
-                        className="grid grid-cols-6 gap-2 border-b border-slate-100 pb-2"
+                        className="border-mirror-light-blue grid grid-cols-6 gap-2 border-b pb-2"
                       >
-                        <div className="h-4 w-2/3 rounded bg-slate-200/60" />
-                        <div className="h-4 w-5/6 rounded bg-slate-200/60" />
-                        <div className="h-4 w-1/2 rounded bg-slate-200/60" />
-                        <div className="h-4 w-3/4 rounded bg-slate-200/60" />
-                        <div className="h-4 rounded bg-slate-200/60" />
-                        <div className="h-4 w-2/3 rounded bg-slate-200/60" />
+                        <div className="bg-mirror-light-gray/40 h-4 w-2/3 rounded" />
+                        <div className="bg-mirror-light-gray/40 h-4 w-5/6 rounded" />
+                        <div className="bg-mirror-light-gray/40 h-4 w-1/2 rounded" />
+                        <div className="bg-mirror-light-gray/40 h-4 w-3/4 rounded" />
+                        <div className="bg-mirror-light-gray/40 h-4 rounded" />
+                        <div className="bg-mirror-light-gray/40 h-4 w-2/3 rounded" />
                       </div>
                     ))}
                   </div>
@@ -370,7 +358,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
 
               {status === "error" && (
                 <div className="flex flex-col items-center gap-4">
-                  <FaExclamationCircle className="h-12 w-12 text-red-500" />
+                  <FaExclamationCircle className="text-mirror-red h-12 w-12" />
                   <p className="text-mirror-dark-blue text-sm font-semibold">
                     Generation failed
                   </p>
