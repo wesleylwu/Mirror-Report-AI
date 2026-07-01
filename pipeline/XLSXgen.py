@@ -15,6 +15,25 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 import re as _re
+import unicodedata as _ud
+
+
+def _vwidth(s: str) -> int:
+    """Approximate rendered width: full-width/wide chars count as 2, others 1."""
+    return sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in s)
+
+
+def _vljust(s: str, target: int, fillchar: str = " ") -> str:
+    """Left-justify s with fillchar until its visual width reaches target."""
+    pad = target - _vwidth(s)
+    if pad <= 0:
+        return s
+    fw = _vwidth(fillchar) or 1
+    out = s + fillchar * (pad // fw)
+    if pad % fw:
+        out += " " * (pad % fw)
+    return out
+
 
 def _fmt_item_code(text: str, opts: dict | None = None) -> str:
     """Move type tokens (e.g. '999 購入', '100 中込') onto the code line.
@@ -72,7 +91,15 @@ def _fmt_item_code(text: str, opts: dict | None = None) -> str:
             if m and len(stripped) <= 12:
                 type_token = f"{m.group(1)}{type_internal}{m.group(2).strip()}"
             else:
-                name_lines.append(stripped)
+                # Type token may sit at the END of a name line (e.g. "<name> 999 購入")
+                m2 = end_type_pat.search(stripped) if not type_token else None
+                if m2 and len(f"{m2.group(1)} {m2.group(2)}") <= 12:
+                    type_token = f"{m2.group(1)}{type_internal}{m2.group(2)}"
+                    name_part = stripped[:m2.start()].strip()
+                    if name_part:
+                        name_lines.append(name_part)
+                else:
+                    name_lines.append(stripped)
 
     if not type_token:
         injected = (opts.get("injected_type") or "").strip()
@@ -159,6 +186,29 @@ def _write_cell(ws, row: int, col: int, end_col: int, end_row: int,
                 cell.fill = PatternFill("solid", fgColor=fill_spec.get("color", "FFFFFF"))
 
 
+def _normalize_row(row, col_names: list) -> dict:
+    """Convert a positional list-row (preferred — avoids JSON key-collision
+    issues with duplicate/blank column headers) into the dict-row shape the
+    rest of this module expects. Dict rows (e.g. {"_full_width": ...}) pass
+    through unchanged."""
+    if isinstance(row, dict):
+        return row
+    if isinstance(row, list):
+        result: dict = {}
+        seen: dict[str, int] = {}
+        for i, cn in enumerate(col_names):
+            cnt = seen.get(cn, 0)
+            seen[cn] = cnt + 1
+            key = cn if cnt == 0 else (f"{cn}_{cnt + 1}" if cn else f"_{cnt + 1}")
+            result[key] = row[i] if i < len(row) else ""
+        return result
+    return {}
+
+
+def _normalize_rows(rows: list, col_names: list) -> list:
+    return [_normalize_row(rw, col_names) for rw in rows]
+
+
 def _split_title_3(title: str) -> tuple[str, str, str]:
     """Split a top-line title string into (left, center, right) parts.
     Left = leading period like '2026年2月'; right = trailing date/page marker
@@ -210,8 +260,9 @@ def _match_template(data: dict, templates: list[dict]) -> dict:
     data_tokens.add((data.get("section_header") or "").strip())
     data_tokens.update(data.get("header", {}).keys())
     table = data.get("table", {})
-    data_tokens.update(c for c in table.get("columns", []) if c)
-    for row in table.get("rows", []):
+    col_names = table.get("columns", [])
+    data_tokens.update(c for c in col_names if c)
+    for row in _normalize_rows(table.get("rows", []), col_names):
         data_tokens.update(k for k in row.keys() if k and k != "_full_width")
     data_tokens.discard("")
 
@@ -288,7 +339,8 @@ def fill_grouped_template(tmpl: dict, data: dict, ws) -> None:
             _write_cell(ws, r_hdr, cell["col"], cell["end_col"], r_hdr,
                         cell.get("value", ""), cell["font"], cell["align"], cell["border"])
 
-    table_rows = data.get("table", {}).get("rows", [])
+    table_rows = _normalize_rows(data.get("table", {}).get("rows", []),
+                                  data.get("table", {}).get("columns", []))
     data_rows = [rw for rw in table_rows if "_full_width" not in rw]
 
     month_source = tmpl.get("month_source", "full_width")
@@ -472,6 +524,34 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
                 if extra:
                     sep = col_def.get("concat_sep", " ")
                     val = (val + sep + extra).strip() if val else extra
+            concat_all = col_def.get("concat_all_indices")
+            if concat_all:
+                sep = col_def.get("concat_sep", " ")
+                skip = set(pair_col_labels) if pair_col_labels else set()
+                pieces = [val] if val and val not in skip else []
+                for ci in concat_all:
+                    piece = pos_vals[ci] if ci < len(pos_vals) else ""
+                    if piece and piece not in skip:
+                        pieces.append(piece)
+                val = sep.join(pieces)
+            second_seg = col_def.get("second_segment_indices")
+            if second_seg:
+                skip = set(pair_col_labels) if pair_col_labels else set()
+                lbl_idx, val_idx = second_seg
+                lbl = pos_vals[lbl_idx] if lbl_idx < len(pos_vals) else ""
+                v2  = pos_vals[val_idx] if val_idx < len(pos_vals) else ""
+                if lbl in skip:
+                    lbl = ""
+                if v2 in skip:
+                    v2 = ""
+                inner_sep = col_def.get("second_segment_inner_sep", " ")
+                seg_text = (lbl + inner_sep + v2).strip() if (lbl or v2) else ""
+                if seg_text:
+                    pad_to = col_def.get("second_segment_pad_to")
+                    if pad_to:
+                        val = _vljust(val, pad_to, "　")
+                    sep = col_def.get("second_segment_sep", "   ")
+                    val = (val + sep + seg_text) if val else seg_text
             second_pair = col_def.get("second_pair_indices")
             if second_pair and val:
                 lbl_idx, val_idx = second_pair
@@ -740,7 +820,7 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
 
     header_vals = data.get("header", {})
     table       = data.get("table", {})
-    table_rows  = table.get("rows", [])
+    table_rows  = _normalize_rows(table.get("rows", []), table.get("columns", []))
 
     # Column widths
     for col_letter, width in tmpl.get("column_widths", {}).items():
@@ -763,8 +843,19 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
             elif "concat_keys" in cell:
                 parts = [_fuzzy_get(header_vals, k, _used=_used_header_keys) for k in cell["concat_keys"]]
                 value = " ".join(p for p in parts if p)
+            elif "value_part" in cell:
+                raw = _fuzzy_get(header_vals, key, _used=_used_header_keys)
+                tokens = _re.split(r'[ 　]+', raw.strip()) if raw else [""]
+                if cell["value_part"] == "tail" and len(tokens) > 1:
+                    value = tokens[-1]
+                elif cell["value_part"] == "tail":
+                    value = ""
+                else:
+                    value = " ".join(tokens[:-1]) if len(tokens) > 1 else tokens[0]
             else:
                 value = _fuzzy_get(header_vals, key, _used=_used_header_keys)
+                if cell.get("label_prefix") and value:
+                    value = f"{key} {value}"
             _write_cell(
                 ws, r, cell["col"], cell["end_col"], r,
                 value, cell["font"], cell["align"], cell["border"],
