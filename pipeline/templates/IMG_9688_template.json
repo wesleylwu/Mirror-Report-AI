@@ -52,11 +52,18 @@
           "border": {"top": "thin", "bottom": null, "left": null, "right": "thin"}
         },
         {
-          "col": 8, "end_col": 9,
+          "col": 8, "end_col": 8,
           "fixed": false, "key": "手配No.", "value_part": "tail",
           "font": {"bold": false, "size": 10},
           "align": {"h": "center", "v": "center", "wrap": true},
           "border": {"top": "thin", "bottom": null, "left": null, "right": "thin"}
+        },
+        {
+          "col": 9, "end_col": 9,
+          "fixed": true, "value": "",
+          "font": {"bold": false, "size": 10},
+          "align": {"h": "left", "v": "center", "wrap": true},
+          "border": {"top": "thin", "bottom": null, "left": null, "right": null}
         },
         {
           "col": 10, "end_col": 11,
