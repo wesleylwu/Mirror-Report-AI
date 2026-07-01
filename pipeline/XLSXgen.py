@@ -148,7 +148,8 @@ def _border(spec: dict) -> Border:
 def _write_cell(ws, row: int, col: int, end_col: int, end_row: int,
                 value: str, font_spec: dict, align_spec: dict, border_spec: dict,
                 fill_spec: dict | None = None):
-    font = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 10))
+    font = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 10),
+                underline="single" if font_spec.get("underline") else None)
     align = Alignment(
         horizontal=align_spec.get("h", "left"),
         vertical=align_spec.get("v", "center"),

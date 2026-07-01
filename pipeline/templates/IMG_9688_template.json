@@ -27,9 +27,9 @@
         {
           "col": 1, "end_col": 24,
           "fixed": false, "key": "title",
-          "font": {"bold": true, "size": 12},
+          "font": {"bold": false, "size": 22, "underline": true},
           "align": {"h": "center", "v": "center", "wrap": true},
-          "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"}
+          "border": {"top": null, "bottom": "thin", "left": null, "right": null}
         }
       ]
     },
@@ -81,9 +81,9 @@
         },
         {
           "col": 16, "end_col": 24,
-          "fixed": true, "value": "",
+          "fixed": true, "value": "備考",
           "font": {"bold": false, "size": 10},
-          "align": {"h": "left", "v": "center", "wrap": true},
+          "align": {"h": "left", "v": "top", "wrap": true},
           "border": {"top": "thin", "bottom": null, "left": "thin", "right": "thin"}
         }
       ]
@@ -292,7 +292,7 @@
         {
           "col": 1, "end_col": 24,
           "fixed": true, "value": "調合票",
-          "font": {"bold": false, "size": 22},
+          "font": {"bold": false, "size": 22, "underline": true},
           "align": {"h": "center", "v": "center", "wrap": true},
           "border": {"top": null, "bottom": "medium", "left": null, "right": null}
         }

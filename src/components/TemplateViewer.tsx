@@ -182,6 +182,9 @@ const TemplateViewer = ({
         return parts.filter(Boolean).join(" ");
       }
       if (cell.value_part) {
+        if (cell.value_part === "tail" && extractedData.header?.[`${key}_sub`] !== undefined) {
+          return extractedData.header[`${key}_sub`];
+        }
         const raw = fuzzyGet(extractedData.header, key);
         const tokens = raw.trim().split(/[ \u3000]+/);
         if (cell.value_part === "tail") {
@@ -277,6 +280,7 @@ const TemplateViewer = ({
                           fontWeight: cell.font?.bold ? "bold" : "normal",
                           fontSize: `${cell.font?.size ? cell.font.size * 0.8 : 8}px`,
                           whiteSpace: cell.align?.wrap ? "normal" : "nowrap",
+                          textDecoration: cell.font?.underline ? "underline" : "none",
                           boxSizing: "border-box",
                           ...borderStyle,
                         }}
@@ -340,6 +344,7 @@ const TemplateViewer = ({
                                 ? "flex-end"
                                 : "flex-start",
                           fontSize: `${cell.font?.size ? cell.font.size * 0.8 : 8}px`,
+                          textDecoration: cell.font?.underline ? "underline" : "none",
                           boxSizing: "border-box",
                           ...borderStyle,
                         }}
@@ -485,6 +490,7 @@ const TemplateViewer = ({
                                   whiteSpace: colSpec.align?.wrap
                                     ? "pre-wrap"
                                     : "nowrap",
+                                  textDecoration: colSpec.font?.underline ? "underline" : "none",
                                   boxSizing: "border-box",
                                   ...borderStyle,
                                 }}
@@ -553,6 +559,7 @@ const TemplateViewer = ({
                                 : "flex-start",
                           fontSize: `${cell.font?.size ? cell.font.size * 0.8 : 8}px`,
                           fontWeight: cell.font?.bold ? "bold" : "normal",
+                          textDecoration: cell.font?.underline ? "underline" : "none",
                           boxSizing: "border-box",
                           ...borderStyle,
                         }}

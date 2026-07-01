@@ -8,6 +8,7 @@ export interface BorderSpec {
 export interface FontSpec {
   bold?: boolean;
   size?: number;
+  underline?: boolean;
 }
 
 export interface AlignSpec {
