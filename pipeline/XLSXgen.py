@@ -482,6 +482,8 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
     pair_col = dr.get("pair_merge_col")   # 1-based col index to merge per pair
     pair_col_labels = dr.get("pair_col_labels")  # fixed labels cycling per pair-in-block (overrides dynamic split)
     sections = dr.get("sections", [])
+    collapse_cols   = dr.get("collapse_empty_row_cols", [])   # 1-based; if all empty, shrink row
+    collapse_height = dr.get("collapse_height", 2)
 
     # Build positional value list from each row
     col_names = data.get("table", {}).get("columns", [])
@@ -809,6 +811,9 @@ def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
                     if fill_spec:
                         xc.fill = PatternFill("solid", fgColor=fill_spec["color"])
 
+                if collapse_cols and all(not ws.cell(row=r, column=cc).value for cc in collapse_cols):
+                    ws.row_dimensions[r].height = collapse_height
+
             excel_row += 2
             row_idx   += 2
 
@@ -820,7 +825,17 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
 
     header_vals = data.get("header", {})
     table       = data.get("table", {})
-    table_rows  = _normalize_rows(table.get("rows", []), table.get("columns", []))
+    dr_pre      = tmpl.get("data_rows", {})
+    raw_rows    = table.get("rows", [])
+    filter_rules = dr_pre.get("filter_rows_if_all_empty_indices", [])
+    if filter_rules:
+        def _pos(row, idx):
+            return (row[idx] if idx < len(row) else "") if isinstance(row, list) else ""
+        raw_rows = [
+            rw for rw in raw_rows
+            if not any(all(not _pos(rw, i) for i in rule) for rule in filter_rules)
+        ]
+    table_rows  = _normalize_rows(raw_rows, table.get("columns", []))
 
     # Column widths
     for col_letter, width in tmpl.get("column_widths", {}).items():
