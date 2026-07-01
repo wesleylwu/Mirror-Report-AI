@@ -83,43 +83,6 @@ Return ONLY the raw JSON object. No explanation, no markdown fences."""
 MAX_IMAGE_PX = 3000
 
 
-<<<<<<< Updated upstream
-def _auto_orient(img: Image.Image) -> Image.Image:
-    """Pick the rotation (0/90/180/270) where text lines are horizontal and
-    the document is right-side up. Axis (portrait vs sideways) is picked by
-    comparing row-sum vs column-sum variance (text creates more variance along
-    the axis perpendicular to the lines). The 0°/180° tie is then broken by
-    checking whether the bottom-edge strip is much sparser than the top-edge
-    strip — a blank page margin sits at the bottom when a document is upside
-    down, regardless of how dense the data table itself is."""
-    img = ImageOps.exif_transpose(img)
-    gray = np.array(img.convert("L"))
-    inv  = (255 - gray).astype(float)
-    row_var = float(np.var(inv.sum(axis=1)))
-    col_var = float(np.var(inv.sum(axis=0)))
-
-    def _strip_ratio(candidate: Image.Image, pct: int) -> float:
-        g = np.array(candidate.convert("L"))
-        v = (255 - g).astype(float)
-        rs = v.sum(axis=1)
-        rh = len(rs)
-        m = max(1, rh * pct // 100)
-        bot = float(rs[rh - m:].mean()) or 1.0
-        return float(rs[:m].mean()) / bot
-
-    if col_var > row_var:
-        # Sideways document — pick CW vs CCW by which puts more ink in the top quarter
-        cw  = img.rotate(270, expand=True)
-        ccw = img.rotate(90,  expand=True)
-        img = cw if _strip_ratio(cw, 25) >= _strip_ratio(ccw, 25) else ccw
-
-    # Upside-down check: blank page margin sits at the bottom when the doc is upside-down,
-    # making the top 5% significantly denser than the bottom 5%.
-    if _strip_ratio(img, 5) > 1.5:
-        img = img.rotate(180, expand=True)
-
-    return img
-=======
 def _heuristic_rotation(img: Image.Image) -> int:
     """Pixel-statistics rotation guess: axis (portrait vs sideways) from
     row/col projection variance, then CW vs CCW and upside-down checks from
@@ -246,7 +209,6 @@ def _auto_orient(img: Image.Image) -> tuple[Image.Image, int, int, int, int]:
     if angle:
         img = img.rotate(angle, expand=True)
     return img, in_tok, out_tok, tie_in, tie_out
->>>>>>> Stashed changes
 
 
 def _deskew(img: Image.Image) -> tuple[Image.Image, int, int, int, int]:
