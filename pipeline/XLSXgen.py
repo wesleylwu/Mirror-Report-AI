@@ -1124,6 +1124,9 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
             ctr += 1
 
         ws = wb.create_sheet(title=clean_title)
+        orient = tmpl.get("orientation")
+        if orient:
+            ws.page_setup.orientation = orient
         fill_template(tmpl, page_data, ws)
 
     if len(wb.worksheets) > 1:
