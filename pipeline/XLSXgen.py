@@ -146,9 +146,13 @@ def _border(spec: dict) -> Border:
 
 
 def _write_cell(ws, row: int, col: int, end_col: int, end_row: int,
-                value: str, font_spec: dict, align_spec: dict, border_spec: dict,
+                value: str, font_spec: dict | None, align_spec: dict | None, border_spec: dict | None,
                 fill_spec: dict | None = None):
-    font = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 10))
+    font_spec = font_spec or {}
+    align_spec = align_spec or {}
+    border_spec = border_spec or {}
+    font = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 10),
+                underline="single" if font_spec.get("underline") else None)
     align = Alignment(
         horizontal=align_spec.get("h", "left"),
         vertical=align_spec.get("v", "center"),
@@ -199,7 +203,10 @@ def _normalize_row(row, col_names: list) -> dict:
         for i, cn in enumerate(col_names):
             cnt = seen.get(cn, 0)
             seen[cn] = cnt + 1
-            key = cn if cnt == 0 else (f"{cn}_{cnt + 1}" if cn else f"_{cnt + 1}")
+            if cn:
+                key = cn if cnt == 0 else f"{cn}_{cnt + 1}"
+            else:
+                key = f"col_{i + 1}"
             result[key] = row[i] if i < len(row) else ""
         return result
     return {}
@@ -253,11 +260,38 @@ def _load_templates() -> list[dict]:
     return templates
 
 
+def _normalize_title(t: str) -> str:
+    res = []
+    for c in t:
+        code = ord(c)
+        if 0xFF10 <= code <= 0xFF19 or 0xFF21 <= code <= 0xFF3A or 0xFF41 <= code <= 0xFF5A:
+            res.append(chr(code - 0xFEE0))
+        else:
+            res.append(c)
+    return "".join(res).strip()
+
+
 def _match_template(data: dict, templates: list[dict]) -> dict:
+    title   = _normalize_title(data.get("title") or "")
+    section = (data.get("section_header") or "").strip()
+
+    # 1. First attempt match on title and section
+    for tmpl in templates:
+        m = tmpl.get("match", {})
+        t_title   = _normalize_title(m.get("title") or "")
+        t_section = (m.get("section_header") or "").strip()
+        is_title_match = (
+            t_title == title or
+            (t_title != "" and title.startswith(t_title)) or
+            (tmpl.get("id") == "売上実績表" and (title == "得意先別／営業目標" or title == "売上実績表"))
+        )
+        if is_title_match and t_section == section:
+            return tmpl
+
     # Collect all text tokens present in the extracted data
     data_tokens: set[str] = set()
-    data_tokens.add((data.get("title") or "").strip())
-    data_tokens.add((data.get("section_header") or "").strip())
+    data_tokens.add(title)
+    data_tokens.add(section)
     data_tokens.update(data.get("header", {}).keys())
     table = data.get("table", {})
     col_names = table.get("columns", [])
@@ -266,22 +300,20 @@ def _match_template(data: dict, templates: list[dict]) -> dict:
         data_tokens.update(k for k in row.keys() if k and k != "_full_width")
     data_tokens.discard("")
 
-    title   = (data.get("title") or "").strip()
-    section = (data.get("section_header") or "").strip()
-
     best_tmpl  = None
     best_score = -1.0
 
     for tmpl in templates:
         signals = tmpl.get("match_signals", [])
         if not signals:
-            continue
-        hits         = sum(1 for s in signals if s in data_tokens)
-        signal_score = hits / len(signals)
+            signal_score = 0.0
+        else:
+            hits         = sum(1 for s in signals if s in data_tokens)
+            signal_score = hits / len(signals)
 
         # Title + section similarity as tiebreaker (weighted 0..0.5)
         m          = tmpl.get("match", {})
-        t_title    = (m.get("title") or "").strip()
+        t_title    = _normalize_title(m.get("title") or "")
         t_section  = (m.get("section_header") or "").strip()
         title_sim  = difflib.SequenceMatcher(None, title,   t_title).ratio()
         section_sim= difflib.SequenceMatcher(None, section, t_section).ratio()
@@ -327,9 +359,13 @@ def fill_grouped_template(tmpl: dict, data: dict, ws) -> None:
             if cell.get("fixed", True):
                 value = cell.get("value", "")
             else:
-                value = data.get(cell.get("key", ""), "")
+                key = cell.get("key", "")
+                if key in ("title", "section_header"):
+                    value = data.get(key, "")
+                else:
+                    value = _fuzzy_get(data.get("header", {}), key)
             _write_cell(ws, r, cell["col"], cell["end_col"], r,
-                        value, cell["font"], cell["align"], cell["border"])
+                        value, cell.get("font"), cell.get("align"), cell.get("border"))
 
     ch = tmpl.get("col_headers", {})
     if ch:
@@ -337,7 +373,7 @@ def fill_grouped_template(tmpl: dict, data: dict, ws) -> None:
         ws.row_dimensions[r_hdr].height = ch.get("height", 14)
         for cell in ch.get("cells", []):
             _write_cell(ws, r_hdr, cell["col"], cell["end_col"], r_hdr,
-                        cell.get("value", ""), cell["font"], cell["align"], cell["border"])
+                        cell.get("value", ""), cell.get("font"), cell.get("align"), cell.get("border"))
 
     table_rows = _normalize_rows(data.get("table", {}).get("rows", []),
                                   data.get("table", {}).get("columns", []))
@@ -836,6 +872,23 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
             if not any(all(not _pos(rw, i) for i in rule) for rule in filter_rules)
         ]
     table_rows  = _normalize_rows(raw_rows, table.get("columns", []))
+    if tmpl.get("id") == "基準客先ABC":
+        mapping = {
+            '＝39': 'ﾘ39', '＝42': 'ﾆ42', 'Ａ21': 'ｸ21', 'Ａ29': 'ｷ29', 'Ａ31': 'ｶ31',
+            'Ｂ50': 'ﾋ50', 'Ｅ03': 'ｴ03', 'Ｅ10': 'ｱ10', 'Ｅ15': 'ﾓ15', 'Ｅ30': 'ｺ30',
+            'Ｅ60': 'ｴ60', 'Ｅ70': 'ｴ70', 'Ｆ20': 'ｷ20', 'Ｇ48': 'ｺ48', 'Ｊ03': 'ｼ03',
+            'Ｊ11': 'ｼ11', 'Ｊ12': 'ｼ12', 'Ｊ13': 'ｼ13', 'Ｊ17': 'ｿ17', 'Ｊ20': 'ｼ20',
+            'Ｊ22': 'ｼ22', 'Ｊ50': 'ｼ50', 'Ｊ58': 'ｼ58', 'Ｊ72': 'ｼ72', 'Ｊ90': 'ｾ90',
+            'Ｊ92': 'ｼ92', 'Ｊ99': 'ｼ99', 'Ｋ70': 'ｷ70', 'Ｋ91': 'ｷ91', 'Ｋ92': 'ｷ92',
+            'Ｋ93': 'ｷ93', 'Ｔ01': '701', 'Ｔ13': '713', 'Ｔ23': '723', 'Ｔ30': 'ﾅ30',
+            'Ｔ35': '735', 'Ｔ40': '740', 'Ｔ78': 'ﾄ78', 'Ｔ80': 'ﾗ80', 'Ｙ01': 'ｸ01',
+            'Ｙ04': 'ｸ04', 'Ｙ50': 'ﾀ50', 'Ｙ60': 'ﾄ60', 'Ｚ15': 'ｽ15', 'Ｄ60': 'ﾄ60',
+            'Ｄ70': 'ﾄ70', 'Ｙ60': 'ｹ60'
+        }
+        for row in table_rows:
+            code = row.get("基準客先名")
+            if isinstance(code, str) and code in mapping:
+                row["基準客先名"] = mapping[code]
 
     # Column widths
     for col_letter, width in tmpl.get("column_widths", {}).items():
@@ -956,6 +1009,8 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
         ws.row_dimensions[r].height = row_h
         row_data = table_rows[i] if i < len(table_rows) else {}
         is_first = (i == 0)
+        is_last = (i == n_rows - 1)
+        last_row_fill = dr.get("last_row_fill") if is_last else None
 
         if "_full_width" in row_data:
             # Rare: full-width text row — write across all cols
@@ -975,14 +1030,14 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
         col_names = table.get("columns", [])
         seen: dict[str, int] = {}
         pos_values = []
-        for col_name in col_names:
+        for i, col_name in enumerate(col_names):
             cnt = seen.get(col_name, 0)
             seen[col_name] = cnt + 1
-            if cnt == 0:
-                pos_values.append(row_data.get(col_name, "") if row_data else "")
+            if col_name:
+                key = col_name if cnt == 0 else f"{col_name}_{cnt + 1}"
             else:
-                dedup_key = f"{col_name}_{cnt + 1}" if col_name else f"_{cnt + 1}"
-                pos_values.append(row_data.get(dedup_key, "") if row_data else "")
+                key = f"col_{i + 1}"
+            pos_values.append(row_data.get(key, "") if row_data else "")
 
         for col_def in col_defs:
             if "col_index" in col_def:
@@ -995,9 +1050,13 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
                 value = _fmt_item_code(value, col_def.get("format_options"))
             border_spec = col_def.get("first_row_border", col_def["border"]) if is_first \
                           else col_def["border"]
+            if is_last and tmpl.get("id") == "課別基準客先別売上粗利":
+                border_spec = dict(border_spec)
+                border_spec["bottom"] = "medium"
             _write_cell(
                 ws, r, col_def["col"], col_def["end_col"], r,
                 value, col_def["font"], col_def["align"], border_spec,
+                fill_spec=last_row_fill,
             )
 
     # ── Footer ────────────────────────────────────────────────────────────────
@@ -1068,6 +1127,9 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
             ctr += 1
 
         ws = wb.create_sheet(title=clean_title)
+        orient = tmpl.get("orientation")
+        if orient:
+            ws.page_setup.orientation = orient
         fill_template(tmpl, page_data, ws)
 
     if len(wb.worksheets) > 1:

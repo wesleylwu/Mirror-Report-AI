@@ -11,8 +11,9 @@ const Page = () => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
 
-  const handleFileSelect = useCallback((file: File) => {
+  const handleCaptureFileSelect = useCallback((file: File) => {
     setUploadedFiles([file]);
+    setIsCapturing(false);
   }, []);
 
   const handleFilesSelect = useCallback((files: File[]) => {
@@ -26,7 +27,7 @@ const Page = () => {
   return (
     <div className="bg-mirror-white font-mirror-noto flex min-h-screen flex-col">
       <NavBar
-        onFileSelect={handleFileSelect}
+        onFilesSelect={handleFilesSelect}
         onCaptureClick={() => setIsCapturing(true)}
       />
       <Mirror
@@ -38,7 +39,7 @@ const Page = () => {
       <AnimatePresence>
         {isCapturing && (
           <Capture
-            onFilesSelect={handleFilesSelect}
+            onFileSelect={handleCaptureFileSelect}
             onClose={() => setIsCapturing(false)}
           />
         )}

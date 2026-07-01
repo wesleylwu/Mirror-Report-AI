@@ -76,4 +76,19 @@
     top: 0 !important;
     left: 0 !important;
   }
+  .print-a4-page-landscape {
+    width: 390mm !important;
+    height: 276mm !important;
+    max-width: none !important;
+    max-height: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 10mm 15mm !important;
+    box-shadow: none !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: scale(0.76) !important;
+    transform-origin: top left !important;
+  }
 }

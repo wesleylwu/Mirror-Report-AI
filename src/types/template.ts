@@ -8,6 +8,7 @@ export interface BorderSpec {
 export interface FontSpec {
   bold?: boolean;
   size?: number;
+  underline?: boolean;
 }
 
 export interface AlignSpec {
@@ -25,6 +26,11 @@ export interface CellSpec {
   border?: BorderSpec;
   align?: AlignSpec;
   font?: FontSpec;
+  value_part?: "main" | "tail";
+  title_part?: "left" | "center" | "right";
+  concat_keys?: string[];
+  label_prefix?: boolean;
+  fill?: { color?: string };
 }
 
 export interface HeaderRowSpec {
@@ -45,12 +51,18 @@ export interface ColumnSpec {
   first_row_border?: BorderSpec;
   align?: AlignSpec;
   font?: FontSpec;
+  col_index?: number;
+  concat_col_index?: number;
+  concat_sep?: string;
+  fallback_col_indices?: number[];
+  split_rows?: boolean;
 }
 
 export interface DataRowsSpec {
   columns: ColumnSpec[];
   count?: number;
   row_height?: number;
+  last_row_fill?: { color?: string };
 }
 
 export interface FooterSpec {
@@ -59,14 +71,24 @@ export interface FooterSpec {
 }
 
 export interface MatchedTemplate {
+  id?: string;
+  orientation?: "portrait" | "landscape";
   column_widths?: Record<string, number>;
   header?: HeaderRowSpec[];
   col_headers?: {
     row_heights?: number[];
+    height?: number;
     cells: CellSpec[];
+    fill?: { color?: string };
   };
   data_rows?: DataRowsSpec;
   footer?: FooterSpec;
+  group_table?: boolean;
+  group_size?: number;
+  group_col?: CellSpec;
+  columns?: ColumnSpec[];
+  row_height?: number;
+  n_cols?: number;
 }
 
 export interface ExtractedData {
@@ -74,6 +96,7 @@ export interface ExtractedData {
   section_header?: string;
   header?: Record<string, string>;
   table?: {
+    columns?: string[];
     rows?: Record<string, string>[];
   };
 }
