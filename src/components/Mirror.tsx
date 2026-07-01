@@ -293,6 +293,19 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     setPages([]);
     setActivePageIndex(0);
     setErrorMsg(null);
+
+    if (uploadedFiles.length > 0) {
+      const name = uploadedFiles[0].name;
+      const lastDot = name.lastIndexOf(".");
+      const baseName = lastDot !== -1 ? name.substring(0, lastDot) : name;
+      document.title = baseName;
+    } else {
+      document.title = "Mirror Report AI";
+    }
+
+    return () => {
+      document.title = "Mirror Report AI";
+    };
   }, [uploadedFiles]);
 
   return (
