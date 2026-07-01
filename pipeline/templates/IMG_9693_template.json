@@ -58,6 +58,9 @@
     "row_height": 13,
     "pair_merge_col": 3,
     "pair_col_labels": ["当月", "累計"],
+    "filter_rows_if_all_empty_indices": [
+      [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    ],
     "sections": [
       {
         "pairs": 2,
@@ -91,7 +94,7 @@
     ],
     "columns": [
       {"col": 1,  "end_col": 1,  "col_index": 0,  "split_rows": true, "font": {"bold": false, "size": 8}, "align": {"h": "left", "v": "center", "wrap": false}},
-      {"col": 2,  "end_col": 2,  "col_index": 1,  "concat_col_index": 2, "concat_sep": "     ", "second_segment_indices": [3, 4], "second_segment_pad_to": 30, "second_segment_sep": "     ", "fallback_col_indices": [0], "font": {"bold": false, "size": 8}, "align": {"h": "left",  "v": "center", "wrap": false}},
+      {"col": 2,  "end_col": 2,  "col_index": 1,  "concat_col_index": 2, "concat_sep": "     ", "fallback_col_indices": [0], "font": {"bold": false, "size": 8}, "align": {"h": "left",  "v": "center", "wrap": false}},
       {"col": 3,  "end_col": 3,  "col_index": 3,  "font": {"bold": false, "size": 8}, "align": {"h": "center", "v": "center", "wrap": false}},
       {"col": 4,  "end_col": 4,  "col_index": 5,  "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
       {"col": 5,  "end_col": 5,  "col_index": 6,  "font": {"bold": false, "size": 8}, "align": {"h": "right", "v": "center", "wrap": false}},
