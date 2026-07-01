@@ -11,7 +11,11 @@ interface DocumentPreviewProps {
 
 const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
-  const activeFile = uploadedFiles[activePreviewIndex] || uploadedFiles[0];
+
+  // Guard activeIndex range in case files list changes
+  const activeIndex =
+    activePreviewIndex >= uploadedFiles.length ? 0 : activePreviewIndex;
+  const activeFile = uploadedFiles[activeIndex];
 
   const isImage = activeFile?.type.startsWith("image/");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -42,20 +46,21 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <p className="text-mirror-gray text-xs font-semibold">
-          Uploaded Files ({uploadedFiles.length})
+          Uploaded Documents ({uploadedFiles.length})
         </p>
         <button
           onClick={onClear}
-          className="text-mirror-gray hover:text-mirror-red flex cursor-pointer items-center justify-center gap-1 rounded p-1 text-xs transition-colors focus:outline-none"
+          className="text-mirror-gray hover:text-mirror-cyan flex cursor-pointer items-center justify-center gap-1 rounded p-1 text-xs transition-colors focus:outline-none"
         >
           <FaTimes className="h-3.5 w-3.5" /> Clear All
         </button>
       </div>
 
-      <div className="flex scrollbar-thin gap-2 overflow-x-auto pb-2">
+      {/* Horizontal Scroll File list */}
+      <div className="scrollbar-thumb-mirror-cyan/20 flex w-full scrollbar-thin scrollbar-track-transparent gap-2 overflow-x-auto pb-2">
         {uploadedFiles.map((file, idx) => {
           const fileIsImage = file.type.startsWith("image/");
-          const isActive = idx === activePreviewIndex;
+          const isActive = idx === activeIndex;
           return (
             <div
               key={idx}
@@ -67,19 +72,19 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
               }`}
             >
               <div
-                className={`flex h-7 w-7 items-center justify-center rounded-lg ${
+                className={`flex h-8 w-8 items-center justify-center rounded-lg ${
                   isActive
                     ? "bg-mirror-cyan/20 text-mirror-cyan"
                     : "text-mirror-gray bg-mirror-light-blue/60"
                 }`}
               >
                 {fileIsImage ? (
-                  <FaCamera className="h-3.5 w-3.5" />
+                  <FaCamera className="h-4 w-4" />
                 ) : (
-                  <FaPaperclip className="h-3.5 w-3.5" />
+                  <FaPaperclip className="h-4 w-4" />
                 )}
               </div>
-              <div className="max-w-[120px]">
+              <div className="max-w-[120px] overflow-hidden">
                 <p className="text-mirror-dark-blue truncate text-xs font-bold">
                   {file.name}
                 </p>
@@ -92,19 +97,20 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
         })}
       </div>
 
-      <div className="bg-mirror-dark-blue/95 border-mirror-light-blue relative flex min-h-[55vh] items-center justify-center overflow-hidden rounded-2xl border p-4">
-        {isImage && imageUrl ? (
-          <div className="relative h-[48vh] w-full">
+      {/* Main Preview Container */}
+      <div className="bg-mirror-dark-blue/95 border-mirror-light-blue relative flex min-h-[50vh] items-center justify-center overflow-hidden rounded-2xl border p-4">
+        {activeFile && isImage && imageUrl ? (
+          <div className="relative h-[44vh] w-full">
             <Image
               src={imageUrl}
-              alt="Uploaded document"
+              alt={activeFile.name}
               fill
-              className="animate-fade-in rounded-2xl object-contain shadow-md"
+              className="rounded-2xl object-contain shadow-md"
             />
           </div>
         ) : (
           activeFile && (
-            <div className="text-mirror-light-blue animate-fade-in flex flex-col items-center justify-center p-8 text-center">
+            <div className="text-mirror-light-blue flex flex-col items-center justify-center p-8 text-center">
               <div className="text-mirror-cyan bg-mirror-cyan/10 mb-4 flex items-center justify-center rounded-full p-4">
                 <FaFileAlt className="h-10 w-10" />
               </div>
@@ -112,6 +118,9 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
                 Non-Image Source Loaded
               </p>
               <div className="bg-mirror-dark-blue/80 text-mirror-green border-mirror-gray max-h-[25vh] w-full max-w-[25vw] overflow-auto rounded-xl border p-4 text-left font-mono text-xs shadow-lg">
+                <p className="text-mirror-gray border-mirror-gray mb-2 border-b pb-1">
+                  {"// Metadata Registry"}
+                </p>
                 <div className="text-mirror-white">
                   <p className="text-mirror-cyan inline">File Name:</p> &quot;
                   {activeFile.name}&quot;
@@ -122,7 +131,7 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
                 </div>
                 <div className="text-mirror-white">
                   <p className="text-mirror-cyan inline">File Type:</p> &quot;
-                  {activeFile.type}&quot;
+                  {activeFile.type || "unknown"}&quot;
                 </div>
               </div>
             </div>

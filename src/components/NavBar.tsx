@@ -5,11 +5,11 @@ import { FaPaperclip, FaCamera, FaBars, FaTimes } from "react-icons/fa";
 import { motion, AnimatePresence } from "motion/react";
 
 interface NavBarProps {
-  onFileSelect: (file: File) => void;
+  onFilesSelect: (files: File[]) => void;
   onCaptureClick: () => void;
 }
 
-const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
+const NavBar = ({ onFilesSelect, onCaptureClick }: NavBarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -24,25 +24,21 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const allowedTypes = [
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/webp",
-        "application/pdf",
-      ];
-      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
       const allowedExtensions = ["jpg", "jpeg", "png", "webp", "pdf"];
+      const validFiles = files.filter((file) => {
+        const ext = file.name.split(".").pop()?.toLowerCase();
+        return ext && allowedExtensions.includes(ext);
+      });
 
-      if (
-        allowedTypes.includes(file.type) ||
-        (fileExtension && allowedExtensions.includes(fileExtension))
-      ) {
-        onFileSelect(file);
-      } else {
-        alert("Only JPEG, PNG, PDF, and WebP files are allowed.");
+      if (validFiles.length > 0) {
+        onFilesSelect(validFiles);
+      }
+      if (validFiles.length < files.length) {
+        alert(
+          "Some files were ignored. Only JPEG, PNG, WebP, and PDF files are allowed.",
+        );
       }
     }
   };
@@ -79,6 +75,7 @@ const NavBar = ({ onFileSelect, onCaptureClick }: NavBarProps) => {
         ref={fileInputRef}
         onChange={handleFileChange}
         accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+        multiple
         className="hidden"
       />
 

@@ -32,17 +32,21 @@ const normalizeRow = (row: any, colNames: string[]): Record<string, string> => {
 interface TemplateViewerProps {
   matchedTemplate: MatchedTemplate;
   extractedData: ExtractedData;
-  onExtractedDataChange: (newData: ExtractedData) => void;
-  isRegeneratingExcel: boolean;
-  onDownloadExcel: () => void;
+  onExtractedDataChange?: (newData: ExtractedData) => void;
+  isRegeneratingExcel?: boolean;
+  onDownloadExcel?: () => void;
+  xlsxBlob?: Blob | null;
+  xlsxName?: string;
 }
 
 const TemplateViewer = ({
   matchedTemplate,
   extractedData,
   onExtractedDataChange,
-  isRegeneratingExcel,
+  isRegeneratingExcel = false,
   onDownloadExcel,
+  xlsxBlob,
+  xlsxName,
 }: TemplateViewerProps) => {
   const colWidths = useMemo(() => {
     const spec = matchedTemplate.column_widths || {};
@@ -83,6 +87,37 @@ const TemplateViewer = ({
     style.borderRight = mapSide(b.right);
     return style;
   }, []);
+
+  const triggerDownload = useCallback((blob: Blob, name: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+
+    const isIOS =
+      typeof window !== "undefined" &&
+      (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+    if (isIOS) {
+      a.target = "_blank";
+    }
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 10000);
+  }, []);
+
+  const handleDownload = useCallback(() => {
+    if (onDownloadExcel) {
+      onDownloadExcel();
+    } else if (xlsxBlob) {
+      triggerDownload(xlsxBlob, xlsxName || "export.xlsx");
+    }
+  }, [onDownloadExcel, xlsxBlob, xlsxName, triggerDownload]);
 
   const handleHeaderChange = useCallback(
     (key: string, value: string) => {
@@ -219,7 +254,7 @@ const TemplateViewer = ({
                       cell.end_col,
                     );
                     const borderStyle = getBorderStyle(cell.border);
-                    const isEditable = !cell.fixed && cell.key;
+                    const isEditable = !cell.fixed && cell.key && !!onExtractedDataChange;
 
                     return (
                       <div
@@ -289,7 +324,7 @@ const TemplateViewer = ({
                     return (
                       <div
                         key={`ch-${cellIndex}`}
-                        className="bg-mirror-light-blue/30 flex overflow-hidden p-1"
+                        className="flex overflow-hidden bg-slate-50 p-1"
                         style={{
                           width: `${widthPercent}%`,
                           justifyContent:
@@ -327,7 +362,16 @@ const TemplateViewer = ({
                   const tableData = extractedData.table || {};
                   const colNames = tableData.columns || [];
                   const rawRows = tableData.rows || [];
-                  const rows = rawRows.map((r) => normalizeRow(r, colNames));
+                  const rows = rawRows
+                    .map((r) => normalizeRow(r, colNames))
+                    .filter(
+                      (r) =>
+                        !(
+                          "_full_width" in r &&
+                          typeof r._full_width === "string" &&
+                          r._full_width.replace(/\s+/g, "") === "備考"
+                        ),
+                    );
                   const maxRows = Math.max(dr.count || 0, rows.length);
                   return Array.from({ length: maxRows }).map((_, rowIndex) => {
                     const rowData = rows[rowIndex] || {};
@@ -414,7 +458,7 @@ const TemplateViewer = ({
                                   return idxOfCol > 1 ? `${name}_${idxOfCol}` : name;
                                 })()
                               : colSpec.key;
-                            const isEditable = !!editKey;
+                            const isEditable = !!editKey && !!onExtractedDataChange;
 
                             return (
                               <div
@@ -492,7 +536,7 @@ const TemplateViewer = ({
                     return (
                       <div
                         key={`f-${cellIndex}`}
-                        className="bg-mirror-light-blue/30 flex p-1"
+                        className="flex bg-slate-50 p-1"
                         style={{
                           width: `${widthPercent}%`,
                           justifyContent:
@@ -526,7 +570,7 @@ const TemplateViewer = ({
 
       <div className="mt-2 flex w-full justify-center gap-4 print:hidden">
         <button
-          onClick={onDownloadExcel}
+          onClick={handleDownload}
           disabled={isRegeneratingExcel}
           className="bg-mirror-cyan hover:bg-mirror-dark-blue text-mirror-white flex cursor-pointer items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold shadow-sm transition-colors duration-200 disabled:opacity-60"
         >
