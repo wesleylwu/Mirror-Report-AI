@@ -98,9 +98,9 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
       </div>
 
       {/* Main Preview Container */}
-      <div className="border-mirror-light-blue relative flex min-h-[50vh] items-center justify-center overflow-hidden rounded-2xl border bg-slate-100 p-4 shadow-inner">
+      <div className="border-mirror-light-blue relative flex h-[70vh] items-center justify-center overflow-hidden rounded-2xl border bg-slate-100 p-4 shadow-inner">
         {activeFile && isImage && imageUrl ? (
-          <div className="relative h-[44vh] w-full">
+          <div className="relative h-full w-full">
             <Image
               src={imageUrl}
               alt={activeFile.name}
