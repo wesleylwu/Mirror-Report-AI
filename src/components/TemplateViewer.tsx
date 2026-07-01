@@ -612,7 +612,9 @@ const TemplateViewer = ({
 
                                     const editKey =
                                       colSpec.col_index !== undefined &&
-                                      colNames[colSpec.col_index] !== undefined
+                                      colNames[colSpec.col_index] !==
+                                        undefined &&
+                                      colNames[colSpec.col_index] !== ""
                                         ? (() => {
                                             const name =
                                               colNames[colSpec.col_index];
@@ -844,7 +846,8 @@ const TemplateViewer = ({
 
                                 const editKey =
                                   colSpec.col_index !== undefined &&
-                                  colNames[colSpec.col_index] !== undefined
+                                  colNames[colSpec.col_index] !== undefined &&
+                                  colNames[colSpec.col_index] !== ""
                                     ? (() => {
                                         const name =
                                           colNames[colSpec.col_index];

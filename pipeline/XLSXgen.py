@@ -203,7 +203,10 @@ def _normalize_row(row, col_names: list) -> dict:
         for i, cn in enumerate(col_names):
             cnt = seen.get(cn, 0)
             seen[cn] = cnt + 1
-            key = cn if cnt == 0 else (f"{cn}_{cnt + 1}" if cn else f"_{cnt + 1}")
+            if cn:
+                key = cn if cnt == 0 else f"{cn}_{cnt + 1}"
+            else:
+                key = f"col_{i + 1}"
             result[key] = row[i] if i < len(row) else ""
         return result
     return {}
@@ -1027,14 +1030,14 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
         col_names = table.get("columns", [])
         seen: dict[str, int] = {}
         pos_values = []
-        for col_name in col_names:
+        for i, col_name in enumerate(col_names):
             cnt = seen.get(col_name, 0)
             seen[col_name] = cnt + 1
-            if cnt == 0:
-                pos_values.append(row_data.get(col_name, "") if row_data else "")
+            if col_name:
+                key = col_name if cnt == 0 else f"{col_name}_{cnt + 1}"
             else:
-                dedup_key = f"{col_name}_{cnt + 1}" if col_name else f"_{cnt + 1}"
-                pos_values.append(row_data.get(dedup_key, "") if row_data else "")
+                key = f"col_{i + 1}"
+            pos_values.append(row_data.get(key, "") if row_data else "")
 
         for col_def in col_defs:
             if "col_index" in col_def:
