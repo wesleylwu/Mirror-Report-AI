@@ -12,7 +12,6 @@ interface DocumentPreviewProps {
 const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
 
-  // Guard activeIndex range in case files list changes
   const activeIndex =
     activePreviewIndex >= uploadedFiles.length ? 0 : activePreviewIndex;
   const activeFile = uploadedFiles[activeIndex];
@@ -44,7 +43,6 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Main Preview Container */}
       <div className="border-mirror-light-blue relative flex h-[70vh] items-center justify-center overflow-hidden rounded-2xl border bg-slate-100 p-4 shadow-inner">
         {activeFile && isImage && imageUrl ? (
           <div className="relative h-full w-full">
@@ -106,7 +104,6 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
         </button>
       </div>
 
-      {/* Horizontal Scroll File list */}
       <div className="scrollbar-thumb-mirror-cyan/20 flex w-full scrollbar-thin scrollbar-track-transparent gap-2 overflow-x-auto pb-2">
         {uploadedFiles.map((file, idx) => {
           const fileIsImage = file.type.startsWith("image/");

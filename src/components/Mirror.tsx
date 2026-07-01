@@ -76,7 +76,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const handleDownloadExcel = useCallback(async () => {
     if (pages.length === 0 || isRegenerating) return;
 
-    // Optimize: if document has not been edited, download cached blob immediately
     if (!isDirty && xlsxBlob) {
       const url = URL.createObjectURL(xlsxBlob);
       const a = document.createElement("a");
@@ -115,7 +114,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       setXlsxBlob(blob);
       setIsDirty(false);
 
-      // Trigger standard browser download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -166,7 +164,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       const cleanedPages = rawPages.map((page: PageResult) => {
         const extracted = { ...page.extractedData };
 
-        // 1. Filter out duplicate full-width 備考 row from OCR data
         if (extracted.table?.rows) {
           extracted.table.rows = extracted.table.rows.filter(
             (r: Record<string, unknown>) =>
@@ -178,7 +175,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
           );
         }
 
-        // 1.5 Clean up customer codes for 基準客先ABC template
         const title = (extracted.title || "").trim();
         const normTitle = title.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) =>
           String.fromCharCode(s.charCodeAt(0) - 0xfee0),
@@ -251,7 +247,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
           }) as Record<string, string>[];
         }
 
-        // 2. Extract main and sub from 手配No.
         if (extracted.header) {
           if (extracted.header["店番"] === "S50") {
             extracted.header["店番"] = "シ50";
@@ -371,7 +366,6 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
             </p>
           </div>
 
-          {/* Page Switching Tabs */}
           {status === "done" && pages.length > 1 && (
             <div className="border-mirror-light-blue mb-4 flex flex-wrap gap-2 border-b pb-3 print:hidden">
               {pages.map((p, index) => {

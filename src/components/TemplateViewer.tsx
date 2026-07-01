@@ -457,7 +457,6 @@ const TemplateViewer = ({
                           key={`g-${groupIndex}`}
                           className="relative flex w-full flex-col"
                         >
-                          {/* Render group_col cell absolutely */}
                           {groupCol && (
                             <div
                               className="bg-mirror-white absolute top-0 left-0 z-10 flex items-center justify-center p-1 text-center"
@@ -478,13 +477,11 @@ const TemplateViewer = ({
                             </div>
                           )}
 
-                          {/* Render the rows of the group */}
                           {groupRows.map((rowData, innerRowIndex) => {
                             const rowIndex =
                               groupIndex * groupSize + innerRowIndex;
                             const isFirst = rowIndex === 0;
 
-                            // Resolve positional values
                             const seen: Record<string, number> = {};
                             const posValues: string[] = [];
                             for (const colName of colNames) {
@@ -535,7 +532,6 @@ const TemplateViewer = ({
                                 className="flex w-full"
                                 style={{ height: `${dr.row_height || 25}px` }}
                               >
-                                {/* Group column placeholder */}
                                 {groupCol && (
                                   <div
                                     style={{
@@ -561,7 +557,6 @@ const TemplateViewer = ({
                                   />
                                 )}
 
-                                {/* Other columns */}
                                 {colSpecs.map(
                                   (colSpec: ColumnSpec, colIndex: number) => {
                                     let rawVal = "";
@@ -741,7 +736,6 @@ const TemplateViewer = ({
                         const rowData = rows[rowIndex] || {};
                         const isFirst = rowIndex === 0;
 
-                        // Positional value resolution for columns based on tableData.columns
                         const seen: Record<string, number> = {};
                         const posValues: string[] = [];
                         for (const colName of colNames) {
