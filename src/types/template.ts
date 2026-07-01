@@ -69,14 +69,22 @@ export interface FooterSpec {
 }
 
 export interface MatchedTemplate {
+  orientation?: "portrait" | "landscape";
   column_widths?: Record<string, number>;
   header?: HeaderRowSpec[];
   col_headers?: {
     row_heights?: number[];
+    height?: number;
     cells: CellSpec[];
   };
   data_rows?: DataRowsSpec;
   footer?: FooterSpec;
+  group_table?: boolean;
+  group_size?: number;
+  group_col?: CellSpec;
+  columns?: ColumnSpec[];
+  row_height?: number;
+  n_cols?: number;
 }
 
 export interface ExtractedData {

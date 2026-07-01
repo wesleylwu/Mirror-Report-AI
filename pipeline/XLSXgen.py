@@ -146,8 +146,11 @@ def _border(spec: dict) -> Border:
 
 
 def _write_cell(ws, row: int, col: int, end_col: int, end_row: int,
-                value: str, font_spec: dict, align_spec: dict, border_spec: dict,
+                value: str, font_spec: dict | None, align_spec: dict | None, border_spec: dict | None,
                 fill_spec: dict | None = None):
+    font_spec = font_spec or {}
+    align_spec = align_spec or {}
+    border_spec = border_spec or {}
     font = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 10),
                 underline="single" if font_spec.get("underline") else None)
     align = Alignment(
@@ -337,9 +340,13 @@ def fill_grouped_template(tmpl: dict, data: dict, ws) -> None:
             if cell.get("fixed", True):
                 value = cell.get("value", "")
             else:
-                value = data.get(cell.get("key", ""), "")
+                key = cell.get("key", "")
+                if key in ("title", "section_header"):
+                    value = data.get(key, "")
+                else:
+                    value = _fuzzy_get(data.get("header", {}), key)
             _write_cell(ws, r, cell["col"], cell["end_col"], r,
-                        value, cell["font"], cell["align"], cell["border"])
+                        value, cell.get("font"), cell.get("align"), cell.get("border"))
 
     ch = tmpl.get("col_headers", {})
     if ch:
@@ -347,7 +354,7 @@ def fill_grouped_template(tmpl: dict, data: dict, ws) -> None:
         ws.row_dimensions[r_hdr].height = ch.get("height", 14)
         for cell in ch.get("cells", []):
             _write_cell(ws, r_hdr, cell["col"], cell["end_col"], r_hdr,
-                        cell.get("value", ""), cell["font"], cell["align"], cell["border"])
+                        cell.get("value", ""), cell.get("font"), cell.get("align"), cell.get("border"))
 
     table_rows = _normalize_rows(data.get("table", {}).get("rows", []),
                                   data.get("table", {}).get("columns", []))

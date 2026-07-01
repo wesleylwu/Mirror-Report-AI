@@ -26,7 +26,7 @@
       "cells": [
         {
           "col": 1, "end_col": 24,
-          "fixed": false, "key": "title",
+          "fixed": true, "value": "製造指図書",
           "font": {"bold": false, "size": 22, "underline": true},
           "align": {"h": "center", "v": "center", "wrap": true},
           "border": {"top": null, "bottom": null, "left": null, "right": null}

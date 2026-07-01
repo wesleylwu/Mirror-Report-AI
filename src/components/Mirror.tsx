@@ -180,6 +180,9 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
 
         // 2. Extract main and sub from 手配No.
         if (extracted.header) {
+          if (extracted.header["店番"] === "S50") {
+            extracted.header["店番"] = "シ50";
+          }
           const rawNo = extracted.header["手配No."] || "";
           if (typeof rawNo === "string" && rawNo.includes("　")) {
             const parts = rawNo.split("　");

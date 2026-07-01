@@ -1,7 +1,8 @@
 {
   "id": "売上実績表",
+  "orientation": "landscape",
   "match": {
-    "title": "売上実績表",
+    "title": "得意先別／営業目標",
     "section_header": ""
   },
   "match_signals": [
@@ -38,28 +39,77 @@
   "header": [
     {
       "row": 1,
-      "height": 14,
+      "height": 20,
       "cells": [
         {
           "col": 1,
-          "end_col": 12,
-          "fixed": false,
+          "end_col": 1,
+          "fixed": true,
+          "value": "シ50",
           "font": {
-            "bold": true,
-            "size": 12
+            "bold": false,
+            "size": 9
           },
           "align": {
-            "h": "center",
-            "v": "center",
-            "wrap": false
+            "h": "left",
+            "v": "bottom"
+          }
+        },
+        {
+          "col": 2,
+          "end_col": 4,
+          "fixed": true,
+          "value": "（株）ジュン",
+          "font": {
+            "bold": false,
+            "size": 9
           },
-          "border": {
-            "top": null,
-            "bottom": "medium",
-            "left": "thin",
-            "right": null
+          "align": {
+            "h": "left",
+            "v": "bottom"
+          }
+        },
+        {
+          "col": 5,
+          "end_col": 6,
+          "fixed": true,
+          "value": "得意先別／営業目標",
+          "font": {
+            "bold": false,
+            "size": 10
           },
-          "key": "title"
+          "align": {
+            "h": "left",
+            "v": "bottom"
+          }
+        },
+        {
+          "col": 7,
+          "end_col": 7,
+          "fixed": true,
+          "value": "営業1課",
+          "font": {
+            "bold": false,
+            "size": 9
+          },
+          "align": {
+            "h": "left",
+            "v": "bottom"
+          }
+        },
+        {
+          "col": 8,
+          "end_col": 12,
+          "fixed": true,
+          "value": "大久保・関谷・金柿",
+          "font": {
+            "bold": false,
+            "size": 9
+          },
+          "align": {
+            "h": "left",
+            "v": "bottom"
+          }
         }
       ]
     }

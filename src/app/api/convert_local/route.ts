@@ -115,16 +115,22 @@ export async function POST(req: NextRequest) {
     const pagesList = extractedData.pages || [];
 
     for (const pageData of pagesList) {
+      if (pageData.header) {
+        if (pageData.header["店番"] === "S50") {
+          pageData.header["店番"] = "シ50";
+        }
+      }
       const title = (pageData.title || "").trim();
       const section = (pageData.section_header || "").trim();
       let matchedTemplate: LocalTemplate | null = null;
 
       for (const tmpl of templates) {
         const m = tmpl.match || {};
-        if (
-          (m.title || "").trim() === title &&
-          (m.section_header || "").trim() === section
-        ) {
+        const isTitleMatch =
+          (m.title || "").trim() === title ||
+          (tmpl.id === "売上実績表" &&
+            (title === "得意先別／営業目標" || title === "売上実績表"));
+        if (isTitleMatch && (m.section_header || "").trim() === section) {
           matchedTemplate = tmpl;
           break;
         }
@@ -133,7 +139,11 @@ export async function POST(req: NextRequest) {
       if (!matchedTemplate) {
         for (const tmpl of templates) {
           const m = tmpl.match || {};
-          if ((m.title || "").trim() === title) {
+          const isTitleMatch =
+            (m.title || "").trim() === title ||
+            (tmpl.id === "売上実績表" &&
+              (title === "得意先別／営業目標" || title === "売上実績表"));
+          if (isTitleMatch) {
             matchedTemplate = tmpl;
             break;
           }

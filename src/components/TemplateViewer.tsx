@@ -56,9 +56,11 @@ const TemplateViewer = ({
     const spec = matchedTemplate.column_widths || {};
     const colNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
     const widths: number[] = [];
-    for (let i = 0; i < 24; i++) {
+    const limit = matchedTemplate.n_cols || 24;
+    for (let i = 0; i < limit; i++) {
       const colName = colNames[i];
-      widths.push(spec[colName] ?? 8.43);
+      const w = spec[colName] ?? spec[String(i + 1)] ?? 8.43;
+      widths.push(w);
     }
     const total = widths.reduce((sum, w) => sum + w, 0);
     return { widths, total };
@@ -80,10 +82,10 @@ const TemplateViewer = ({
     const style: Record<string, string> = {};
     const mapSide = (side: string | null | undefined) => {
       if (!side || side === "none") return "none";
-      if (side === "thin") return "1px solid #111827";
-      if (side === "medium") return "2px solid #111827";
-      if (side === "double") return "3px double #111827";
-      return "1px solid #111827";
+      if (side === "thin") return "0.5px solid #000000";
+      if (side === "medium") return "1px solid #000000";
+      if (side === "double") return "2px double #000000";
+      return "0.5px solid #000000";
     };
     style.borderTop = mapSide(b.top);
     style.borderBottom = mapSide(b.bottom);
@@ -244,9 +246,31 @@ const TemplateViewer = ({
 
   return (
     <div className="flex w-full flex-col gap-4">
+      {matchedTemplate.orientation === "landscape" && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+          @media print {
+            @page {
+              size: A4 landscape !important;
+              margin: 0 !important;
+            }
+            body, html {
+              width: 297mm !important;
+              height: 210mm !important;
+            }
+          }
+        `,
+          }}
+        />
+      )}
       <div className="border-mirror-light-blue max-h-[70vh] w-full overflow-auto rounded-2xl border bg-slate-100 p-4 shadow-inner print:max-h-none print:border-none print:bg-white print:p-0 print:shadow-none">
         <div
-          className="bg-mirror-white print-a4-page relative mx-auto flex aspect-210/297 w-full max-w-4xl flex-col border border-gray-300 p-6 text-xs shadow-md select-none print:border-none print:p-0 print:shadow-none"
+          className={`bg-mirror-white relative mx-auto flex w-full max-w-4xl flex-col border border-gray-300 p-6 text-xs shadow-md select-none print:border-none print:p-0 print:shadow-none ${
+            matchedTemplate.orientation === "landscape"
+              ? "print-a4-page-landscape aspect-[297/210]"
+              : "print-a4-page aspect-[210/297]"
+          }`}
           style={{ minWidth: "600px" }}
         >
           <div className="relative flex w-full flex-col">
@@ -286,7 +310,7 @@ const TemplateViewer = ({
                                 ? "flex-end"
                                 : "flex-start",
                           fontWeight: cell.font?.bold ? "bold" : "normal",
-                          fontSize: `${cell.font?.size ? cell.font.size * 0.8 : 8}px`,
+                          fontSize: `${cell.font?.size ? cell.font.size * 0.9 : 9}px`,
                           whiteSpace: cell.align?.wrap ? "normal" : "nowrap",
                           textDecoration: cell.font?.underline
                             ? "underline"
@@ -325,7 +349,7 @@ const TemplateViewer = ({
               <div
                 className="flex w-full"
                 style={{
-                  height: `${(matchedTemplate.col_headers.row_heights || []).reduce((a: number, b: number) => a + b, 0) || 30}px`,
+                  height: `${(matchedTemplate.col_headers.row_heights || []).reduce((a: number, b: number) => a + b, 0) || matchedTemplate.col_headers.height || 30}px`,
                 }}
               >
                 {matchedTemplate.col_headers.cells.map(
@@ -353,7 +377,7 @@ const TemplateViewer = ({
                               : cell.align?.v === "bottom"
                                 ? "flex-end"
                                 : "flex-start",
-                          fontSize: `${cell.font?.size ? cell.font.size * 0.8 : 8}px`,
+                          fontSize: `${cell.font?.size ? cell.font.size * 0.9 : 9}px`,
                           textDecoration: cell.font?.underline
                             ? "underline"
                             : "none",
@@ -371,10 +395,14 @@ const TemplateViewer = ({
               </div>
             )}
 
-            {matchedTemplate.data_rows && (
+            {(matchedTemplate.data_rows || matchedTemplate.group_table) && (
               <div className="flex w-full flex-col">
                 {(() => {
-                  const dr = matchedTemplate.data_rows;
+                  const isGroup = !!matchedTemplate.group_table;
+                  const dr = matchedTemplate.data_rows || {
+                    row_height: matchedTemplate.row_height,
+                    columns: matchedTemplate.columns || [],
+                  };
                   const colSpecs = dr.columns || [];
                   const tableData = extractedData.table || {};
                   const colNames = tableData.columns || [];
@@ -389,199 +417,508 @@ const TemplateViewer = ({
                           r._full_width.replace(/\s+/g, "") === "備考"
                         ),
                     );
-                  const maxRows = Math.max(dr.count || 0, rows.length);
-                  return Array.from({ length: maxRows }).map((_, rowIndex) => {
-                    const rowData = rows[rowIndex] || {};
-                    const isFirst = rowIndex === 0;
 
-                    // Positional value resolution for columns based on tableData.columns
-                    const colNames = tableData.columns || [];
-                    const seen: Record<string, number> = {};
-                    const posValues: string[] = [];
-                    for (const colName of colNames) {
-                      const cnt = seen[colName] || 0;
-                      seen[colName] = cnt + 1;
-                      if (cnt === 0) {
-                        posValues.push(rowData[colName] ?? "");
-                      } else {
-                        const dedupKey = colName
-                          ? `${colName}_${cnt + 1}`
-                          : `_${cnt + 1}`;
-                        posValues.push(rowData[dedupKey] ?? "");
-                      }
+                  if (isGroup) {
+                    const groupCol = matchedTemplate.group_col;
+                    const groupSize = matchedTemplate.group_size || 4;
+                    const groups: any[][] = [];
+                    for (let i = 0; i < rows.length; i += groupSize) {
+                      groups.push(rows.slice(i, i + groupSize));
                     }
 
-                    if ("_full_width" in rowData) {
+                    return groups.map((groupRows, groupIndex) => {
+                      const groupLabel = groupCol
+                        ? (() => {
+                            const key = groupCol.key || "月別";
+                            for (const r of groupRows) {
+                              const val = r[key] || fuzzyGet(r, key);
+                              if (val) return val;
+                            }
+                            return "";
+                          })()
+                        : "";
+
                       return (
                         <div
-                          key={`dr-${rowIndex}`}
-                          className="flex w-full"
-                          style={{ height: `${dr.row_height || 25}px` }}
+                          key={`g-${groupIndex}`}
+                          className="relative flex w-full flex-col"
                         >
-                          <div
-                            contentEditable={true}
-                            suppressContentEditableWarning={true}
-                            onBlur={(e) =>
-                              handleRowChange(
-                                rowIndex,
-                                "_full_width",
-                                e.currentTarget.textContent || "",
-                              )
-                            }
-                            className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 bg-mirror-light-blue/30 flex w-full cursor-text items-center justify-center border border-dashed border-transparent p-1 text-center text-[9px] font-bold transition-colors outline-none"
-                            style={{
-                              boxSizing: "border-box",
-                              ...getBorderStyle(colSpecs[0]?.border),
-                            }}
-                          >
-                            {rowData["_full_width"]}
-                          </div>
-                        </div>
-                      );
-                    }
+                          {/* Render group_col cell absolutely */}
+                          {groupCol && (
+                            <div
+                              className="bg-mirror-white absolute top-0 left-0 z-10 flex items-center justify-center p-1 text-center"
+                              style={{
+                                width: `${getCellWidthPercent(groupCol.col, groupCol.end_col)}%`,
+                                height: `${groupRows.length * (dr.row_height || 25)}px`,
+                                fontSize: `${groupCol.font?.size ? groupCol.font.size * 1.25 : 10}px`,
+                                fontWeight: groupCol.font?.bold
+                                  ? "bold"
+                                  : "normal",
+                                ...getBorderStyle(groupCol.border),
+                                boxSizing: "border-box",
+                              }}
+                            >
+                              <span className="leading-tight whitespace-pre-wrap">
+                                {groupLabel}
+                              </span>
+                            </div>
+                          )}
 
-                    return (
-                      <div
-                        key={`dr-${rowIndex}`}
-                        className="flex w-full"
-                        style={{ height: `${dr.row_height || 25}px` }}
-                      >
-                        {colSpecs.map(
-                          (colSpec: ColumnSpec, colIndex: number) => {
-                            let rawVal = "";
-                            if (
-                              colSpec.col_index !== undefined &&
-                              posValues[colSpec.col_index] !== undefined &&
-                              posValues[colSpec.col_index] !== ""
-                            ) {
-                              rawVal = posValues[colSpec.col_index];
-                            } else {
-                              rawVal = fuzzyGet(rowData, colSpec.key || "");
-                            }
-                            let val = rawVal;
-                            if (colSpec.format === "item_code") {
-                              val = formatItemCode(
-                                rawVal,
-                                colSpec.format_options,
-                              );
-                            }
-                            const widthPercent = getCellWidthPercent(
-                              colSpec.col,
-                              colSpec.end_col,
-                            );
-                            const borderSpec = isFirst
-                              ? colSpec.first_row_border || colSpec.border
-                              : colSpec.border;
-                            const borderStyle = getBorderStyle(borderSpec);
+                          {/* Render the rows of the group */}
+                          {groupRows.map((rowData, innerRowIndex) => {
+                            const rowIndex =
+                              groupIndex * groupSize + innerRowIndex;
+                            const isFirst = rowIndex === 0;
 
-                            const editKey =
-                              colSpec.col_index !== undefined &&
-                              colNames[colSpec.col_index] !== undefined
-                                ? (() => {
-                                    const name = colNames[colSpec.col_index];
-                                    const idxOfCol = colNames
-                                      .slice(0, colSpec.col_index + 1)
-                                      .filter((n) => n === name).length;
-                                    return idxOfCol > 1
-                                      ? `${name}_${idxOfCol}`
-                                      : name;
-                                  })()
-                                : colSpec.key;
-                            const isEditable =
-                              !!editKey && !!onExtractedDataChange;
-                            const { code, typeToken, name } =
-                              colSpec.format === "item_code"
-                                ? parseFormattedItemCode(val)
-                                : { code: "", typeToken: "", name: "" };
+                            // Resolve positional values
+                            const seen: Record<string, number> = {};
+                            const posValues: string[] = [];
+                            for (const colName of colNames) {
+                              const cnt = seen[colName] || 0;
+                              seen[colName] = cnt + 1;
+                              if (cnt === 0) {
+                                posValues.push(rowData[colName] ?? "");
+                              } else {
+                                const dedupKey = colName
+                                  ? `${colName}_${cnt + 1}`
+                                  : `_${cnt + 1}`;
+                                posValues.push(rowData[dedupKey] ?? "");
+                              }
+                            }
 
-                            return !isEditable &&
-                              colSpec.format === "item_code" ? (
-                              <div
-                                key={colIndex}
-                                className="flex h-full w-full flex-col p-1"
-                                style={{
-                                  width: `${widthPercent}%`,
-                                  fontSize: `${colSpec.font?.size ? colSpec.font.size * 0.8 : 8}px`,
-                                  fontWeight: colSpec.font?.bold
-                                    ? "bold"
-                                    : "normal",
-                                  boxSizing: "border-box",
-                                  justifyContent: "space-between",
-                                  ...borderStyle,
-                                }}
-                              >
-                                <div className="flex w-full items-start justify-between">
-                                  <span className="truncate">{code}</span>
-                                  {typeToken && (
-                                    <span className="ml-1 text-[7.5px] font-normal whitespace-nowrap text-gray-500">
-                                      {typeToken}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="mt-0.5 w-full text-left leading-tight whitespace-pre-wrap">
-                                  {name}
-                                </div>
-                              </div>
-                            ) : (
-                              <div
-                                key={colIndex}
-                                className="flex overflow-hidden p-1"
-                                style={{
-                                  width: `${widthPercent}%`,
-                                  justifyContent:
-                                    colSpec.align?.h === "center"
-                                      ? "center"
-                                      : colSpec.align?.h === "right"
-                                        ? "flex-end"
-                                        : "flex-start",
-                                  alignItems:
-                                    colSpec.align?.v === "center"
-                                      ? "center"
-                                      : colSpec.align?.v === "bottom"
-                                        ? "flex-end"
-                                        : "flex-start",
-                                  fontSize: `${colSpec.font?.size ? colSpec.font.size * 0.8 : 8}px`,
-                                  fontWeight: colSpec.font?.bold
-                                    ? "bold"
-                                    : "normal",
-                                  whiteSpace: colSpec.align?.wrap
-                                    ? "pre-wrap"
-                                    : "nowrap",
-                                  textDecoration: colSpec.font?.underline
-                                    ? "underline"
-                                    : "none",
-                                  boxSizing: "border-box",
-                                  ...borderStyle,
-                                }}
-                              >
-                                {isEditable ? (
-                                  <span
+                            if ("_full_width" in rowData) {
+                              return (
+                                <div
+                                  key={`dr-${rowIndex}`}
+                                  className="flex w-full"
+                                  style={{ height: `${dr.row_height || 25}px` }}
+                                >
+                                  <div
                                     contentEditable={true}
                                     suppressContentEditableWarning={true}
                                     onBlur={(e) =>
                                       handleRowChange(
                                         rowIndex,
-                                        editKey!,
+                                        "_full_width",
                                         e.currentTarget.textContent || "",
-                                        colSpec.col_index,
                                       )
                                     }
-                                    className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 max-w-full cursor-text rounded border border-dashed border-transparent px-0.5 leading-tight whitespace-pre-wrap transition-colors outline-none"
+                                    className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 bg-mirror-light-blue/30 flex w-full cursor-text items-center justify-center border border-dashed border-transparent p-1 text-center text-[9px] font-bold transition-colors outline-none"
+                                    style={{
+                                      boxSizing: "border-box",
+                                      ...getBorderStyle(colSpecs[0]?.border),
+                                    }}
                                   >
-                                    {val}
-                                  </span>
-                                ) : (
-                                  <span className="max-w-full leading-tight whitespace-pre-wrap">
-                                    {val}
-                                  </span>
+                                    {rowData["_full_width"]}
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={`dr-${rowIndex}`}
+                                className="flex w-full"
+                                style={{ height: `${dr.row_height || 25}px` }}
+                              >
+                                {/* Group column placeholder */}
+                                {groupCol && (
+                                  <div
+                                    style={{
+                                      width: `${getCellWidthPercent(groupCol.col, groupCol.end_col)}%`,
+                                      boxSizing: "border-box",
+                                      borderLeft: getBorderStyle(
+                                        groupCol.border,
+                                      ).borderLeft,
+                                      borderRight: getBorderStyle(
+                                        groupCol.border,
+                                      ).borderRight,
+                                      borderTop:
+                                        innerRowIndex === 0
+                                          ? getBorderStyle(groupCol.border)
+                                              .borderTop
+                                          : "none",
+                                      borderBottom:
+                                        innerRowIndex === groupRows.length - 1
+                                          ? getBorderStyle(groupCol.border)
+                                              .borderBottom
+                                          : "none",
+                                    }}
+                                  />
+                                )}
+
+                                {/* Other columns */}
+                                {colSpecs.map(
+                                  (colSpec: ColumnSpec, colIndex: number) => {
+                                    let rawVal = "";
+                                    if (
+                                      colSpec.col_index !== undefined &&
+                                      posValues[colSpec.col_index] !==
+                                        undefined &&
+                                      posValues[colSpec.col_index] !== ""
+                                    ) {
+                                      rawVal = posValues[colSpec.col_index];
+                                    } else {
+                                      rawVal = fuzzyGet(
+                                        rowData,
+                                        colSpec.key || "",
+                                      );
+                                    }
+                                    let val = rawVal;
+                                    if (colSpec.format === "item_code") {
+                                      val = formatItemCode(
+                                        rawVal,
+                                        colSpec.format_options,
+                                      );
+                                    }
+                                    const widthPercent = getCellWidthPercent(
+                                      colSpec.col,
+                                      colSpec.end_col,
+                                    );
+                                    const borderSpec = isFirst
+                                      ? colSpec.first_row_border ||
+                                        colSpec.border
+                                      : colSpec.border;
+                                    const borderStyle =
+                                      getBorderStyle(borderSpec);
+                                    if (innerRowIndex > 0) {
+                                      borderStyle.borderTop =
+                                        "0.5px solid rgba(0, 0, 0, 0.15)";
+                                    } else {
+                                      borderStyle.borderTop =
+                                        "1px solid #000000";
+                                    }
+                                    if (
+                                      innerRowIndex ===
+                                      groupRows.length - 1
+                                    ) {
+                                      borderStyle.borderBottom =
+                                        "1px solid #000000";
+                                    }
+
+                                    const editKey =
+                                      colSpec.col_index !== undefined &&
+                                      colNames[colSpec.col_index] !== undefined
+                                        ? (() => {
+                                            const name =
+                                              colNames[colSpec.col_index];
+                                            const idxOfCol = colNames
+                                              .slice(0, colSpec.col_index + 1)
+                                              .filter((n) => n === name).length;
+                                            return idxOfCol > 1
+                                              ? `${name}_${idxOfCol}`
+                                              : name;
+                                          })()
+                                        : colSpec.key;
+                                    const isEditable =
+                                      !!editKey && !!onExtractedDataChange;
+                                    const { code, typeToken, name } =
+                                      colSpec.format === "item_code"
+                                        ? parseFormattedItemCode(val)
+                                        : { code: "", typeToken: "", name: "" };
+
+                                    return !isEditable &&
+                                      colSpec.format === "item_code" ? (
+                                      <div
+                                        key={colIndex}
+                                        className="flex h-full w-full flex-col p-1"
+                                        style={{
+                                          width: `${widthPercent}%`,
+                                          fontSize: `${colSpec.font?.size ? colSpec.font.size * 0.9 : 9}px`,
+                                          fontWeight: colSpec.font?.bold
+                                            ? "bold"
+                                            : "normal",
+                                          boxSizing: "border-box",
+                                          justifyContent: "space-between",
+                                          ...borderStyle,
+                                        }}
+                                      >
+                                        <div className="flex w-full items-start justify-between">
+                                          <span className="truncate">
+                                            {code}
+                                          </span>
+                                          {typeToken && (
+                                            <span className="ml-1 text-[7.5px] font-normal whitespace-nowrap text-gray-500">
+                                              {typeToken}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="mt-0.5 w-full text-left leading-tight whitespace-pre-wrap">
+                                          {name}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div
+                                        key={colIndex}
+                                        className="flex overflow-hidden p-1"
+                                        style={{
+                                          width: `${widthPercent}%`,
+                                          justifyContent:
+                                            colSpec.align?.h === "center"
+                                              ? "center"
+                                              : colSpec.align?.h === "right"
+                                                ? "flex-end"
+                                                : "flex-start",
+                                          alignItems:
+                                            colSpec.align?.v === "center"
+                                              ? "center"
+                                              : colSpec.align?.v === "bottom"
+                                                ? "flex-end"
+                                                : "flex-start",
+                                          fontSize: `${colSpec.font?.size ? colSpec.font.size * 0.9 : 9}px`,
+                                          fontWeight: colSpec.font?.bold
+                                            ? "bold"
+                                            : "normal",
+                                          whiteSpace: colSpec.align?.wrap
+                                            ? "pre-wrap"
+                                            : "nowrap",
+                                          textDecoration: colSpec.font
+                                            ?.underline
+                                            ? "underline"
+                                            : "none",
+                                          boxSizing: "border-box",
+                                          ...borderStyle,
+                                        }}
+                                      >
+                                        {isEditable ? (
+                                          <span
+                                            contentEditable={true}
+                                            suppressContentEditableWarning={
+                                              true
+                                            }
+                                            onBlur={(e) =>
+                                              handleRowChange(
+                                                rowIndex,
+                                                editKey!,
+                                                e.currentTarget.textContent ||
+                                                  "",
+                                                colSpec.col_index,
+                                              )
+                                            }
+                                            className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 max-w-full cursor-text rounded border border-dashed border-transparent px-0.5 leading-tight transition-colors outline-none"
+                                            style={{ whiteSpace: "inherit" }}
+                                          >
+                                            {val}
+                                          </span>
+                                        ) : (
+                                          <span
+                                            className="max-w-full leading-tight"
+                                            style={{ whiteSpace: "inherit" }}
+                                          >
+                                            {val}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  },
                                 )}
                               </div>
                             );
-                          },
-                        )}
-                      </div>
+                          })}
+                        </div>
+                      );
+                    });
+                  } else {
+                    const maxRows = Math.max(dr.count || 0, rows.length);
+                    return Array.from({ length: maxRows }).map(
+                      (_, rowIndex) => {
+                        const rowData = rows[rowIndex] || {};
+                        const isFirst = rowIndex === 0;
+
+                        // Positional value resolution for columns based on tableData.columns
+                        const seen: Record<string, number> = {};
+                        const posValues: string[] = [];
+                        for (const colName of colNames) {
+                          const cnt = seen[colName] || 0;
+                          seen[colName] = cnt + 1;
+                          if (cnt === 0) {
+                            posValues.push(rowData[colName] ?? "");
+                          } else {
+                            const dedupKey = colName
+                              ? `${colName}_${cnt + 1}`
+                              : `_${cnt + 1}`;
+                            posValues.push(rowData[dedupKey] ?? "");
+                          }
+                        }
+
+                        if ("_full_width" in rowData) {
+                          return (
+                            <div
+                              key={`dr-${rowIndex}`}
+                              className="flex w-full"
+                              style={{ height: `${dr.row_height || 25}px` }}
+                            >
+                              <div
+                                contentEditable={true}
+                                suppressContentEditableWarning={true}
+                                onBlur={(e) =>
+                                  handleRowChange(
+                                    rowIndex,
+                                    "_full_width",
+                                    e.currentTarget.textContent || "",
+                                  )
+                                }
+                                className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 bg-mirror-light-blue/30 flex w-full cursor-text items-center justify-center border border-dashed border-transparent p-1 text-center text-[9px] font-bold transition-colors outline-none"
+                                style={{
+                                  boxSizing: "border-box",
+                                  ...getBorderStyle(colSpecs[0]?.border),
+                                }}
+                              >
+                                {rowData["_full_width"]}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={`dr-${rowIndex}`}
+                            className="flex w-full"
+                            style={{ height: `${dr.row_height || 25}px` }}
+                          >
+                            {colSpecs.map(
+                              (colSpec: ColumnSpec, colIndex: number) => {
+                                let rawVal = "";
+                                if (
+                                  colSpec.col_index !== undefined &&
+                                  posValues[colSpec.col_index] !== undefined &&
+                                  posValues[colSpec.col_index] !== ""
+                                ) {
+                                  rawVal = posValues[colSpec.col_index];
+                                } else {
+                                  rawVal = fuzzyGet(rowData, colSpec.key || "");
+                                }
+                                let val = rawVal;
+                                if (colSpec.format === "item_code") {
+                                  val = formatItemCode(
+                                    rawVal,
+                                    colSpec.format_options,
+                                  );
+                                }
+                                const widthPercent = getCellWidthPercent(
+                                  colSpec.col,
+                                  colSpec.end_col,
+                                );
+                                const borderSpec = isFirst
+                                  ? colSpec.first_row_border || colSpec.border
+                                  : colSpec.border;
+                                const borderStyle = getBorderStyle(borderSpec);
+
+                                const editKey =
+                                  colSpec.col_index !== undefined &&
+                                  colNames[colSpec.col_index] !== undefined
+                                    ? (() => {
+                                        const name =
+                                          colNames[colSpec.col_index];
+                                        const idxOfCol = colNames
+                                          .slice(0, colSpec.col_index + 1)
+                                          .filter((n) => n === name).length;
+                                        return idxOfCol > 1
+                                          ? `${name}_${idxOfCol}`
+                                          : name;
+                                      })()
+                                    : colSpec.key;
+                                const isEditable =
+                                  !!editKey && !!onExtractedDataChange;
+                                const { code, typeToken, name } =
+                                  colSpec.format === "item_code"
+                                    ? parseFormattedItemCode(val)
+                                    : { code: "", typeToken: "", name: "" };
+
+                                return !isEditable &&
+                                  colSpec.format === "item_code" ? (
+                                  <div
+                                    key={colIndex}
+                                    className="flex h-full w-full flex-col p-1"
+                                    style={{
+                                      width: `${widthPercent}%`,
+                                      fontSize: `${colSpec.font?.size ? colSpec.font.size * 0.9 : 9}px`,
+                                      fontWeight: colSpec.font?.bold
+                                        ? "bold"
+                                        : "normal",
+                                      boxSizing: "border-box",
+                                      justifyContent: "space-between",
+                                      ...borderStyle,
+                                    }}
+                                  >
+                                    <div className="flex w-full items-start justify-between">
+                                      <span className="truncate">{code}</span>
+                                      {typeToken && (
+                                        <span className="ml-1 text-[7.5px] font-normal whitespace-nowrap text-gray-500">
+                                          {typeToken}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="mt-0.5 w-full text-left leading-tight whitespace-pre-wrap">
+                                      {name}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div
+                                    key={colIndex}
+                                    className="flex overflow-hidden p-1"
+                                    style={{
+                                      width: `${widthPercent}%`,
+                                      justifyContent:
+                                        colSpec.align?.h === "center"
+                                          ? "center"
+                                          : colSpec.align?.h === "right"
+                                            ? "flex-end"
+                                            : "flex-start",
+                                      alignItems:
+                                        colSpec.align?.v === "center"
+                                          ? "center"
+                                          : colSpec.align?.v === "bottom"
+                                            ? "flex-end"
+                                            : "flex-start",
+                                      fontSize: `${colSpec.font?.size ? colSpec.font.size * 0.9 : 9}px`,
+                                      fontWeight: colSpec.font?.bold
+                                        ? "bold"
+                                        : "normal",
+                                      whiteSpace: colSpec.align?.wrap
+                                        ? "pre-wrap"
+                                        : "nowrap",
+                                      textDecoration: colSpec.font?.underline
+                                        ? "underline"
+                                        : "none",
+                                      boxSizing: "border-box",
+                                      ...borderStyle,
+                                    }}
+                                  >
+                                    {isEditable ? (
+                                      <span
+                                        contentEditable={true}
+                                        suppressContentEditableWarning={true}
+                                        onBlur={(e) =>
+                                          handleRowChange(
+                                            rowIndex,
+                                            editKey!,
+                                            e.currentTarget.textContent || "",
+                                            colSpec.col_index,
+                                          )
+                                        }
+                                        className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 max-w-full cursor-text rounded border border-dashed border-transparent px-0.5 leading-tight transition-colors outline-none"
+                                        style={{ whiteSpace: "inherit" }}
+                                      >
+                                        {val}
+                                      </span>
+                                    ) : (
+                                      <span
+                                        className="max-w-full leading-tight"
+                                        style={{ whiteSpace: "inherit" }}
+                                      >
+                                        {val}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              },
+                            )}
+                          </div>
+                        );
+                      },
                     );
-                  });
+                  }
                 })()}
               </div>
             )}
@@ -616,7 +953,7 @@ const TemplateViewer = ({
                               : cell.align?.v === "bottom"
                                 ? "flex-end"
                                 : "flex-start",
-                          fontSize: `${cell.font?.size ? cell.font.size * 0.8 : 8}px`,
+                          fontSize: `${cell.font?.size ? cell.font.size * 0.9 : 9}px`,
                           fontWeight: cell.font?.bold ? "bold" : "normal",
                           textDecoration: cell.font?.underline
                             ? "underline"
