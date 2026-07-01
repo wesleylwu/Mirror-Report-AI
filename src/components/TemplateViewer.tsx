@@ -16,7 +16,10 @@ import {
   parseFormattedItemCode,
 } from "../utils/template";
 
-const normalizeRow = (row: any, colNames: string[]): Record<string, string> => {
+const normalizeRow = (
+  row: Record<string, unknown> | unknown[] | null | undefined,
+  colNames: string[],
+): Record<string, string> => {
   if (!row) return {};
   if (!Array.isArray(row)) {
     return row as Record<string, string>;
@@ -218,11 +221,11 @@ const TemplateViewer = ({
       const rows = [...(extractedData.table?.rows || [])];
       if (rows[rIndex]) {
         if (Array.isArray(rows[rIndex])) {
-          const rowArr = [...(rows[rIndex] as any)];
+          const rowArr = [...(rows[rIndex] as unknown as string[])];
           if (colIndex !== undefined) {
             rowArr[colIndex] = value;
           }
-          rows[rIndex] = rowArr as any;
+          rows[rIndex] = rowArr as unknown as Record<string, string>;
         } else {
           rows[rIndex] = {
             ...(rows[rIndex] as Record<string, string>),
@@ -421,7 +424,7 @@ const TemplateViewer = ({
                   if (isGroup) {
                     const groupCol = matchedTemplate.group_col;
                     const groupSize = matchedTemplate.group_size || 4;
-                    const groups: any[][] = [];
+                    const groups: Record<string, string>[][] = [];
                     for (let i = 0; i < rows.length; i += groupSize) {
                       groups.push(rows.slice(i, i + groupSize));
                     }
