@@ -291,6 +291,9 @@ const TemplateViewer = ({
                       cell.end_col,
                     );
                     const borderStyle = getBorderStyle(cell.border);
+                    const fillStyle = cell.fill?.color
+                      ? { backgroundColor: `#${cell.fill.color}` }
+                      : {};
                     const isEditable =
                       !cell.fixed && cell.key && !!onExtractedDataChange;
 
@@ -320,6 +323,7 @@ const TemplateViewer = ({
                             : "none",
                           boxSizing: "border-box",
                           ...borderStyle,
+                          ...fillStyle,
                         }}
                       >
                         {isEditable ? (
@@ -355,46 +359,53 @@ const TemplateViewer = ({
                   height: `${(matchedTemplate.col_headers.row_heights || []).reduce((a: number, b: number) => a + b, 0) || matchedTemplate.col_headers.height || 30}px`,
                 }}
               >
-                {matchedTemplate.col_headers.cells.map(
-                  (cell: CellSpec, cellIndex: number) => {
-                    const widthPercent = getCellWidthPercent(
-                      cell.col,
-                      cell.end_col,
-                    );
-                    const borderStyle = getBorderStyle(cell.border);
-                    return (
-                      <div
-                        key={`ch-${cellIndex}`}
-                        className="flex overflow-hidden bg-slate-50 p-1"
-                        style={{
-                          width: `${widthPercent}%`,
-                          justifyContent:
-                            cell.align?.h === "center"
-                              ? "center"
-                              : cell.align?.h === "right"
-                                ? "flex-end"
-                                : "flex-start",
-                          alignItems:
-                            cell.align?.v === "center"
-                              ? "center"
-                              : cell.align?.v === "bottom"
-                                ? "flex-end"
-                                : "flex-start",
-                          fontSize: `${cell.font?.size ? cell.font.size * 0.9 : 9}px`,
-                          textDecoration: cell.font?.underline
-                            ? "underline"
-                            : "none",
-                          boxSizing: "border-box",
-                          ...borderStyle,
-                        }}
-                      >
-                        <span className="max-w-full truncate leading-tight font-bold">
-                          {cell.value}
-                        </span>
-                      </div>
-                    );
-                  },
-                )}
+                {(() => {
+                  const colHeaders = matchedTemplate.col_headers;
+                  return colHeaders.cells.map(
+                    (cell: CellSpec, cellIndex: number) => {
+                      const widthPercent = getCellWidthPercent(
+                        cell.col,
+                        cell.end_col,
+                      );
+                      const borderStyle = getBorderStyle(cell.border);
+                      const fillStyle = colHeaders.fill?.color
+                        ? { backgroundColor: `#${colHeaders.fill.color}` }
+                        : { backgroundColor: "#f8fafc" };
+                      return (
+                        <div
+                          key={`ch-${cellIndex}`}
+                          className="flex overflow-hidden p-1"
+                          style={{
+                            width: `${widthPercent}%`,
+                            justifyContent:
+                              cell.align?.h === "center"
+                                ? "center"
+                                : cell.align?.h === "right"
+                                  ? "flex-end"
+                                  : "flex-start",
+                            alignItems:
+                              cell.align?.v === "center"
+                                ? "center"
+                                : cell.align?.v === "bottom"
+                                  ? "flex-end"
+                                  : "flex-start",
+                            fontSize: `${cell.font?.size ? cell.font.size * 0.9 : 9}px`,
+                            textDecoration: cell.font?.underline
+                              ? "underline"
+                              : "none",
+                            boxSizing: "border-box",
+                            ...borderStyle,
+                            ...fillStyle,
+                          }}
+                        >
+                          <span className="max-w-full truncate leading-tight font-bold">
+                            {cell.value}
+                          </span>
+                        </div>
+                      );
+                    },
+                  );
+                })()}
               </div>
             )}
 
@@ -807,6 +818,30 @@ const TemplateViewer = ({
                                   : colSpec.border;
                                 const borderStyle = getBorderStyle(borderSpec);
 
+                                if (
+                                  matchedTemplate.id ===
+                                  "課別基準客先別売上粗利"
+                                ) {
+                                  if (rowIndex > 0) {
+                                    borderStyle.borderTop =
+                                      "0.5px solid rgba(0, 0, 0, 0.15)";
+                                  } else {
+                                    borderStyle.borderTop = "1px solid #000000";
+                                  }
+                                  if (rowIndex === maxRows - 1) {
+                                    borderStyle.borderBottom =
+                                      "1px solid #000000";
+                                  }
+                                }
+
+                                const isLastRow = rowIndex === maxRows - 1;
+                                const fillStyle =
+                                  isLastRow && dr.last_row_fill
+                                    ? {
+                                        backgroundColor: `#${dr.last_row_fill.color || "D9D9D9"}`,
+                                      }
+                                    : {};
+
                                 const editKey =
                                   colSpec.col_index !== undefined &&
                                   colNames[colSpec.col_index] !== undefined
@@ -842,6 +877,7 @@ const TemplateViewer = ({
                                       boxSizing: "border-box",
                                       justifyContent: "space-between",
                                       ...borderStyle,
+                                      ...fillStyle,
                                     }}
                                   >
                                     <div className="flex w-full items-start justify-between">
@@ -886,6 +922,7 @@ const TemplateViewer = ({
                                         : "none",
                                       boxSizing: "border-box",
                                       ...borderStyle,
+                                      ...fillStyle,
                                     }}
                                   >
                                     {isEditable ? (

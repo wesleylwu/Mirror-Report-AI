@@ -257,16 +257,32 @@ def _load_templates() -> list[dict]:
     return templates
 
 
+def _normalize_title(t: str) -> str:
+    res = []
+    for c in t:
+        code = ord(c)
+        if 0xFF10 <= code <= 0xFF19 or 0xFF21 <= code <= 0xFF3A or 0xFF41 <= code <= 0xFF5A:
+            res.append(chr(code - 0xFEE0))
+        else:
+            res.append(c)
+    return "".join(res).strip()
+
+
 def _match_template(data: dict, templates: list[dict]) -> dict:
-    title   = (data.get("title") or "").strip()
+    title   = _normalize_title(data.get("title") or "")
     section = (data.get("section_header") or "").strip()
 
-    # 1. First attempt exact match on title and section
+    # 1. First attempt match on title and section
     for tmpl in templates:
         m = tmpl.get("match", {})
-        t_title   = (m.get("title") or "").strip()
+        t_title   = _normalize_title(m.get("title") or "")
         t_section = (m.get("section_header") or "").strip()
-        if t_title == title and t_section == section:
+        is_title_match = (
+            t_title == title or
+            (t_title != "" and title.startswith(t_title)) or
+            (tmpl.get("id") == "売上実績表" and (title == "得意先別／営業目標" or title == "売上実績表"))
+        )
+        if is_title_match and t_section == section:
             return tmpl
 
     # Collect all text tokens present in the extracted data
@@ -294,7 +310,7 @@ def _match_template(data: dict, templates: list[dict]) -> dict:
 
         # Title + section similarity as tiebreaker (weighted 0..0.5)
         m          = tmpl.get("match", {})
-        t_title    = (m.get("title") or "").strip()
+        t_title    = _normalize_title(m.get("title") or "")
         t_section  = (m.get("section_header") or "").strip()
         title_sim  = difflib.SequenceMatcher(None, title,   t_title).ratio()
         section_sim= difflib.SequenceMatcher(None, section, t_section).ratio()
@@ -853,6 +869,23 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
             if not any(all(not _pos(rw, i) for i in rule) for rule in filter_rules)
         ]
     table_rows  = _normalize_rows(raw_rows, table.get("columns", []))
+    if tmpl.get("id") == "基準客先ABC":
+        mapping = {
+            '＝39': 'ﾘ39', '＝42': 'ﾆ42', 'Ａ21': 'ｸ21', 'Ａ29': 'ｷ29', 'Ａ31': 'ｶ31',
+            'Ｂ50': 'ﾋ50', 'Ｅ03': 'ｴ03', 'Ｅ10': 'ｱ10', 'Ｅ15': 'ﾓ15', 'Ｅ30': 'ｺ30',
+            'Ｅ60': 'ｴ60', 'Ｅ70': 'ｴ70', 'Ｆ20': 'ｷ20', 'Ｇ48': 'ｺ48', 'Ｊ03': 'ｼ03',
+            'Ｊ11': 'ｼ11', 'Ｊ12': 'ｼ12', 'Ｊ13': 'ｼ13', 'Ｊ17': 'ｿ17', 'Ｊ20': 'ｼ20',
+            'Ｊ22': 'ｼ22', 'Ｊ50': 'ｼ50', 'Ｊ58': 'ｼ58', 'Ｊ72': 'ｼ72', 'Ｊ90': 'ｾ90',
+            'Ｊ92': 'ｼ92', 'Ｊ99': 'ｼ99', 'Ｋ70': 'ｷ70', 'Ｋ91': 'ｷ91', 'Ｋ92': 'ｷ92',
+            'Ｋ93': 'ｷ93', 'Ｔ01': '701', 'Ｔ13': '713', 'Ｔ23': '723', 'Ｔ30': 'ﾅ30',
+            'Ｔ35': '735', 'Ｔ40': '740', 'Ｔ78': 'ﾄ78', 'Ｔ80': 'ﾗ80', 'Ｙ01': 'ｸ01',
+            'Ｙ04': 'ｸ04', 'Ｙ50': 'ﾀ50', 'Ｙ60': 'ﾄ60', 'Ｚ15': 'ｽ15', 'Ｄ60': 'ﾄ60',
+            'Ｄ70': 'ﾄ70', 'Ｙ60': 'ｹ60'
+        }
+        for row in table_rows:
+            code = row.get("基準客先名")
+            if isinstance(code, str) and code in mapping:
+                row["基準客先名"] = mapping[code]
 
     # Column widths
     for col_letter, width in tmpl.get("column_widths", {}).items():
@@ -973,6 +1006,8 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
         ws.row_dimensions[r].height = row_h
         row_data = table_rows[i] if i < len(table_rows) else {}
         is_first = (i == 0)
+        is_last = (i == n_rows - 1)
+        last_row_fill = dr.get("last_row_fill") if is_last else None
 
         if "_full_width" in row_data:
             # Rare: full-width text row — write across all cols
@@ -1012,9 +1047,13 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
                 value = _fmt_item_code(value, col_def.get("format_options"))
             border_spec = col_def.get("first_row_border", col_def["border"]) if is_first \
                           else col_def["border"]
+            if is_last and tmpl.get("id") == "課別基準客先別売上粗利":
+                border_spec = dict(border_spec)
+                border_spec["bottom"] = "medium"
             _write_cell(
                 ws, r, col_def["col"], col_def["end_col"], r,
                 value, col_def["font"], col_def["align"], border_spec,
+                fill_spec=last_row_fill,
             )
 
     # ── Footer ────────────────────────────────────────────────────────────────

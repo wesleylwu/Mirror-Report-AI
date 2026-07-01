@@ -98,7 +98,7 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
       </div>
 
       {/* Main Preview Container */}
-      <div className="bg-mirror-dark-blue/95 border-mirror-light-blue relative flex min-h-[50vh] items-center justify-center overflow-hidden rounded-2xl border p-4">
+      <div className="border-mirror-light-blue relative flex min-h-[50vh] items-center justify-center overflow-hidden rounded-2xl border bg-slate-100 p-4 shadow-inner">
         {activeFile && isImage && imageUrl ? (
           <div className="relative h-[44vh] w-full">
             <Image
@@ -110,27 +110,35 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
           </div>
         ) : (
           activeFile && (
-            <div className="text-mirror-light-blue flex flex-col items-center justify-center p-8 text-center">
+            <div className="text-mirror-dark-blue flex flex-col items-center justify-center p-8 text-center">
               <div className="text-mirror-cyan bg-mirror-cyan/10 mb-4 flex items-center justify-center rounded-full p-4">
                 <FaFileAlt className="h-10 w-10" />
               </div>
-              <p className="text-mirror-white mb-2 text-base font-bold">
+              <p className="text-mirror-dark-blue mb-2 text-base font-bold">
                 Non-Image Source Loaded
               </p>
-              <div className="bg-mirror-dark-blue/80 text-mirror-green border-mirror-gray max-h-[25vh] w-full max-w-[25vw] overflow-auto rounded-xl border p-4 text-left font-mono text-xs shadow-lg">
-                <p className="text-mirror-gray border-mirror-gray mb-2 border-b pb-1">
+              <div className="max-h-[25vh] w-full max-w-[25vw] overflow-auto rounded-xl border border-gray-200 bg-white p-4 text-left font-mono text-xs text-gray-800 shadow-md">
+                <p className="mb-2 border-b border-gray-100 pb-1 text-gray-400">
                   {"// Metadata Registry"}
                 </p>
-                <div className="text-mirror-white">
-                  <p className="text-mirror-cyan inline">File Name:</p> &quot;
+                <div className="text-gray-700">
+                  <p className="text-mirror-cyan inline font-bold">
+                    File Name:
+                  </p>{" "}
+                  &quot;
                   {activeFile.name}&quot;
                 </div>
-                <div className="text-mirror-white">
-                  <p className="text-mirror-cyan inline">File Size:</p>{" "}
+                <div className="text-gray-700">
+                  <p className="text-mirror-cyan inline font-bold">
+                    File Size:
+                  </p>{" "}
                   {activeFile.size} B
                 </div>
-                <div className="text-mirror-white">
-                  <p className="text-mirror-cyan inline">File Type:</p> &quot;
+                <div className="text-gray-700">
+                  <p className="text-mirror-cyan inline font-bold">
+                    File Type:
+                  </p>{" "}
+                  &quot;
                   {activeFile.type || "unknown"}&quot;
                 </div>
               </div>

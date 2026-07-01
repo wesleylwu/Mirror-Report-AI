@@ -178,6 +178,79 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
           );
         }
 
+        // 1.5 Clean up customer codes for 基準客先ABC template
+        const title = (extracted.title || "").trim();
+        const normTitle = title.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) =>
+          String.fromCharCode(s.charCodeAt(0) - 0xfee0),
+        );
+        if (normTitle.startsWith("基準客先ABC") && extracted.table?.rows) {
+          const mapping: Record<string, string> = {
+            "＝39": "ﾘ39",
+            "＝42": "ﾆ42",
+            Ａ21: "ｸ21",
+            Ａ29: "ｷ29",
+            Ａ31: "ｶ31",
+            Ｂ50: "ﾋ50",
+            Ｅ03: "ｴ03",
+            Ｅ10: "ｱ10",
+            Ｅ15: "ﾓ15",
+            Ｅ30: "ｺ30",
+            Ｅ60: "ｴ60",
+            Ｅ70: "ｴ70",
+            Ｆ20: "ｷ20",
+            Ｇ48: "ｺ48",
+            Ｊ03: "ｼ03",
+            Ｊ11: "ｼ11",
+            Ｊ12: "ｼ12",
+            Ｊ13: "ｼ13",
+            Ｊ17: "ｿ17",
+            Ｊ20: "ｼ20",
+            Ｊ22: "ｼ22",
+            Ｊ50: "ｼ50",
+            Ｊ58: "ｼ58",
+            Ｊ72: "ｼ72",
+            Ｊ90: "ｾ90",
+            Ｊ92: "ｼ92",
+            Ｊ99: "ｼ99",
+            Ｋ70: "ｷ70",
+            Ｋ91: "ｷ91",
+            Ｋ92: "ｷ92",
+            Ｋ93: "ｷ93",
+            Ｔ01: "701",
+            Ｔ13: "713",
+            Ｔ23: "723",
+            Ｔ30: "ﾅ30",
+            Ｔ35: "735",
+            Ｔ40: "740",
+            Ｔ78: "ﾄ78",
+            Ｔ80: "ﾗ80",
+            Ｙ01: "ｸ01",
+            Ｙ04: "ｸ04",
+            Ｙ50: "ﾀ50",
+            Ｚ15: "ｽ15",
+            Ｄ60: "ﾄ60",
+            Ｄ70: "ﾄ70",
+            Ｙ60: "ｹ60",
+          };
+          extracted.table.rows = extracted.table.rows.map((r: unknown) => {
+            if (Array.isArray(r) && r.length > 1) {
+              const code = r[1];
+              if (typeof code === "string" && mapping[code]) {
+                const newRow = [...r];
+                newRow[1] = mapping[code];
+                return newRow;
+              }
+            } else if (r && typeof r === "object") {
+              const obj = r as Record<string, unknown>;
+              const code = (obj["基準客先名"] || obj[1]) as string | undefined;
+              if (typeof code === "string" && mapping[code]) {
+                return { ...obj, 基準客先名: mapping[code] };
+              }
+            }
+            return r;
+          }) as Record<string, string>[];
+        }
+
         // 2. Extract main and sub from 手配No.
         if (extracted.header) {
           if (extracted.header["店番"] === "S50") {

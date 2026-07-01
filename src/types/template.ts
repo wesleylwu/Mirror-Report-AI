@@ -30,6 +30,7 @@ export interface CellSpec {
   title_part?: "left" | "center" | "right";
   concat_keys?: string[];
   label_prefix?: boolean;
+  fill?: { color?: string };
 }
 
 export interface HeaderRowSpec {
@@ -61,6 +62,7 @@ export interface DataRowsSpec {
   columns: ColumnSpec[];
   count?: number;
   row_height?: number;
+  last_row_fill?: { color?: string };
 }
 
 export interface FooterSpec {
@@ -69,6 +71,7 @@ export interface FooterSpec {
 }
 
 export interface MatchedTemplate {
+  id?: string;
   orientation?: "portrait" | "landscape";
   column_widths?: Record<string, number>;
   header?: HeaderRowSpec[];
@@ -76,6 +79,7 @@ export interface MatchedTemplate {
     row_heights?: number[];
     height?: number;
     cells: CellSpec[];
+    fill?: { color?: string };
   };
   data_rows?: DataRowsSpec;
   footer?: FooterSpec;

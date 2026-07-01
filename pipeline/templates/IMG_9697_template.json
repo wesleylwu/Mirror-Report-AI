@@ -1,5 +1,7 @@
 {
   "id": "基準客先ABC",
+  "orientation": "portrait",
+  "n_cols": 9,
   "match": {"title": "基準客先ＡＢＣ", "section_header": ""},
   "match_signals": ["基準客先名", "営業部", "他営業部", "本部売上額", "売上原価", "営業粗利率"],
   "column_widths": {
