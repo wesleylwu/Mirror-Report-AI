@@ -89,3 +89,16 @@ export const formatItemCode = (
   const rest = nameLines.join("\n");
   return rest ? `${firstLine}\n${rest}` : firstLine;
 };
+
+export const parseFormattedItemCode = (text: string) => {
+  if (!text) return { code: "", typeToken: "", name: "" };
+  const lines = text.split("\n");
+  const firstLine = lines[0] || "";
+  const nameLine = lines.slice(1).join("\n") || "";
+
+  const parts = firstLine.split(/\u00A0{2,}|\s{2,}/);
+  const code = parts[0] || "";
+  const typeToken = (parts[1] || "").trim();
+
+  return { code, typeToken, name: nameLine };
+};

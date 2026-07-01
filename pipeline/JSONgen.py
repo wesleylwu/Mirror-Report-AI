@@ -26,7 +26,7 @@ from PIL import Image, ImageDraw, ImageOps
 
 MODEL_HAIKU  = "claude-haiku-4-5-20251001"
 MODEL_SONNET = "claude-sonnet-4-6"
-MODEL = MODEL_HAIKU  # default; overridden by --sonnet flag at runtime
+MODEL = MODEL_SONNET  # default; overridden by --sonnet flag at runtime
 
 PROMPT = """You are a precise document digitizer. Extract ONLY the text visible in the image. Do not infer, guess, or fill in values.
 

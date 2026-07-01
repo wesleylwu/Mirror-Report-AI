@@ -10,7 +10,11 @@ import {
   HeaderRowSpec,
   ColumnSpec,
 } from "../types/template";
-import { fuzzyGet, formatItemCode } from "../utils/template";
+import {
+  fuzzyGet,
+  formatItemCode,
+  parseFormattedItemCode,
+} from "../utils/template";
 
 const normalizeRow = (row: any, colNames: string[]): Record<string, string> => {
   if (!row) return {};
@@ -23,7 +27,7 @@ const normalizeRow = (row: any, colNames: string[]): Record<string, string> => {
     const cn = colNames[i] || "";
     const cnt = seen[cn] || 0;
     seen[cn] = cnt + 1;
-    const key = cnt === 0 ? cn : (cn ? `${cn}_${cnt + 1}` : `_${cnt + 1}`);
+    const key = cnt === 0 ? cn : cn ? `${cn}_${cnt + 1}` : `_${cnt + 1}`;
     result[key] = row[i] !== undefined ? String(row[i]) : "";
   }
   return result;
@@ -182,7 +186,10 @@ const TemplateViewer = ({
         return parts.filter(Boolean).join(" ");
       }
       if (cell.value_part) {
-        if (cell.value_part === "tail" && extractedData.header?.[`${key}_sub`] !== undefined) {
+        if (
+          cell.value_part === "tail" &&
+          extractedData.header?.[`${key}_sub`] !== undefined
+        ) {
           return extractedData.header[`${key}_sub`];
         }
         const raw = fuzzyGet(extractedData.header, key);
@@ -257,7 +264,8 @@ const TemplateViewer = ({
                       cell.end_col,
                     );
                     const borderStyle = getBorderStyle(cell.border);
-                    const isEditable = !cell.fixed && cell.key && !!onExtractedDataChange;
+                    const isEditable =
+                      !cell.fixed && cell.key && !!onExtractedDataChange;
 
                     return (
                       <div
@@ -280,7 +288,9 @@ const TemplateViewer = ({
                           fontWeight: cell.font?.bold ? "bold" : "normal",
                           fontSize: `${cell.font?.size ? cell.font.size * 0.8 : 8}px`,
                           whiteSpace: cell.align?.wrap ? "normal" : "nowrap",
-                          textDecoration: cell.font?.underline ? "underline" : "none",
+                          textDecoration: cell.font?.underline
+                            ? "underline"
+                            : "none",
                           boxSizing: "border-box",
                           ...borderStyle,
                         }}
@@ -344,7 +354,9 @@ const TemplateViewer = ({
                                 ? "flex-end"
                                 : "flex-start",
                           fontSize: `${cell.font?.size ? cell.font.size * 0.8 : 8}px`,
-                          textDecoration: cell.font?.underline ? "underline" : "none",
+                          textDecoration: cell.font?.underline
+                            ? "underline"
+                            : "none",
                           boxSizing: "border-box",
                           ...borderStyle,
                         }}
@@ -392,7 +404,9 @@ const TemplateViewer = ({
                       if (cnt === 0) {
                         posValues.push(rowData[colName] ?? "");
                       } else {
-                        const dedupKey = colName ? `${colName}_${cnt + 1}` : `_${cnt + 1}`;
+                        const dedupKey = colName
+                          ? `${colName}_${cnt + 1}`
+                          : `_${cnt + 1}`;
                         posValues.push(rowData[dedupKey] ?? "");
                       }
                     }
@@ -435,7 +449,11 @@ const TemplateViewer = ({
                         {colSpecs.map(
                           (colSpec: ColumnSpec, colIndex: number) => {
                             let rawVal = "";
-                            if (colSpec.col_index !== undefined && posValues[colSpec.col_index] !== undefined && posValues[colSpec.col_index] !== "") {
+                            if (
+                              colSpec.col_index !== undefined &&
+                              posValues[colSpec.col_index] !== undefined &&
+                              posValues[colSpec.col_index] !== ""
+                            ) {
                               rawVal = posValues[colSpec.col_index];
                             } else {
                               rawVal = fuzzyGet(rowData, colSpec.key || "");
@@ -456,16 +474,55 @@ const TemplateViewer = ({
                               : colSpec.border;
                             const borderStyle = getBorderStyle(borderSpec);
 
-                            const editKey = colSpec.col_index !== undefined && colNames[colSpec.col_index] !== undefined
-                              ? (() => {
-                                  const name = colNames[colSpec.col_index];
-                                  const idxOfCol = colNames.slice(0, colSpec.col_index + 1).filter(n => n === name).length;
-                                  return idxOfCol > 1 ? `${name}_${idxOfCol}` : name;
-                                })()
-                              : colSpec.key;
-                            const isEditable = !!editKey && !!onExtractedDataChange;
+                            const editKey =
+                              colSpec.col_index !== undefined &&
+                              colNames[colSpec.col_index] !== undefined
+                                ? (() => {
+                                    const name = colNames[colSpec.col_index];
+                                    const idxOfCol = colNames
+                                      .slice(0, colSpec.col_index + 1)
+                                      .filter((n) => n === name).length;
+                                    return idxOfCol > 1
+                                      ? `${name}_${idxOfCol}`
+                                      : name;
+                                  })()
+                                : colSpec.key;
+                            const isEditable =
+                              !!editKey && !!onExtractedDataChange;
+                            const { code, typeToken, name } =
+                              colSpec.format === "item_code"
+                                ? parseFormattedItemCode(val)
+                                : { code: "", typeToken: "", name: "" };
 
-                            return (
+                            return !isEditable &&
+                              colSpec.format === "item_code" ? (
+                              <div
+                                key={colIndex}
+                                className="flex h-full w-full flex-col p-1"
+                                style={{
+                                  width: `${widthPercent}%`,
+                                  fontSize: `${colSpec.font?.size ? colSpec.font.size * 0.8 : 8}px`,
+                                  fontWeight: colSpec.font?.bold
+                                    ? "bold"
+                                    : "normal",
+                                  boxSizing: "border-box",
+                                  justifyContent: "space-between",
+                                  ...borderStyle,
+                                }}
+                              >
+                                <div className="flex w-full items-start justify-between">
+                                  <span className="truncate">{code}</span>
+                                  {typeToken && (
+                                    <span className="ml-1 text-[7.5px] font-normal whitespace-nowrap text-gray-500">
+                                      {typeToken}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="mt-0.5 w-full text-left leading-tight whitespace-pre-wrap">
+                                  {name}
+                                </div>
+                              </div>
+                            ) : (
                               <div
                                 key={colIndex}
                                 className="flex overflow-hidden p-1"
@@ -490,7 +547,9 @@ const TemplateViewer = ({
                                   whiteSpace: colSpec.align?.wrap
                                     ? "pre-wrap"
                                     : "nowrap",
-                                  textDecoration: colSpec.font?.underline ? "underline" : "none",
+                                  textDecoration: colSpec.font?.underline
+                                    ? "underline"
+                                    : "none",
                                   boxSizing: "border-box",
                                   ...borderStyle,
                                 }}
@@ -507,12 +566,12 @@ const TemplateViewer = ({
                                         colSpec.col_index,
                                       )
                                     }
-                                    className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 max-w-full cursor-text truncate rounded border border-dashed border-transparent px-0.5 leading-tight transition-colors outline-none"
+                                    className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 max-w-full cursor-text rounded border border-dashed border-transparent px-0.5 leading-tight whitespace-pre-wrap transition-colors outline-none"
                                   >
                                     {val}
                                   </span>
                                 ) : (
-                                  <span className="max-w-full truncate leading-tight">
+                                  <span className="max-w-full leading-tight whitespace-pre-wrap">
                                     {val}
                                   </span>
                                 )}
@@ -559,7 +618,9 @@ const TemplateViewer = ({
                                 : "flex-start",
                           fontSize: `${cell.font?.size ? cell.font.size * 0.8 : 8}px`,
                           fontWeight: cell.font?.bold ? "bold" : "normal",
-                          textDecoration: cell.font?.underline ? "underline" : "none",
+                          textDecoration: cell.font?.underline
+                            ? "underline"
+                            : "none",
                           boxSizing: "border-box",
                           ...borderStyle,
                         }}
