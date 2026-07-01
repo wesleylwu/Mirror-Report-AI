@@ -25,6 +25,10 @@ export interface CellSpec {
   border?: BorderSpec;
   align?: AlignSpec;
   font?: FontSpec;
+  value_part?: "main" | "tail";
+  title_part?: "left" | "center" | "right";
+  concat_keys?: string[];
+  label_prefix?: boolean;
 }
 
 export interface HeaderRowSpec {
@@ -45,6 +49,11 @@ export interface ColumnSpec {
   first_row_border?: BorderSpec;
   align?: AlignSpec;
   font?: FontSpec;
+  col_index?: number;
+  concat_col_index?: number;
+  concat_sep?: string;
+  fallback_col_indices?: number[];
+  split_rows?: boolean;
 }
 
 export interface DataRowsSpec {
@@ -74,6 +83,7 @@ export interface ExtractedData {
   section_header?: string;
   header?: Record<string, string>;
   table?: {
+    columns?: string[];
     rows?: Record<string, string>[];
   };
 }

@@ -254,10 +254,21 @@ def _load_templates() -> list[dict]:
 
 
 def _match_template(data: dict, templates: list[dict]) -> dict:
+    title   = (data.get("title") or "").strip()
+    section = (data.get("section_header") or "").strip()
+
+    # 1. First attempt exact match on title and section
+    for tmpl in templates:
+        m = tmpl.get("match", {})
+        t_title   = (m.get("title") or "").strip()
+        t_section = (m.get("section_header") or "").strip()
+        if t_title == title and t_section == section:
+            return tmpl
+
     # Collect all text tokens present in the extracted data
     data_tokens: set[str] = set()
-    data_tokens.add((data.get("title") or "").strip())
-    data_tokens.add((data.get("section_header") or "").strip())
+    data_tokens.add(title)
+    data_tokens.add(section)
     data_tokens.update(data.get("header", {}).keys())
     table = data.get("table", {})
     col_names = table.get("columns", [])
@@ -266,18 +277,16 @@ def _match_template(data: dict, templates: list[dict]) -> dict:
         data_tokens.update(k for k in row.keys() if k and k != "_full_width")
     data_tokens.discard("")
 
-    title   = (data.get("title") or "").strip()
-    section = (data.get("section_header") or "").strip()
-
     best_tmpl  = None
     best_score = -1.0
 
     for tmpl in templates:
         signals = tmpl.get("match_signals", [])
         if not signals:
-            continue
-        hits         = sum(1 for s in signals if s in data_tokens)
-        signal_score = hits / len(signals)
+            signal_score = 0.0
+        else:
+            hits         = sum(1 for s in signals if s in data_tokens)
+            signal_score = hits / len(signals)
 
         # Title + section similarity as tiebreaker (weighted 0..0.5)
         m          = tmpl.get("match", {})

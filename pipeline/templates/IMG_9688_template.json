@@ -354,7 +354,7 @@
     "row_height": 30,
     "columns": [
       {
-        "col": 1, "end_col": 11, "key": "成分名", "format": "item_code",
+        "col": 1, "end_col": 11, "key": "成分名", "col_index": 0, "format": "item_code",
         "format_options": {"code_to_type_spaces": 8, "type_internal_spaces": 1},
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
@@ -362,35 +362,35 @@
         "first_row_border": {"top": "medium", "bottom": "thin", "left": "medium", "right": "thin"}
       },
       {
-        "col": 12, "end_col": 13, "key": "原単位",
+        "col": 12, "end_col": 13, "key": "原単位", "col_index": 1,
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
         "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
         "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
-        "col": 14, "end_col": 15, "key": "分量",
+        "col": 14, "end_col": 15, "key": "分量", "col_index": 2,
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
         "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
         "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
-        "col": 16, "end_col": 17, "key": "検量者",
+        "col": 16, "end_col": 17, "key": "検量者", "col_index": 3,
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
         "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
         "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
-        "col": 18, "end_col": 22, "key": "原料ロット",
+        "col": 18, "end_col": 22, "key": "原料ロット", "col_index": 4,
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
         "border": {"top": "thin", "bottom": "thin", "left": "thin", "right": "thin"},
         "first_row_border": {"top": "medium", "bottom": "thin", "left": "thin", "right": "thin"}
       },
       {
-        "col": 23, "end_col": 24, "key": "備考",
+        "col": 23, "end_col": 24, "key": "備考", "col_index": 5,
         "font": {"bold": false, "size": 10},
         "align": {"h": "left", "v": "center", "wrap": true},
         "border": {"top": "thin", "bottom": "thin", "left": null, "right": "thin"},
