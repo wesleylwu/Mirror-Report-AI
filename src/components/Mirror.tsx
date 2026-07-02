@@ -31,6 +31,66 @@ const LOADING_STEPS = [
   "Finalizing Excel spreadsheet binary generation...",
 ];
 
+const compressImage = async (file: File): Promise<File> => {
+  if (!file.type.startsWith("image/")) {
+    return file;
+  }
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 2000;
+        const MAX_HEIGHT = 2000;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width * MAX_HEIGHT) / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressed = new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(compressed);
+            } else {
+              resolve(file);
+            }
+          },
+          "image/jpeg",
+          0.85,
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+};
+
 const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [status, setStatus] = useState<ConvertStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -140,15 +200,51 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     setActivePageIndex(0);
 
     try {
+      // Compress image files client-side before sending to respect Vercel's body size limits
+      const processedFiles = await Promise.all(
+        uploadedFiles.map(async (file) => {
+          try {
+            return await compressImage(file);
+          } catch (e) {
+            console.error("Compression failed for", file.name, e);
+            return file;
+          }
+        }),
+      );
+
       const form = new FormData();
-      uploadedFiles.forEach((file) => {
+      processedFiles.forEach((file) => {
         form.append("file", file);
       });
       const res = await fetch("/api/convert", { method: "POST", body: form });
 
       if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error || "Conversion failed");
+        let errMessage = "Conversion failed";
+        try {
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorJson = await res.json();
+            errMessage = errorJson.error || errMessage;
+          } else {
+            const text = await res.text();
+            if (text.includes("<html") || text.includes("<!DOCTYPE")) {
+              if (res.status === 413) {
+                errMessage =
+                  "Upload payload too large (Vercel has a 4.5MB limit). Try uploading fewer documents.";
+              } else if (res.status === 504) {
+                errMessage =
+                  "Vercel execution timed out. Try uploading fewer documents.";
+              } else {
+                errMessage = `Server error ${res.status}: ${res.statusText}`;
+              }
+            } else {
+              errMessage = text || `HTTP error ${res.status}`;
+            }
+          }
+        } catch (e) {
+          errMessage = `HTTP error ${res.status}`;
+        }
+        throw new Error(errMessage);
       }
 
       const result = await res.json();
