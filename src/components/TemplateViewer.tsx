@@ -36,6 +36,59 @@ const normalizeRow = (
   return result;
 };
 
+const preprocessPosValues = (posValues: string[], colSpecs: ColumnSpec[]) => {
+  if (posValues.length > 1 && posValues[0]) {
+    const hasItemCode = colSpecs.some(
+      (cd) => cd.col_index === 0 && cd.format === "item_code",
+    );
+    if (hasItemCode) {
+      const val0 = posValues[0];
+      const val1 = posValues[1] || "";
+      const val2 = posValues[2] || "";
+      const typePat = /^(\d+)\s+(\S+)$/;
+
+      // Check for Case A: Column 1 is just a type token, Column 2 has merged lines
+      const isTypeToken = typePat.test(val1.trim());
+      const val2Lines = val2
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+      let isVal2Split = false;
+      if (val2Lines.length >= 2) {
+        const firstIsNum = /^\d+(\.\d+)?$/.test(val2Lines[0]);
+        const secondHasNum = /\d+/.test(val2Lines[1]);
+        isVal2Split = firstIsNum && secondHasNum;
+      }
+
+      if (isTypeToken && isVal2Split) {
+        // Move type token from Col 1 to Col 0
+        posValues[0] = val0 + "\n" + val1.trim();
+        // Move unit value from Col 2 to Col 1
+        posValues[1] = val2Lines[0];
+        // Keep remaining lines in Col 2
+        posValues[2] = val2Lines.slice(1).join("\n");
+      } else {
+        // Case B: Standard extraction from Column 1
+        const val1Lines = val1.split("\n");
+        const cleanedVal1Lines: string[] = [];
+        const extractedTypes: string[] = [];
+        for (const line of val1Lines) {
+          const stripped = line.trim();
+          if (typePat.test(stripped) && stripped.length <= 12) {
+            extractedTypes.push(stripped);
+          } else {
+            cleanedVal1Lines.push(line);
+          }
+        }
+        if (extractedTypes.length > 0) {
+          posValues[1] = cleanedVal1Lines.join("\n").trim();
+          posValues[0] = val0 + "\n" + extractedTypes.join("\n");
+        }
+      }
+    }
+  }
+};
+
 interface TemplateViewerProps {
   matchedTemplate: MatchedTemplate;
   extractedData: ExtractedData;
@@ -496,6 +549,7 @@ const TemplateViewer = ({
                                 posValues.push(rowData[dedupKey] ?? "");
                               }
                             }
+                            preprocessPosValues(posValues, colSpecs);
 
                             if ("_full_width" in rowData) {
                               return (
@@ -750,6 +804,7 @@ const TemplateViewer = ({
                             posValues.push(rowData[dedupKey] ?? "");
                           }
                         }
+                        preprocessPosValues(posValues, colSpecs);
 
                         if ("_full_width" in rowData) {
                           return (
