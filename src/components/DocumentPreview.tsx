@@ -131,7 +131,7 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
                   <FaPaperclip className="h-4 w-4" />
                 )}
               </div>
-              <div className="max-w-[120px] overflow-hidden">
+              <div className="max-w-30 overflow-hidden">
                 <p className="text-mirror-dark-blue truncate text-xs font-bold">
                   {file.name}
                 </p>

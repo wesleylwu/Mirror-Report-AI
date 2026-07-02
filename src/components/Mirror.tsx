@@ -423,7 +423,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
               </div>
 
               <div className="border-mirror-light-blue bg-mirror-light-blue max-h-[70vh] w-full overflow-hidden rounded-2xl border p-4 shadow-inner">
-                <div className="bg-mirror-white border-mirror-light-gray relative mx-auto flex aspect-[210/297] w-full max-w-4xl animate-pulse flex-col border p-6 shadow-md">
+                <div className="bg-mirror-white border-mirror-light-gray relative mx-auto flex aspect-210/297 w-full max-w-4xl animate-pulse flex-col border p-6 shadow-md">
                   <div className="bg-mirror-light-gray/60 mx-auto mb-6 h-6 w-48 rounded" />
 
                   <div className="mb-6 grid grid-cols-4 gap-4">
