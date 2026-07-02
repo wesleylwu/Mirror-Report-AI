@@ -80,8 +80,7 @@ export async function POST(req: NextRequest) {
     // Write all uploaded files to tmp locations
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const ext = path.extname(file.name) || ".jpg";
-      const filePath = path.join(os.tmpdir(), `${id}_${i}${ext}`);
+      const filePath = path.join(os.tmpdir(), `${id}_${i}_${file.name}`);
       await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
       tempFiles.push(filePath);
     }
@@ -247,6 +246,7 @@ export async function POST(req: NextRequest) {
       pagesResult.push({
         extractedData: pageData,
         template: matchedTemplate,
+        filename: pageData.filename,
       });
     }
 

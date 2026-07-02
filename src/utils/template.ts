@@ -57,19 +57,24 @@ export const formatItemCode = (
       codeLine = parts[0];
       if (parts.length > 1) {
         const remainder = parts.slice(1).join(" ").trim();
-        const startMatch = startTypePat.exec(remainder);
-        if (startMatch && (startMatch[1] + startMatch[2]).length <= 12) {
-          typeToken = `${startMatch[1]}${typeInternal}${startMatch[2]}`;
-          const namePart = remainder.substring(startMatch[0].length).trim();
-          if (namePart) nameLines.push(namePart);
+        const typeMatch = typePat.exec(remainder);
+        if (typeMatch && remainder.length <= 12) {
+          typeToken = `${typeMatch[1]}${typeInternal}${typeMatch[2]}`;
         } else {
-          const endMatch = endTypePat.exec(remainder);
-          if (endMatch && (endMatch[1] + endMatch[2]).length <= 12) {
-            typeToken = `${endMatch[1]}${typeInternal}${endMatch[2]}`;
-            const namePart = remainder.substring(0, endMatch.index).trim();
+          const startMatch = startTypePat.exec(remainder);
+          if (startMatch && (startMatch[1] + startMatch[2]).length <= 12) {
+            typeToken = `${startMatch[1]}${typeInternal}${startMatch[2]}`;
+            const namePart = remainder.substring(startMatch[0].length).trim();
             if (namePart) nameLines.push(namePart);
           } else {
-            nameLines.push(remainder);
+            const endMatch = endTypePat.exec(remainder);
+            if (endMatch && (endMatch[1] + endMatch[2]).length <= 12) {
+              typeToken = `${endMatch[1]}${typeInternal}${endMatch[2]}`;
+              const namePart = remainder.substring(0, endMatch.index).trim();
+              if (namePart) nameLines.push(namePart);
+            } else {
+              nameLines.push(remainder);
+            }
           }
         }
       }
@@ -78,7 +83,14 @@ export const formatItemCode = (
       if (typeMatch && line.length <= 12) {
         typeToken = `${typeMatch[1]}${typeInternal}${typeMatch[2]}`;
       } else {
-        nameLines.push(line);
+        const m2 = !typeToken ? endTypePat.exec(line) : null;
+        if (m2 && (m2[1] + m2[2]).length <= 12) {
+          typeToken = `${m2[1]}${typeInternal}${m2[2]}`;
+          const namePart = line.substring(0, m2.index).trim();
+          if (namePart) nameLines.push(namePart);
+        } else {
+          nameLines.push(line);
+        }
       }
     }
   }

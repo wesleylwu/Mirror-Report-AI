@@ -400,6 +400,13 @@ def extract_all(paths: list[str]) -> dict:
             print(f"Error: path {path_str} does not exist", file=sys.stderr)
             continue
 
+        # Extract the original filename from the temp filename if matching the pattern
+        parts = p.name.split("_")
+        if len(parts) >= 5 and parts[0] == "mirror":
+            orig_name = "_".join(parts[4:])
+        else:
+            orig_name = p.name
+
         if p.suffix.lower() == ".pdf":
             try:
                 doc = fitz.open(p)
@@ -408,14 +415,14 @@ def extract_all(paths: list[str]) -> dict:
                     pix = page.get_pixmap(dpi=150)
                     img_data = pix.tobytes("jpeg")
                     img = Image.open(io.BytesIO(img_data))
-                    tasks.append((img, f"{p.name} (page {page_idx + 1})"))
+                    tasks.append((img, f"{orig_name} (page {page_idx + 1})"))
             except Exception as e:
                 print(f"Error reading PDF {path_str}: {e}", file=sys.stderr)
                 raise
         else:
             try:
                 img = Image.open(p)
-                tasks.append((img, p.name))
+                tasks.append((img, orig_name))
             except Exception as e:
                 print(f"Error reading image {path_str}: {e}", file=sys.stderr)
                 raise
@@ -426,8 +433,18 @@ def extract_all(paths: list[str]) -> dict:
     pages_data = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(extract_text_from_image, task[0], task[1]) for task in tasks]
-        for f in futures:
-            pages_data.append(f.result())
+        for idx, f in enumerate(futures):
+            res_dict = f.result()
+            
+            raw_title = tasks[idx][1]
+            match = re.match(r"^(.*)\.([a-zA-Z0-9]+)\s*(\(page \d+\))?$", raw_title)
+            if match:
+                title = f"{match.group(1)}{match.group(3) or ''}"
+            else:
+                title = raw_title
+                
+            res_dict["filename"] = title
+            pages_data.append(res_dict)
 
     return {"pages": pages_data}
 
