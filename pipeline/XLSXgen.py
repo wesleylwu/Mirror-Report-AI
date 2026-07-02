@@ -1039,6 +1039,51 @@ def fill_template(tmpl: dict, data: dict, ws) -> None:
                 key = f"col_{i + 1}"
             pos_values.append(row_data.get(key, "") if row_data else "")
 
+        # Pre-process pos_values:
+        # Case A: If Column 1 (index 1, "原単位") is ONLY a type token (like "100 仕込" or "999 購入"),
+        # and Column 2 (index 2, "分量") contains the unit value and the quantity merged (like "100.0000\n400.72\nkg"),
+        # correct the OCR column alignment shift.
+        # Case B: If Column 1 contains both the type token and the unit value (like "999 購入\n89.8383"),
+        # move the type token to Column 0.
+        if len(pos_values) > 1 and pos_values[0]:
+            has_item_code = any(cd.get("col_index") == 0 and cd.get("format") == "item_code" for cd in col_defs)
+            if has_item_code:
+                val0 = str(pos_values[0])
+                val1 = str(pos_values[1]) if len(pos_values) > 1 else ""
+                val2 = str(pos_values[2]) if len(pos_values) > 2 else ""
+                type_pat = _re.compile(r"^(\d+)\s+(\S+)$")
+                
+                # Check for Case A: Column 1 is just a type token, Column 2 has merged lines
+                is_type_token = bool(type_pat.match(val1.strip()))
+                val2_lines = [l.strip() for l in val2.split("\n") if l.strip()]
+                is_val2_split = False
+                if len(val2_lines) >= 2:
+                    first_is_num = bool(_re.match(r"^\d+(\.\d+)?$", val2_lines[0]))
+                    second_has_num = bool(_re.search(r"\d+", val2_lines[1]))
+                    is_val2_split = first_is_num and second_has_num
+
+                if is_type_token and is_val2_split:
+                    # Move type token from Col 1 to Col 0
+                    pos_values[0] = val0 + "\n" + val1.strip()
+                    # Move unit value from Col 2 to Col 1
+                    pos_values[1] = val2_lines[0]
+                    # Keep remaining lines in Col 2
+                    pos_values[2] = "\n".join(val2_lines[1:])
+                else:
+                    # Case B: Standard extraction from Column 1
+                    val1_lines = val1.split("\n")
+                    cleaned_val1_lines = []
+                    extracted_types = []
+                    for line in val1_lines:
+                        stripped = line.strip()
+                        if type_pat.match(stripped) and len(stripped) <= 12:
+                            extracted_types.append(stripped)
+                        else:
+                            cleaned_val1_lines.append(line)
+                    if extracted_types:
+                        pos_values[1] = "\n".join(cleaned_val1_lines).strip()
+                        pos_values[0] = val0 + "\n" + "\n".join(extracted_types)
+
         for col_def in col_defs:
             if "col_index" in col_def:
                 idx = col_def["col_index"]
