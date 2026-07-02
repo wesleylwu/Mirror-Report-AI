@@ -16,6 +16,7 @@ interface MirrorProps {
 interface PageResult {
   extractedData: ExtractedData;
   template: MatchedTemplate;
+  filename?: string;
 }
 
 type ConvertStatus = "idle" | "loading" | "done" | "error";
@@ -23,7 +24,7 @@ type ConvertStatus = "idle" | "loading" | "done" | "error";
 const LOADING_STEPS = [
   "Uploading manufacturing document to secure server...",
   "Correcting document rotation & perspective (deskewing)...",
-  "Connecting to Anthropic Claude 3.5 Haiku Vision API...",
+  "Connecting to Document Analysis API...",
   "Analyzing report layout and reading text characters...",
   "Fuzzy-matching OCR results against layout schemas...",
   "Building custom sheets and styling Excel borders...",
@@ -289,7 +290,22 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     setActivePageIndex(0);
     setErrorMsg(null);
 
-    if (uploadedFiles.length > 0) {
+    return () => {
+      document.title = "Mirror Report AI";
+    };
+  }, [uploadedFiles]);
+
+  useEffect(() => {
+    if (status === "done" && pages[activePageIndex]) {
+      const activePage = pages[activePageIndex];
+      const name =
+        activePage.filename ||
+        activePage.extractedData.title ||
+        `Page ${activePageIndex + 1}`;
+      const lastDot = name.lastIndexOf(".");
+      const baseName = lastDot !== -1 ? name.substring(0, lastDot) : name;
+      document.title = baseName;
+    } else if (uploadedFiles.length > 0) {
       const name = uploadedFiles[0].name;
       const lastDot = name.lastIndexOf(".");
       const baseName = lastDot !== -1 ? name.substring(0, lastDot) : name;
@@ -297,11 +313,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     } else {
       document.title = "Mirror Report AI";
     }
-
-    return () => {
-      document.title = "Mirror Report AI";
-    };
-  }, [uploadedFiles]);
+  }, [uploadedFiles, status, pages, activePageIndex]);
 
   return (
     <div className="mx-auto w-full max-w-[90vw] grow px-6 py-8 md:px-12 print:m-0 print:w-full print:max-w-none print:p-0">
@@ -369,7 +381,8 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
           {status === "done" && pages.length > 1 && (
             <div className="border-mirror-light-blue mb-4 flex flex-wrap gap-2 border-b pb-3 print:hidden">
               {pages.map((p, index) => {
-                const pageTitle = p.extractedData.title || `Page ${index + 1}`;
+                const pageTitle =
+                  p.filename || p.extractedData.title || `Page ${index + 1}`;
                 return (
                   <button
                     key={index}

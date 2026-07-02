@@ -98,7 +98,14 @@ def convert():
     for idx, page_data in enumerate(pages_data):
         try:
             tmpl = _match_template(page_data, templates)
-            title = page_data.get("title", f"Sheet {idx+1}")
+
+            raw_title = tasks[idx][1]
+            match = re.match(r"^(.*)\.([a-zA-Z0-9]+)\s*(\(page \d+\))?$", raw_title)
+            if match:
+                title = f"{match.group(1)}{match.group(3) or ''}"
+            else:
+                title = raw_title
+
             clean_title = re.sub(r'[:\\/?*\[\]]', '', title)[:30].strip() or f"Page {idx+1}"
             orig_title = clean_title
             ctr = 1
@@ -110,7 +117,8 @@ def convert():
             fill_template(tmpl, page_data, ws)
             pages_result.append({
                 "extractedData": page_data,
-                "template": tmpl
+                "template": tmpl,
+                "filename": title
             })
         except Exception as e:
             return jsonify({"error": f"Excel generation failed: {str(e)}"}), 500

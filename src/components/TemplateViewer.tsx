@@ -271,8 +271,8 @@ const TemplateViewer = ({
         <div
           className={`bg-mirror-white relative mx-auto flex w-full max-w-4xl flex-col border border-gray-300 p-6 text-xs shadow-md select-none print:border-none print:p-0 print:shadow-none ${
             matchedTemplate.orientation === "landscape"
-              ? "print-a4-page-landscape aspect-[297/210]"
-              : "print-a4-page aspect-[210/297]"
+              ? "print-a4-page-landscape aspect-297/210"
+              : "print-a4-page aspect-210/297"
           }`}
           style={{ minWidth: "600px" }}
         >
