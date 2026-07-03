@@ -13,7 +13,7 @@ import concurrent.futures
 sys.path.append(str(Path(__file__).parent.parent))
 
 from pipeline.JSONgen import extract_text_from_image
-from pipeline.XLSXgen import _load_templates, _match_template, fill_template
+from pipeline.XLSXgen import render_sheet
 from openpyxl import Workbook
 
 app = Flask(__name__)
@@ -29,9 +29,7 @@ def convert():
         pages = extracted_data.get("pages")
         if pages is None:
             pages = [extracted_data]
-        templates = _load_templates()
         for idx, page_data in enumerate(pages):
-            tmpl = _match_template(page_data, templates)
             title = page_data.get("title", f"Sheet {idx+1}")
             clean_title = re.sub(r'[:\\/?*\[\]]', '', title)[:30].strip() or f"Page {idx+1}"
             orig_title = clean_title
@@ -41,7 +39,7 @@ def convert():
                 clean_title = orig_title[:30 - len(suffix)] + suffix
                 ctr += 1
             ws = wb.create_sheet(title=clean_title)
-            fill_template(tmpl, page_data, ws)
+            render_sheet(page_data, ws)
         if len(wb.worksheets) > 1:
             wb.remove(default_sheet)
         out_stream = io.BytesIO()
@@ -92,13 +90,10 @@ def convert():
 
     wb = Workbook()
     default_sheet = wb.active
-    templates = _load_templates()
     pages_result = []
 
     for idx, page_data in enumerate(pages_data):
         try:
-            tmpl = _match_template(page_data, templates)
-
             raw_title = tasks[idx][1]
             match = re.match(r"^(.*)\.([a-zA-Z0-9]+)\s*(\(page \d+\))?$", raw_title)
             if match:
@@ -114,10 +109,9 @@ def convert():
                 clean_title = orig_title[:30 - len(suffix)] + suffix
                 ctr += 1
             ws = wb.create_sheet(title=clean_title)
-            fill_template(tmpl, page_data, ws)
+            render_sheet(page_data, ws)
             pages_result.append({
                 "extractedData": page_data,
-                "template": tmpl,
                 "filename": title
             })
         except Exception as e:

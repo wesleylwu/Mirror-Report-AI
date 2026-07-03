@@ -1,8 +1,7 @@
 {
   "functions": {
     "api/py_convert.py": {
-      "maxDuration": 300,
-      "includeFiles": "pipeline/templates/**"
+      "maxDuration": 300
     }
   }
 }

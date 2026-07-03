@@ -1,6 +1,6 @@
 """Extract text content from document images/PDFs using Claude.
 
-Outputs a flat JSON with title, section_header, header key/value pairs,
+Outputs a flat JSON with title, section_header, positional header rows,
 and table rows. Layout is handled entirely by XLSXgen via templates.
 Outputs a unified JSON with a "pages" array containing extracted fields for each page.
 
@@ -41,15 +41,20 @@ CRITICAL RULES:
 - Pay close attention to characters that look similar: e.g. ン vs ソ, サ vs セ, 両 vs 吋, ド vs ト. Zoom in mentally on each character before committing.
 - Product names, codes, and field values must be transcribed in full — do not truncate or paraphrase.
 
+POSITIONAL CONSISTENCY: Extraction must reflect physical position, not just present text. Do not use any prior knowledge of how this document type "usually" looks — read only what is in front of you, in the order it appears on the page. Wherever a visible gap or blank cell separates two pieces of printed content — in a header row or a table row — represent that gap explicitly as its own empty-string entry at that position. Never silently drop, skip, renumber, or merge a blank cell into its neighbor. This keeps row/column layout identical every time the same document is processed.
+
 Return a single JSON object with this exact schema:
 
 {
   "title": "<full-width title text at the very top of the document, e.g. 製造指図書>",
   "section_header": "<full-width section title between the header fields and the data table, e.g. 調合票. Empty string if none.>",
-  "header": {
-    "<label text exactly as printed>": "<value text, or empty string if blank>",
+  "header": [
+    [
+      {"label": "<label text exactly as printed, or \"\" if this cell has no label>", "value": "<value text, or \"\" if blank>"},
+      ...
+    ],
     ...
-  },
+  ],
   "table": {
     "columns": ["<column header 1>", "<column header 2>", ...],
     "rows": [
@@ -60,24 +65,15 @@ Return a single JSON object with this exact schema:
 }
 
 RULES:
-
-TITLE: The full-width text spanning the top of the document (e.g. 製造指図書). Do not include it in header.
-
-HEADER FIELDS: Every label/value pair in the metadata section above the data table.
-- Use the EXACT printed label text as the key (e.g. "手配No.", "発行日", "品目CD").
-- Capture the COMPLETE text within each value cell — a cell may contain multiple words or tokens separated by spaces (e.g. "30 噴霧", "20 仕込"). Transcribe ALL of them as one string.
-- If a field has no value printed, still include it with value "".
-- Do NOT include the title or section header in this dict.
-
-SECTION HEADER: A full-width label separating the header fields from the data table (e.g. 調合票). Empty string if none.
-
-TABLE COLUMNS: Column header strings in left-to-right order. Blank/unlabeled columns are still counted — include an empty string "" at their position.
-
-TABLE ROWS: Each data row as an ARRAY of cell-text strings, in the exact same left-to-right order as TABLE COLUMNS. Every row array must have exactly as many entries as TABLE COLUMNS has — one entry per column position, including blank/unlabeled columns. This positional format means you never need to invent or repeat a key, so just transcribe what you see in each column, left to right.
-- Do NOT emit a row whose values are just the column header names.
+- "title" and "section_header" are not header cells — don't repeat them inside "header".
+- "header" is read row by row, top to bottom, left to right within each row. Every cell in a row — labeled, valued, or a blank spacer — gets its own {"label", "value"} entry; never collapse, omit, or merge one into its neighbor.
+- Table rows must have exactly as many entries as "columns", in the same left-to-right order, including blank/spacer columns.
+- Do NOT emit a table row whose values are just the column header names.
 - Include subtotal and grand total rows — do not skip rows because they contain summary labels like 計 or 合計.
-- Blank cells: "".
+- Every entry in "rows" must be either a plain array of cell strings OR a single JSON object ({"_tag":…} or {"_full_width":…}). Never wrap a row object inside an array — {"_tag": "x", "values": [...]} is correct; [{"_tag": "x", "values": [...]}] is wrong.
+- If a table row is visually distinct from regular data rows based solely on its formatting (e.g., bold text, shaded or colored background, different font size, centered alignment — regardless of whether it contains text or is blank), output it as {"_tag": "<short_label>", "values": ["<cell 1>", ...]} instead of a plain array. Use the exact same "_tag" string for every row that shares the same visual style. On the FIRST occurrence of each new "_tag" value, also include a "_style" field describing the visual format: {"bold": true/false, "fill": "<color>", "align": "left"/"center"/"right"} where fill is exactly one of: "none", "light_gray", "light_blue", "light_yellow", "light_green", "light_orange". Omit "_style" on subsequent rows with the same tag — they inherit the first row's style. Normal data rows remain plain arrays. Do NOT infer bold, italic, underline, or any font styling — only tag what is unambiguously visible in the printed formatting of the row.
 - The last row(s) of the table may be a full-width text row spanning all columns — output it as a special entry: {"_full_width": "<text>"} (an object, not an array) instead of a normal row.
+
 Return ONLY the raw JSON object. No explanation, no markdown fences."""
 
 MAX_IMAGE_PX = 3000
@@ -388,7 +384,7 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
         json.loads(text)
     except json.JSONDecodeError as e:
         print(f"JSON parse error in {debug_name}: {e} — raw response saved to {raw_path}", file=sys.stderr)
-    return {"title": "", "section_header": "", "header": {}, "table": {"columns": [], "rows": []}}
+    return {"title": "", "section_header": "", "header": [], "table": {"columns": [], "rows": []}}
 
 
 def extract_all(paths: list[str]) -> dict:
