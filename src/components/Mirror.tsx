@@ -15,6 +15,7 @@ interface MirrorProps {
 
 interface PageResult {
   extractedData: ExtractedData;
+  htmlContent?: string;
   filename?: string;
 }
 
@@ -278,6 +279,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
         return {
           ...page,
           extractedData: extracted,
+          htmlContent: extracted.html || page.htmlContent,
         };
       });
 
@@ -499,6 +501,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
             pages[activePageIndex] && (
               <DataPreview
                 extractedData={pages[activePageIndex].extractedData}
+                htmlContent={pages[activePageIndex].htmlContent}
                 onExtractedDataChange={handleExtractedDataChange}
                 isRegeneratingExcel={isRegenerating}
                 onDownloadExcel={handleDownloadExcel}

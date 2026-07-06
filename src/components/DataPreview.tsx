@@ -6,6 +6,7 @@ import { ExtractedData, HeaderRow, TableRow, TaggedRow, TaggedRowStyle } from ".
 
 interface DataPreviewProps {
   extractedData: ExtractedData;
+  htmlContent?: string;
   onExtractedDataChange?: (newData: ExtractedData) => void;
   isRegeneratingExcel?: boolean;
   onDownloadExcel?: () => void;
@@ -57,6 +58,7 @@ const DEFAULT_TAG_STYLE: ResolvedTagStyle = {
 
 const DataPreview = ({
   extractedData,
+  htmlContent,
   onExtractedDataChange,
   isRegeneratingExcel = false,
   onDownloadExcel,
@@ -164,108 +166,136 @@ const DataPreview = ({
   return (
     <div className="flex w-full flex-col gap-4">
       <div className="border-mirror-light-blue max-h-[70vh] w-full overflow-auto rounded-2xl border bg-slate-100 p-4 shadow-inner print:max-h-none print:border-none print:bg-white print:p-0 print:shadow-none">
-        <div
-          className="bg-mirror-white print-a4-page relative mx-auto flex w-full max-w-4xl flex-col gap-3 border border-gray-300 p-6 text-xs shadow-md select-none print:border-none print:p-0 print:shadow-none"
-          style={{ minWidth: "600px" }}
-        >
-          {(extractedData.title || isEditable) && (
-            <span
-              contentEditable={isEditable}
-              suppressContentEditableWarning={true}
-              onBlur={(e) =>
-                handleTitleChange(e.currentTarget.textContent || "")
-              }
-              className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 cursor-text rounded border border-dashed border-transparent px-1 py-0.5 text-center text-base font-bold outline-none"
-            >
-              {extractedData.title}
-            </span>
-          )}
+        {htmlContent ? (
+          <div
+            className="bg-mirror-white relative mx-auto w-full max-w-4xl overflow-auto border border-gray-300 p-4 shadow-md print:border-none print:p-0 print:shadow-none"
+            dangerouslySetInnerHTML={{ __html: htmlContent }}
+          />
+        ) : (
+          <div
+            className="bg-mirror-white print-a4-page relative mx-auto flex w-full max-w-4xl flex-col gap-3 border border-gray-300 p-6 text-xs shadow-md select-none print:border-none print:p-0 print:shadow-none"
+            style={{ minWidth: "600px" }}
+          >
+            {(extractedData.title || isEditable) && (
+              <span
+                contentEditable={isEditable}
+                suppressContentEditableWarning={true}
+                onBlur={(e) =>
+                  handleTitleChange(e.currentTarget.textContent || "")
+                }
+                className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 cursor-text rounded border border-dashed border-transparent px-1 py-0.5 text-center text-base font-bold outline-none"
+              >
+                {extractedData.title}
+              </span>
+            )}
 
-          {(extractedData.section_header || isEditable) && (
-            <span
-              contentEditable={isEditable}
-              suppressContentEditableWarning={true}
-              onBlur={(e) =>
-                handleSectionChange(e.currentTarget.textContent || "")
-              }
-              className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 cursor-text rounded border border-dashed border-transparent px-1 py-0.5 text-center text-sm font-bold outline-none"
-            >
-              {extractedData.section_header}
-            </span>
-          )}
+            {(extractedData.section_header || isEditable) && (
+              <span
+                contentEditable={isEditable}
+                suppressContentEditableWarning={true}
+                onBlur={(e) =>
+                  handleSectionChange(e.currentTarget.textContent || "")
+                }
+                className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 cursor-text rounded border border-dashed border-transparent px-1 py-0.5 text-center text-sm font-bold outline-none"
+              >
+                {extractedData.section_header}
+              </span>
+            )}
 
-          {headerRows.length > 0 && (
-            <div className="flex flex-col gap-1 border-b border-gray-200 pb-3">
-              {headerRows.map((row: HeaderRow, rowIndex: number) => (
-                <div key={`h-${rowIndex}`} className="flex flex-wrap gap-x-4 gap-y-1">
-                  {row.map((cell, cellIndex) => {
-                    if (!cell.label && !cell.value) return null;
-                    return (
-                      <div key={cellIndex} className="flex items-baseline gap-1">
-                        {cell.label && (
-                          <span className="text-mirror-gray shrink-0 font-semibold">
-                            {cell.label}
+            {headerRows.length > 0 && (
+              <div className="flex flex-col gap-1 border-b border-gray-200 pb-3">
+                {headerRows.map((row: HeaderRow, rowIndex: number) => (
+                  <div key={`h-${rowIndex}`} className="flex flex-wrap gap-x-4 gap-y-1">
+                    {row.map((cell, cellIndex) => {
+                      if (!cell.label && !cell.value) return null;
+                      return (
+                        <div key={cellIndex} className="flex items-baseline gap-1">
+                          {cell.label && (
+                            <span className="text-mirror-gray shrink-0 font-semibold">
+                              {cell.label}
+                            </span>
+                          )}
+                          <span
+                            contentEditable={isEditable}
+                            suppressContentEditableWarning={true}
+                            onBlur={(e) =>
+                              handleHeaderCellChange(
+                                rowIndex,
+                                cellIndex,
+                                e.currentTarget.textContent || "",
+                              )
+                            }
+                            className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 min-w-[1em] cursor-text rounded border border-dashed border-transparent px-0.5 outline-none"
+                          >
+                            {cell.value}
                           </span>
-                        )}
-                        <span
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {columns.length > 0 && (
+              <table className="w-full table-auto border-collapse text-xs">
+                <thead>
+                  <tr>
+                    {columns.map((col, colIndex) => (
+                      <th
+                        key={colIndex}
+                        className="border border-gray-400 bg-slate-50 px-1.5 py-1 text-center font-bold"
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, rowIndex) =>
+                    isFullWidthRow(row) ? (
+                      <tr key={`r-${rowIndex}`}>
+                        <td
+                          colSpan={columns.length}
                           contentEditable={isEditable}
                           suppressContentEditableWarning={true}
                           onBlur={(e) =>
-                            handleHeaderCellChange(
+                            handleFullWidthChange(
                               rowIndex,
-                              cellIndex,
                               e.currentTarget.textContent || "",
                             )
                           }
-                          className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 min-w-[1em] cursor-text rounded border border-dashed border-transparent px-0.5 outline-none"
+                          className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 bg-mirror-light-blue/20 cursor-text border border-gray-400 px-1.5 py-1 text-center font-semibold outline-none"
                         >
-                          {cell.value}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {columns.length > 0 && (
-            <table className="w-full table-auto border-collapse text-xs">
-              <thead>
-                <tr>
-                  {columns.map((col, colIndex) => (
-                    <th
-                      key={colIndex}
-                      className="border border-gray-400 bg-slate-50 px-1.5 py-1 text-center font-bold"
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, rowIndex) =>
-                  isFullWidthRow(row) ? (
-                    <tr key={`r-${rowIndex}`}>
-                      <td
-                        colSpan={columns.length}
-                        contentEditable={isEditable}
-                        suppressContentEditableWarning={true}
-                        onBlur={(e) =>
-                          handleFullWidthChange(
-                            rowIndex,
-                            e.currentTarget.textContent || "",
-                          )
-                        }
-                        className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 bg-mirror-light-blue/20 cursor-text border border-gray-400 px-1.5 py-1 text-center font-semibold outline-none"
-                      >
-                        {row._full_width}
-                      </td>
-                    </tr>
-                  ) : isTaggedRow(row) ? (() => {
-                    const ts = tagStyleMap[row._tag] ?? DEFAULT_TAG_STYLE;
-                    return (
-                      <tr key={`r-${rowIndex}`} style={{ backgroundColor: ts.background }}>
+                          {row._full_width}
+                        </td>
+                      </tr>
+                    ) : isTaggedRow(row) ? (() => {
+                      const ts = tagStyleMap[row._tag] ?? DEFAULT_TAG_STYLE;
+                      return (
+                        <tr key={`r-${rowIndex}`} style={{ backgroundColor: ts.background }}>
+                          {columns.map((_, colIndex) => (
+                            <td
+                              key={colIndex}
+                              contentEditable={isEditable}
+                              suppressContentEditableWarning={true}
+                              onBlur={(e) =>
+                                handleCellChange(
+                                  rowIndex,
+                                  colIndex,
+                                  e.currentTarget.textContent || "",
+                                )
+                              }
+                              style={{ fontWeight: ts.fontWeight, textAlign: ts.textAlign }}
+                              className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 cursor-text border border-gray-400 px-1.5 py-1 outline-none"
+                            >
+                              {row.values[colIndex] ?? ""}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })() : (
+                      <tr key={`r-${rowIndex}`}>
                         {columns.map((_, colIndex) => (
                           <td
                             key={colIndex}
@@ -278,40 +308,19 @@ const DataPreview = ({
                                 e.currentTarget.textContent || "",
                               )
                             }
-                            style={{ fontWeight: ts.fontWeight, textAlign: ts.textAlign }}
                             className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 cursor-text border border-gray-400 px-1.5 py-1 outline-none"
                           >
-                            {row.values[colIndex] ?? ""}
+                            {row[colIndex] ?? ""}
                           </td>
                         ))}
                       </tr>
-                    );
-                  })() : (
-                    <tr key={`r-${rowIndex}`}>
-                      {columns.map((_, colIndex) => (
-                        <td
-                          key={colIndex}
-                          contentEditable={isEditable}
-                          suppressContentEditableWarning={true}
-                          onBlur={(e) =>
-                            handleCellChange(
-                              rowIndex,
-                              colIndex,
-                              e.currentTarget.textContent || "",
-                            )
-                          }
-                          className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 cursor-text border border-gray-400 px-1.5 py-1 outline-none"
-                        >
-                          {row[colIndex] ?? ""}
-                        </td>
-                      ))}
-                    </tr>
-                  ),
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="mt-2 flex w-full justify-center gap-4 print:hidden">

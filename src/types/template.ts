@@ -23,6 +23,12 @@ export interface TaggedRow {
 
 export type TableRow = string[] | FullWidthRow | TaggedRow;
 
+export interface DataCell {
+  r: number;
+  c: number;
+  v: string;
+}
+
 export interface ExtractedData {
   title?: string;
   section_header?: string;
@@ -31,6 +37,9 @@ export interface ExtractedData {
     columns?: string[];
     rows?: TableRow[];
   };
+  html?: string;
+  data?: DataCell[];
+  code?: string;
   filename?: string;
 }
 

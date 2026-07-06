@@ -1,199 +1,356 @@
-"""Render an Excel workbook directly from JSONgen's extracted JSON.
+"""Render an Excel workbook from JSON produced by JSONgen.
 
-No template matching: each page's title, header rows, and table are written
-generically, in the order the data appears, with plain styling (bold title,
-label/value header pairs, a bordered data table, autosized columns).
+Supports two formats:
+  - New (code-based): page has a "code" key with a build_template(ws) function
+  - Legacy (JSON schema): page has a "template" key with cell-grid JSON
+
+Each page becomes a worksheet.
 
 Usage:
     python XLSXgen.py <json_path> [output.xlsx]
 """
 import json
-import re as _re
+import re
 import sys
-import unicodedata as _ud
 from pathlib import Path
 
 from openpyxl import Workbook
+from openpyxl.cell.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.utils import get_column_letter
-
-
-def _vwidth(s: str) -> int:
-    """Approximate rendered width: full-width/wide chars count as 2, others 1."""
-    return sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in s)
+from openpyxl.utils import get_column_letter, range_boundaries
 
 
 _THIN = Side(style="thin")
 _BORDER_ALL = Border(top=_THIN, bottom=_THIN, left=_THIN, right=_THIN)
+_BORDER_NONE = Border()
+
+# A4 usable column width in Excel char units (0.5" margins, Calibri 11pt)
+_A4_PORTRAIT_COLS  = 100.0
+_A4_LANDSCAPE_COLS = 128.0
 
 
-_NAMED_FILLS = {
-    "none": None,
-    "light_gray": "EDEDED",
-    "light_blue": "D9E1F2",
-    "light_yellow": "FFF2CC",
-    "light_green": "E2EFDA",
-    "light_orange": "FCE4D6",
-}
+class _NullCell:
+    """Stand-in for a MergedCell position — silently swallows all writes."""
+    def __setattr__(self, name, value): pass
+    def __getattr__(self, name): return None
 
 
-def _set_cell(ws, row: int, col: int, value, *, bold: bool = False, size: int = 10,
-              h: str = "left", v: str = "center", wrap: bool = False,
-              border: bool = False, end_col: int | None = None, end_row: int | None = None,
-              fill: str | None = None) -> None:
-    if isinstance(value, (dict, list)):
-        value = None
-    else:
-        value = value or None
-    is_negative = isinstance(value, str) and value.strip().startswith("-")
-    end_col = end_col or col
-    end_row = end_row or row
-    ws.cell(row=row, column=col, value=value)
-    if end_col > col or end_row > row:
-        ws.merge_cells(start_row=row, end_row=end_row, start_column=col, end_column=end_col)
-    for r in range(row, end_row + 1):
-        for c in range(col, end_col + 1):
+def _guard(obj):
+    """Replace MergedCell instances with _NullCell, recursively for tuples."""
+    if isinstance(obj, MergedCell):
+        return _NullCell()
+    if isinstance(obj, tuple):
+        return tuple(_guard(item) for item in obj)
+    return obj
+
+
+class _SafeWS:
+    """Proxy around openpyxl Worksheet that turns MergedCell access into no-ops.
+
+    Claude-generated code often writes to every cell in a range (e.g. to apply
+    borders) without checking whether cells are inside a merge region. This proxy
+    intercepts those writes and drops them silently so execution continues.
+    """
+    __slots__ = ("_ws",)
+
+    def __init__(self, ws):
+        object.__setattr__(self, "_ws", ws)
+
+    def __getattr__(self, name):
+        return getattr(object.__getattribute__(self, "_ws"), name)
+
+    def __setattr__(self, name, value):
+        setattr(object.__getattribute__(self, "_ws"), name, value)
+
+    def cell(self, row=None, column=None, value=None, **kw):
+        ws = object.__getattribute__(self, "_ws")
+        c = ws.cell(row=row, column=column)
+        if isinstance(c, MergedCell):
+            return _NullCell()
+        if value is not None:
+            c.value = value
+        return c
+
+    def __getitem__(self, key):
+        return _guard(object.__getattribute__(self, "_ws")[key])
+
+    def __setitem__(self, key, value):
+        ws = object.__getattribute__(self, "_ws")
+        if not isinstance(ws[key], MergedCell):
+            ws[key] = value
+
+    def iter_rows(self, **kw):
+        for row in object.__getattribute__(self, "_ws").iter_rows(**kw):
+            yield tuple(_NullCell() if isinstance(c, MergedCell) else c for c in row)
+
+    def iter_cols(self, **kw):
+        for col in object.__getattribute__(self, "_ws").iter_cols(**kw):
+            yield tuple(_NullCell() if isinstance(c, MergedCell) else c for c in col)
+
+    def merge_cells(self, range_string=None, start_row=None, end_row=None,
+                    start_column=None, end_column=None):
+        # Normalize range_string to row/col coords
+        if range_string is not None:
+            try:
+                sc, sr, ec, er = range_boundaries(str(range_string).upper())
+                start_row, end_row, start_column, end_column = sr, er, sc, ec
+            except Exception:
+                return
+
+        if start_row is None:
+            return
+
+        # Single-cell merges are invalid OOXML
+        if start_row == end_row and start_column == end_column:
+            return
+
+        ws = object.__getattribute__(self, "_ws")
+
+        # Overlapping merges corrupt the file — openpyxl silently writes both,
+        # producing invalid XML. Skip any range that touches an existing merge.
+        for existing in ws.merged_cells.ranges:
+            if not (end_row < existing.min_row or start_row > existing.max_row or
+                    end_column < existing.min_col or start_column > existing.max_col):
+                return
+
+        try:
+            ws.merge_cells(start_row=start_row, end_row=end_row,
+                           start_column=start_column, end_column=end_column)
+        except Exception:
+            pass
+
+
+def _post_process_sheet(ws) -> None:
+    """Hide trailing empty cells, clear spacer borders, fix text wrapping and accidental fills."""
+    max_col = ws.max_column or 1
+    max_row = ws.max_row or 1
+
+    # Build a set of (row, col) pairs that are anchors of full-width merges
+    # (e.g. the title row A1:O1). These carry a value but shouldn't count
+    # as real column content — they're just the storage cell for the title.
+    half_cols = (max_col or 1) // 2
+    full_width_anchors: set = set()
+    for mr in ws.merged_cells.ranges:
+        if (mr.max_col - mr.min_col) >= half_cols:
+            full_width_anchors.add((mr.min_row, mr.min_col))
+
+    # Find the real content boundary.
+    # full_width_anchors are excluded from column tracking (so title merges don't
+    # inflate eff_max_col) but their ROWS still count toward eff_max_row.
+    content_rows: set = set()
+    content_cols: set = set()
+    for row in ws.iter_rows(min_row=1, max_row=max_row, min_col=1, max_col=max_col):
+        for cell in row:
+            if isinstance(cell, MergedCell):
+                continue
+            if (cell.row, cell.column) in full_width_anchors:
+                content_rows.add(cell.row)   # row counts, column does not
+                continue
+            if cell.value is not None or (cell.fill and cell.fill.fill_type == "solid"):
+                content_rows.add(cell.row)
+                content_cols.add(cell.column)
+
+    eff_max_row = max(content_rows) if content_rows else max_row
+    eff_max_col = max(content_cols) if content_cols else max_col
+
+    # Hide rows/cols entirely outside the content boundary.
+    # Also unhide everything inside — Claude sometimes hides blank data rows.
+    for r in range(1, eff_max_row + 1):
+        ws.row_dimensions[r].hidden = False
+    for r in range(eff_max_row + 1, max_row + 1):
+        ws.row_dimensions[r].hidden = True
+    for c in range(eff_max_col + 1, max_col + 1):
+        ws.column_dimensions[get_column_letter(c)].hidden = True
+
+    # Strip borders from spacer columns: narrow (≤ 6 chars) + no real values
+    # + not interior of a merge. Full-width merge anchors don't disqualify a column.
+    for c in range(1, eff_max_col + 1):
+        if float(ws.column_dimensions[get_column_letter(c)].width or 8.43) > 6.0:
+            continue
+        is_spacer = True
+        for r in range(1, eff_max_row + 1):
             cell = ws.cell(row=r, column=c)
-            cell.font = Font(bold=bold, size=size, color="FF0000" if is_negative else "000000")
-            cell.alignment = Alignment(horizontal=h, vertical=v, wrap_text=wrap)
-            if border:
-                cell.border = _BORDER_ALL
-            if fill:
-                cell.fill = PatternFill(start_color=fill, end_color=fill, fill_type="solid")
+            if isinstance(cell, MergedCell):
+                is_spacer = False
+                break
+            if cell.value is not None and (r, c) not in full_width_anchors:
+                is_spacer = False
+                break
+        if is_spacer:
+            for r in range(1, eff_max_row + 1):
+                cell = ws.cell(row=r, column=c)
+                if not isinstance(cell, MergedCell):
+                    cell.border = _BORDER_NONE
+
+    # Scale columns to fit the page width (columns only — row scaling distorts proportions)
+    orientation = (getattr(ws.page_setup, "orientation", None) or "portrait").lower()
+    target_cols = _A4_LANDSCAPE_COLS if orientation == "landscape" else _A4_PORTRAIT_COLS
+    col_widths = [
+        float(ws.column_dimensions[get_column_letter(c)].width or 8.43)
+        for c in range(1, eff_max_col + 1)
+    ]
+    raw_col_total = sum(col_widths) or 1.0
+    col_scale = min(1.0, target_cols / raw_col_total)
+    if col_scale < 1.0:
+        for c, w in enumerate(col_widths, start=1):
+            ws.column_dimensions[get_column_letter(c)].width = max(2.0, w * col_scale)
+
+    _WHITE = {"FFFFFF", "00FFFFFF", "FFFFFFFF"}
+
+    for row in ws.iter_rows(min_row=1, max_row=eff_max_row, min_col=1, max_col=eff_max_col):
+        for cell in row:
+            if isinstance(cell, MergedCell):
+                continue
+            # Strip embedded newlines
+            if isinstance(cell.value, str) and "\n" in cell.value:
+                cell.value = cell.value.replace("\n", " ").strip()
+            # Disable wrap_text
+            al = cell.alignment
+            cell.alignment = Alignment(
+                horizontal=al.horizontal if al else None,
+                vertical=al.vertical if al else "center",
+                wrap_text=False,
+            )
+            # Strip accidental white fills
+            f = cell.fill
+            if (f is not None and f.fill_type == "solid"
+                    and str(f.fgColor.rgb).upper() in _WHITE):
+                cell.fill = PatternFill(fill_type=None)
+
+
+def execute_code(code: str, ws) -> None:
+    """Execute a Claude-generated build_template(ws) function in place."""
+    ns: dict = {}
+    exec(compile(code, "<claude_generated>", "exec"), ns)  # noqa: S102
+    fn = ns.get("build_template")
+    if callable(fn):
+        fn(_SafeWS(ws))
+    _post_process_sheet(ws)
 
 
 def render_sheet(data: dict, ws) -> None:
-    """Write title, header rows, and table directly from extracted JSON — no
-    template lookup, everything rendered positionally in the order it appears."""
-    title = data.get("title") or ""
-    section = data.get("section_header") or ""
-    header_rows = data.get("header") or []
-    table = data.get("table") or {}
-    columns = table.get("columns") or []
-    rows = table.get("rows") or []
+    col_widths = data.get("col_widths") or []
+    rows       = data.get("rows") or []
+    orientation = str(data.get("orientation") or "portrait").lower()
 
-    # Drop blank spacer cells (label AND value both empty) — they only exist
-    # upstream to keep extraction positionally consistent, not to occupy cells.
-    rendered_header_rows: list[list[tuple[str, str]]] = []
-    for row in header_rows:
-        pairs = [
-            ((cell or {}).get("label", ""), (cell or {}).get("value", ""))
-            for cell in (row or [])
-            if (cell or {}).get("label") or (cell or {}).get("value")
-        ]
-        rendered_header_rows.append(pairs)
+    # Rows index — support both short (r/h) and long field names
+    num_rows = int(data.get("num_rows") or len(rows))
+    row_by_r: dict[int, dict] = {}
+    for idx, row in enumerate(rows):
+        r = row.get("r") or row.get("row") or (idx + 1)
+        row_by_r[int(r)] = row
 
-    n_cols = max([len(columns), 1] + [len(pairs) * 2 for pairs in rendered_header_rows])
+    # Pre-compute raw heights for all rows (needed for scaling)
+    raw_heights = []
+    for r in range(1, num_rows + 1):
+        row = row_by_r.get(r, {})
+        try:
+            raw_heights.append(float(row.get("h") or row.get("height") or 15))
+        except (ValueError, TypeError):
+            raw_heights.append(15.0)
 
-    r = 1
-    if title:
-        ws.row_dimensions[r].height = 22
-        _set_cell(ws, r, 1, title, bold=True, size=14, h="center", end_col=n_cols)
-        r += 1
-    if section:
-        ws.row_dimensions[r].height = 18
-        _set_cell(ws, r, 1, section, bold=True, size=12, h="center", end_col=n_cols)
-        r += 1
+    # Scale factors so the sheet fills one A4 page
+    if orientation == "landscape":
+        target_cols = _A4_LANDSCAPE_COLS
+        target_rows = _A4_LANDSCAPE_ROWS
+    else:
+        target_cols = _A4_PORTRAIT_COLS
+        target_rows = _A4_PORTRAIT_ROWS
 
-    LINE_H = 15  # points per line of text
+    raw_col_total = sum(max(1.0, float(w)) for w in col_widths) if col_widths else 1.0
+    col_scale = target_cols / raw_col_total
 
-    def _row_h(*values) -> float:
-        max_lines = max(
-            (str(v).count("\n") + 1 for v in values if v is not None and str(v)),
-            default=1,
-        )
-        return max_lines * LINE_H
+    raw_row_total = sum(raw_heights) or 1.0
+    row_scale = target_rows / raw_row_total
 
-    for pairs in rendered_header_rows:
-        all_vals = [s for label, value in pairs for s in (label, value)]
-        ws.row_dimensions[r].height = _row_h(*all_vals)
-        c = 1
-        for label, value in pairs:
-            _set_cell(ws, r, c, label, bold=True, size=10, h="right")
-            _set_cell(ws, r, c + 1, value, size=10, h="left")
-            c += 2
-        r += 1
+    # Apply scaled column widths
+    for i, w in enumerate(col_widths, start=1):
+        try:
+            ws.column_dimensions[get_column_letter(i)].width = max(2, float(w) * col_scale)
+        except (ValueError, TypeError):
+            ws.column_dimensions[get_column_letter(i)].width = 8
 
-    r += 1  # blank separator row before the table
+    # Apply scaled row heights and render cells
+    for row_idx in range(1, num_rows + 1):
+        row    = row_by_r.get(row_idx, {})
+        height = max(5.0, raw_heights[row_idx - 1] * row_scale)
+        ws.row_dimensions[row_idx].height = height
 
-    if columns:
-        ws.row_dimensions[r].height = _row_h(*columns)
-        for c, name in enumerate(columns, start=1):
-            _set_cell(ws, r, c, name, bold=True, h="center", border=True)
-        r += 1
+        for cell_spec in (row.get("cells") or []):
+            try:
+                col = int(cell_spec.get("c") or cell_spec.get("col") or 1)
+                span = max(1, int(cell_spec.get("s") or cell_spec.get("span") or 1))
+            except (ValueError, TypeError):
+                col, span = 1, 1
 
-    def _unwrap(row):
-        """Strip any extra single-element list wrappers the model adds around a row.
-        Stops when the inner value is a scalar or a multi-element list."""
-        while (
-            isinstance(row, list)
-            and len(row) == 1
-            and not isinstance(row[0], (str, int, float, type(None)))
-        ):
-            row = row[0]
-        return row
+            # Skip if this position is already inside a previous merge
+            top_left = ws.cell(row=row_idx, column=col)
+            if isinstance(top_left, MergedCell):
+                continue
 
-    rows = [_unwrap(r) for r in rows]
+            value = cell_spec.get("v") or cell_spec.get("value") or None
+            bold = bool(cell_spec.get("b") or cell_spec.get("bold") or False)
+            align = cell_spec.get("a") or cell_spec.get("align") or "left"
+            fill_hex = cell_spec.get("f") or cell_spec.get("fill")
+            border_style = "all" if cell_spec.get("x") else (cell_spec.get("border") or "none")
+            end_col = col + span - 1
 
-    # First pass: collect style from the first occurrence of each tag
-    tag_styles: dict[str, dict] = {}
-    for row in rows:
-        if isinstance(row, dict) and "_tag" in row and "_style" in row:
-            tag = row["_tag"]
-            if tag not in tag_styles:
-                s = row["_style"] or {}
-                tag_styles[tag] = {
-                    "bold": bool(s.get("bold", False)),
-                    "fill": _NAMED_FILLS.get(s.get("fill", "none")),
-                    "h": s.get("align", "left"),
-                }
+            top_left.value = value
 
-    table_width = max(len(columns), 1)
-    for row in rows:
-        if isinstance(row, dict) and "_full_width" in row:
-            ws.row_dimensions[r].height = _row_h(row["_full_width"])
-            _set_cell(ws, r, 1, row["_full_width"], bold=True, h="center", wrap=True,
-                      border=True, end_col=table_width)
-        elif isinstance(row, dict) and "_tag" in row:
-            raw = row.get("values") or []
-            cells = [c if isinstance(c, (str, int, float)) else "" for c in raw]
-            ws.row_dimensions[r].height = _row_h(*cells)
-            style = tag_styles.get(row["_tag"], {"bold": False, "fill": None, "h": "left"})
-            for c in range(1, table_width + 1):
-                value = cells[c - 1] if c - 1 < len(cells) else ""
-                _set_cell(ws, r, c, value, bold=style["bold"], h=style["h"],
-                          wrap=True, border=True, fill=style["fill"])
-        else:
-            raw = row if isinstance(row, list) else []
-            cells = [c if isinstance(c, (str, int, float)) else "" for c in raw]
-            ws.row_dimensions[r].height = _row_h(*cells)
-            for c in range(1, table_width + 1):
-                value = cells[c - 1] if c - 1 < len(cells) else ""
-                _set_cell(ws, r, c, value, wrap=True, border=True)
-        r += 1
+            if span > 1:
+                try:
+                    ws.merge_cells(
+                        start_row=row_idx, end_row=row_idx,
+                        start_column=col, end_column=end_col,
+                    )
+                except Exception:
+                    pass
 
-    # Column widths — autosized from header + table content.
-    # Measure the longest *line* within each cell (split on \n) after collapsing
-    # runs of spaces so padded OCR text doesn't inflate column widths.
-    def _measure(s: str) -> int:
-        s = str(s)
-        return max((_vwidth(" ".join(line.split())) for line in s.splitlines()), default=0)
+            font      = Font(bold=bold)
+            alignment = Alignment(horizontal=align, vertical="center")
+            border    = _BORDER_ALL if border_style == "all" else _BORDER_NONE
+            fill      = None
+            if fill_hex:
+                hex_val = str(fill_hex).lstrip("#")
+                if len(hex_val) == 6:
+                    try:
+                        fill = PatternFill(
+                            start_color=hex_val, end_color=hex_val, fill_type="solid"
+                        )
+                    except Exception:
+                        pass
 
-    widths: dict[int, int] = {}
-    for c, name in enumerate(columns, start=1):
-        widths[c] = max(widths.get(c, 0), _measure(name))
-    for row in rows:
-        if isinstance(row, dict) and "_tag" in row:
-            raw = row.get("values") or []
-            cells = [c if isinstance(c, (str, int, float)) else "" for c in raw]
-        elif isinstance(row, dict):
-            continue
-        else:
-            cells = row if isinstance(row, list) else []
-        for c, value in enumerate(cells, start=1):
-            widths[c] = max(widths.get(c, 0), _measure(str(value)))
-    for c, w in widths.items():
-        ws.column_dimensions[get_column_letter(c)].width = max(6, w + 2)
+            for c in range(col, end_col + 1):
+                cell = ws.cell(row=row_idx, column=c)
+                if isinstance(cell, MergedCell):
+                    continue  # non-top-left cells in a merge are read-only
+                cell.font      = font
+                cell.alignment = alignment
+                cell.border    = border
+                if fill:
+                    cell.fill = fill
+
+    # Page setup — A4, correct orientation, fit to one page
+    ws.page_setup.paperSize  = 9  # A4
+    ws.page_setup.orientation = orientation
+    ws.page_setup.fitToPage  = True
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 1
+    ws.page_margins.left   = 0.5
+    ws.page_margins.right  = 0.5
+    ws.page_margins.top    = 0.5
+    ws.page_margins.bottom = 0.5
+
+
+def _unique_name(base: str, seen: set) -> str:
+    clean = re.sub(r'[:\\/?*\[\]]', "", base)[:30].strip() or "Sheet"
+    name, ctr = clean, 1
+    while name in seen:
+        suffix = f"_{ctr}"
+        name = clean[: 30 - len(suffix)] + suffix
+        ctr += 1
+    seen.add(name)
+    return name
 
 
 def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
@@ -202,24 +359,32 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
 
     wb = Workbook()
     default_sheet = wb.active
+    seen: set = set()
 
     pages = data.get("pages")
     if pages is None:
         pages = [data]
 
     for idx, page_data in enumerate(pages):
-        title = page_data.get("title", f"Sheet {idx+1}")
-        clean_title = _re.sub(r'[:\\/?*\[\]]', '', title)[:30].strip() or f"Page {idx+1}"
+        if "error" in page_data:
+            continue
 
-        orig_title = clean_title
-        ctr = 1
-        while clean_title in wb.sheetnames:
-            suffix = f"_{ctr}"
-            clean_title = orig_title[:30 - len(suffix)] + suffix
-            ctr += 1
-
-        ws = wb.create_sheet(title=clean_title)
-        render_sheet(page_data, ws)
+        code = page_data.get("code", "")
+        if code:
+            # New code-based approach — extract sheet name from code if present
+            m = re.search(r'ws\.title\s*=\s*["\']([^"\']+)["\']', code)
+            raw_name = m.group(1) if m else f"Sheet {idx + 1}"
+            ws = wb.create_sheet(title=_unique_name(raw_name, seen))
+            try:
+                execute_code(code, ws)
+            except Exception as e:
+                print(f"Code execution failed for page {idx + 1}: {e}", file=sys.stderr)
+        else:
+            # Legacy JSON template approach
+            tmpl = page_data.get("template") or page_data
+            raw_name = str(tmpl.get("sheet_name") or f"Sheet {idx + 1}")
+            ws = wb.create_sheet(title=_unique_name(raw_name, seen))
+            render_sheet(tmpl, ws)
 
     if len(wb.worksheets) > 1:
         wb.remove(default_sheet)
@@ -230,11 +395,11 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
 
 def main():
     import argparse
+
     p = argparse.ArgumentParser()
     p.add_argument("json_path")
     p.add_argument("xlsx_path", nargs="?")
     args = p.parse_args()
-
     xlsx_path = args.xlsx_path or str(Path(args.json_path).with_suffix(".xlsx"))
     json_to_xlsx(args.json_path, xlsx_path)
 
