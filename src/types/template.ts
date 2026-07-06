@@ -11,13 +11,7 @@ export interface FullWidthRow {
 
 export interface TaggedRowStyle {
   bold?: boolean;
-  fill?:
-    | "none"
-    | "light_gray"
-    | "light_blue"
-    | "light_yellow"
-    | "light_green"
-    | "light_orange";
+  fill?: "none" | "light_gray" | "light_blue" | "light_yellow" | "light_green" | "light_orange";
   align?: "left" | "center" | "right";
 }
 

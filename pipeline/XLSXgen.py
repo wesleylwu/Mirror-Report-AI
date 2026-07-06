@@ -195,69 +195,21 @@ def _post_process_sheet(ws) -> None:
         for c, w in enumerate(col_widths, start=1):
             ws.column_dimensions[get_column_letter(c)].width = max(2.0, w * col_scale)
 
-        # Pre-process pos_values:
-        # Case A: If Column 1 (index 1, "原単位") is ONLY a type token (like "100 仕込" or "999 購入"),
-        # and Column 2 (index 2, "分量") contains the unit value and the quantity merged (like "100.0000\n400.72\nkg"),
-        # correct the OCR column alignment shift.
-        # Case B: If Column 1 contains both the type token and the unit value (like "999 購入\n89.8383"),
-        # move the type token to Column 0.
-        if len(pos_values) > 1 and pos_values[0]:
-            has_item_code = any(cd.get("col_index") == 0 and cd.get("format") == "item_code" for cd in col_defs)
-            if has_item_code:
-                val0 = str(pos_values[0])
-                val1 = str(pos_values[1]) if len(pos_values) > 1 else ""
-                val2 = str(pos_values[2]) if len(pos_values) > 2 else ""
-                type_pat = _re.compile(r"^(\d+)\s+(\S+)$")
-                
-                # Check for Case A: Column 1 is just a type token, Column 2 has merged lines
-                is_type_token = bool(type_pat.match(val1.strip()))
-                val2_lines = [l.strip() for l in val2.split("\n") if l.strip()]
-                is_val2_split = False
-                if len(val2_lines) >= 2:
-                    first_is_num = bool(_re.match(r"^\d+(\.\d+)?$", val2_lines[0]))
-                    second_has_num = bool(_re.search(r"\d+", val2_lines[1]))
-                    is_val2_split = first_is_num and second_has_num
+    _WHITE = {"FFFFFF", "00FFFFFF", "FFFFFFFF"}
 
-                if is_type_token and is_val2_split:
-                    # Move type token from Col 1 to Col 0
-                    pos_values[0] = val0 + "\n" + val1.strip()
-                    # Move unit value from Col 2 to Col 1
-                    pos_values[1] = val2_lines[0]
-                    # Keep remaining lines in Col 2
-                    pos_values[2] = "\n".join(val2_lines[1:])
-                else:
-                    # Case B: Standard extraction from Column 1
-                    val1_lines = val1.split("\n")
-                    cleaned_val1_lines = []
-                    extracted_types = []
-                    for line in val1_lines:
-                        stripped = line.strip()
-                        if type_pat.match(stripped) and len(stripped) <= 12:
-                            extracted_types.append(stripped)
-                        else:
-                            cleaned_val1_lines.append(line)
-                    if extracted_types:
-                        pos_values[1] = "\n".join(cleaned_val1_lines).strip()
-                        pos_values[0] = val0 + "\n" + "\n".join(extracted_types)
-
-        for col_def in col_defs:
-            if "col_index" in col_def:
-                idx = col_def["col_index"]
-                value = pos_values[idx] if idx < len(pos_values) else ""
-            else:
-                key   = col_def.get("key", "")
-                value = _fuzzy_get(row_data, key) if row_data else ""
-            if col_def.get("format") == "item_code":
-                value = _fmt_item_code(value, col_def.get("format_options"))
-            border_spec = col_def.get("first_row_border", col_def["border"]) if is_first \
-                          else col_def["border"]
-            if is_last and tmpl.get("id") == "課別基準客先別売上粗利":
-                border_spec = dict(border_spec)
-                border_spec["bottom"] = "medium"
-            _write_cell(
-                ws, r, col_def["col"], col_def["end_col"], r,
-                value, col_def["font"], col_def["align"], border_spec,
-                fill_spec=last_row_fill,
+    for row in ws.iter_rows(min_row=1, max_row=eff_max_row, min_col=1, max_col=eff_max_col):
+        for cell in row:
+            if isinstance(cell, MergedCell):
+                continue
+            # Strip embedded newlines
+            if isinstance(cell.value, str) and "\n" in cell.value:
+                cell.value = cell.value.replace("\n", " ").strip()
+            # Disable wrap_text
+            al = cell.alignment
+            cell.alignment = Alignment(
+                horizontal=al.horizontal if al else None,
+                vertical=al.vertical if al else "center",
+                wrap_text=False,
             )
             # Strip accidental white fills
             f = cell.fill
