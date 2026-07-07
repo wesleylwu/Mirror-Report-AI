@@ -45,7 +45,7 @@ export interface ExtractedData {
   };
   html?: string;
   data?: DataCell[];
-  code?: string;
+  template?: Record<string, unknown>;
   filename?: string;
 }
 

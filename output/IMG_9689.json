@@ -1,112 +1,630 @@
 {
   "pages": [
     {
-      "code": "from openpyxl import Workbook\nfrom openpyxl.styles import Font, Alignment, Border, Side, PatternFill\nfrom openpyxl.utils import get_column_letter\n\ndef build_template(ws):\n    ws.title = \"製造指図書\"\n\n    # Column widths (A=spacer, B..., last=spacer)\n    # Total ~14 columns\n    col_widths = {\n        1: 2,    # spacer\n        2: 8,    # 手配No label\n        3: 12,   # 手配No value\n        4: 4,    # sub\n        5: 8,    # 発行日 label\n        6: 12,   # 発行日 value\n        7: 8,    # (barcode area)\n        8: 8,\n        9: 8,    # 作成者 label\n        10: 2,   # spacer\n    }\n    # Redefine with more columns for accuracy\n    # Let's use 12 columns\n    col_widths = {\n        1: 2,    # spacer left\n        2: 10,   # label col\n        3: 14,   # value col\n        4: 4,    # small\n        5: 8,    # label\n        6: 12,   # value\n        7: 8,    # label\n        8: 12,   # value\n        9: 6,    # 作成者\n        10: 2,   # spacer right\n    }\n    for col, width in col_widths.items():\n        ws.column_dimensions[get_column_letter(col)].width = width\n\n    # Row heights\n    row_heights = {\n        1: 20,   # 製造指図書 title + barcode\n        2: 18,   # 手配No\n        3: 18,   # 手配先\n        4: 18,   # 品目CD\n        5: 18,   # 品目名\n        6: 18,   # 手配内容\n        7: 18,   # ロットNo\n        8: 20,   # 調合票 title\n        9: 18,   # header row (成分名 etc)\n        10: 22,  # data row 1\n        11: 22,  # data row 2\n        12: 18,\n        13: 18,\n        14: 18,\n        15: 18,\n        16: 18,\n        17: 18,\n        18: 18,\n        19: 18,\n        20: 18,\n        21: 18,\n        22: 18,\n        23: 18,\n        24: 18,\n        25: 18,\n        26: 20,  # 備考\n    }\n    for row, height in row_heights.items():\n        ws.row_dimensions[row].height = height\n\n    num_rows = 26\n    num_cols = 10\n\n    # 1. Apply thin border to every cell\n    thin = Side(style='thin')\n    border = Border(top=thin, bottom=thin, left=thin, right=thin)\n    for row in ws.iter_rows(min_row=1, max_row=num_rows, min_col=1, max_col=num_cols):\n        for cell in row:\n            cell.border = border\n\n    # Helper\n    def sc(row, col, value, bold=False, align='left', size=10):\n        cell = ws.cell(row=row, column=col)\n        cell.value = value\n        cell.font = Font(bold=bold, size=size, name='MS Gothic')\n        ha = align if align in ('left','center','right') else 'left'\n        cell.alignment = Alignment(horizontal=ha, vertical='center', wrap_text=True)\n\n    # Light gray fill for label cells\n    gray_fill = PatternFill(fill_type='solid', fgColor='D9D9D9')\n\n    # Row 1: 製造指図書 title + barcode area\n    sc(1, 2, '製造指図書', bold=True, align='center', size=14)\n    # barcode label area - no fill needed\n\n    # Row 2: 手配No | value | | 発行日 | value | | | 作成者\n    sc(2, 2, '手配No.', bold=False, align='center')\n    sc(2, 5, '発行日', bold=False, align='center')\n    sc(2, 9, '作成者', bold=False, align='center')\n    ws.cell(row=2, column=2).fill = gray_fill\n    ws.cell(row=2, column=5).fill = gray_fill\n    ws.cell(row=2, column=9).fill = gray_fill\n\n    # Row 3: 手配先 | value | | 手配納期\n    sc(3, 2, '手配先', bold=False, align='center')\n    sc(3, 7, '手配納期', bold=False, align='center')\n    ws.cell(row=3, column=2).fill = gray_fill\n    ws.cell(row=3, column=7).fill = gray_fill\n\n    # Row 4: 品目CD | value | 工順 | value | 発注手配数 | value\n    sc(4, 2, '品目CD', bold=False, align='center')\n    sc(4, 5, '工順', bold=False, align='center')\n    sc(4, 7, '発注手配数', bold=False, align='center')\n    ws.cell(row=4, column=2).fill = gray_fill\n    ws.cell(row=4, column=5).fill = gray_fill\n    ws.cell(row=4, column=7).fill = gray_fill\n\n    # Row 5: 品目名 | value | | 製番 | value\n    sc(5, 2, '品目名', bold=False, align='center')\n    sc(5, 7, '製番', bold=False, align='center')\n    ws.cell(row=5, column=2).fill = gray_fill\n    ws.cell(row=5, column=7).fill = gray_fill\n\n    # Row 6: 手配内容 | value | | 完成入庫 | value\n    sc(6, 2, '手配内容', bold=False, align='center')\n    sc(6, 7, '完成入庫', bold=False, align='center')\n    ws.cell(row=6, column=2).fill = gray_fill\n    ws.cell(row=6, column=7).fill = gray_fill\n\n    # Row 7: ロットNo. | value | | 完成日 | value\n    sc(7, 2, 'ロットNo.', bold=False, align='center')\n    sc(7, 7, '完成日', bold=False, align='center')\n    ws.cell(row=7, column=2).fill = gray_fill\n    ws.cell(row=7, column=7).fill = gray_fill\n\n    # Row 8: 調合票 title + 責任者\n    sc(8, 2, '調合票', bold=True, align='center', size=13)\n    sc(8, 9, '責任者', bold=False, align='center')\n    ws.cell(row=8, column=9).fill = gray_fill\n\n    # Row 9: table headers\n    sc(9, 2, '成分名', bold=True, align='center')\n    sc(9, 5, '原単位', bold=True, align='center')\n    sc(9, 6, '分量', bold=True, align='center')\n    sc(9, 7, '秤量者', bold=True, align='center')\n    sc(9, 8, '原料ロット', bold=True, align='center')\n    sc(9, 9, '確認者', bold=True, align='center')\n    for col in [2, 5, 6, 7, 8, 9]:\n        ws.cell(row=9, column=col).fill = gray_fill\n\n    # Row 26: 備考\n    sc(26, 2, '備考', bold=False, align='left')\n    ws.cell(row=26, column=2).fill = gray_fill\n\n    # Merges - LAST\n    # Row 1: title spans cols 2-6, barcode spans 7-9\n    ws.merge_cells(start_row=1, start_column=2, end_row=1, end_column=6)\n    ws.merge_cells(start_row=1, start_column=7, end_row=1, end_column=9)\n\n    # Row 2: 手配No value cols 3-4, 発行日 value cols 6, 作成者 spans rows 2-3 col 9\n    ws.merge_cells(start_row=2, start_column=3, end_row=2, end_column=4)\n    ws.merge_cells(start_row=2, start_column=6, end_row=2, end_column=8)\n    ws.merge_cells(start_row=2, start_column=9, end_row=3, end_column=9)\n\n    # Row 3: 手配先 value cols 3-6, 手配納期 value col 8\n    ws.merge_cells(start_row=3, start_column=3, end_row=3, end_column=6)\n    ws.merge_cells(start_row=3, start_column=8, end_row=3, end_column=8)\n\n    # Row 4: 品目CD value cols 3-4, 工順 value col 6, 発注手配数 value col 8\n    ws.merge_cells(start_row=4, start_column=3, end_row=4, end_column=4)\n\n    # Row 5: 品目名 value cols 3-6, 製番 value col 8\n    ws.merge_cells(start_row=5, start_column=3, end_row=5, end_column=6)\n\n    # Row 6: 手配内容 value cols 3-6, 完成入庫 value col 8\n    ws.merge_cells(start_row=6, start_column=3, end_row=6, end_column=6)\n\n    # Row 7: ロットNo value cols 3-6, 完成日 value col 8\n    ws.merge_cells(start_row=7, start_column=3, end_row=7, end_column=6)\n\n    # Row 8: 調合票 title cols 2-8, 責任者 spans rows 8-9 col 9\n    ws.merge_cells(start_row=8, start_column=2, end_row=8, end_column=8)\n    ws.merge_cells(start_row=8, start_column=9, end_row=9, end_column=9)\n\n    # Row 9: 成分名 cols 2-4\n    ws.merge_cells(start_row=9, start_column=2, end_row=9, end_column=4)\n\n    # Data rows 10-25: 成分名 cols 2-4\n    for r in range(10, 26):\n        ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=4)\n\n    # Row 26: 備考 cols 2-9\n    ws.merge_cells(start_row=26, start_column=2, end_row=26, end_column=9)\n\n    # Spacer cols 1 and 10 - remove borders visually by making them no border\n    no_border = Border()\n    for r in range(1, num_rows + 1):\n        ws.cell(row=r, column=1).border = no_border\n        ws.cell(row=r, column=10).border = no_border\n\n    # Page setup\n    ws.page_setup.paperSize = 9\n    ws.page_setup.fitToPage = True\n    ws.page_setup.fitToWidth = 1\n    ws.page_setup.fitToHeight = 1\n    ws.page_setup.orientation = \"portrait\"\n    ws.page_margins.left = 0.5\n    ws.page_margins.right = 0.5\n    ws.page_margins.top = 0.5\n    ws.page_margins.bottom = 0.5\n\nif __name__ == '__main__':\n    from openpyxl import Workbook\n    wb = Workbook()\n    ws = wb.active\n    build_template(ws)\n    wb.save('製造指図書_template.xlsx')",
-      "html": "<table style=\"border-collapse:collapse;width:100%;font-family:'MS Gothic',monospace;font-size:11px;\">\n  <col style=\"width:18px\">\n  <col style=\"width:70px\">\n  <col style=\"width:90px\">\n  <col style=\"width:30px\">\n  <col style=\"width:60px\">\n  <col style=\"width:80px\">\n  <col style=\"width:60px\">\n  <col style=\"width:80px\">\n  <col style=\"width:50px\">\n  <col style=\"width:18px\">\n\n  <!-- Row 1: Title + Barcode -->\n  <tr style=\"height:24px\">\n    <td style=\"border:none\"></td>\n    <td colspan=\"5\" style=\"border:1px solid #000;text-align:center;font-weight:bold;font-size:15px;\">製造指図書</td>\n    <td colspan=\"3\" style=\"border:1px solid #000;text-align:center;font-size:9px;\">||||||||||||||||||||||||||||</td>\n    <td style=\"border:none\"></td>\n  </tr>\n\n  <!-- Row 2: 手配No / 発行日 / 作成者 -->\n  <tr style=\"height:20px\">\n    <td style=\"border:none\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">手配No.</td>\n    <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">発行日</td>\n    <td colspan=\"3\" style=\"border:1px solid #000;\"></td>\n    <td rowspan=\"2\" style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">作成者</td>\n    <td style=\"border:none\"></td>\n  </tr>\n\n  <!-- Row 3: 手配先 / 手配納期 -->\n  <tr style=\"height:20px\">\n    <td style=\"border:none\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">手配先</td>\n    <td colspan=\"4\" style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">手配納期</td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:none\"></td>\n  </tr>\n\n  <!-- Row 4: 品目CD / 工順 / 発注手配数 -->\n  <tr style=\"height:20px\">\n    <td style=\"border:none\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">品目CD</td>\n    <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">工順</td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">発注手配数</td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:none\"></td>\n  </tr>\n\n  <!-- Row 5: 品目名 / 製番 -->\n  <tr style=\"height:20px\">\n    <td style=\"border:none\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">品目名</td>\n    <td colspan=\"4\" style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">製番</td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:none\"></td>\n  </tr>\n\n  <!-- Row 6: 手配内容 / 完成入庫 -->\n  <tr style=\"height:20px\">\n    <td style=\"border:none\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">手配内容</td>\n    <td colspan=\"4\" style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">完成入庫</td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:none\"></td>\n  </tr>\n\n  <!-- Row 7: ロットNo / 完成日 -->\n  <tr style=\"height:20px\">\n    <td style=\"border:none\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">ロットNo.</td>\n    <td colspan=\"4\" style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">完成日</td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:none\"></td>\n  </tr>\n\n  <!-- Row 8: 調合票 title / 責任者 -->\n  <tr style=\"height:22px\">\n    <td style=\"border:none\"></td>\n    <td colspan=\"7\" style=\"border:1px solid #000;text-align:center;font-weight:bold;font-size:14px;\">調合票</td>\n    <td rowspan=\"2\" style=\"border:1px solid #000;background:#D9D9D9;text-align:center;\">責任者</td>\n    <td style=\"border:none\"></td>\n  </tr>\n\n  <!-- Row 9: Table headers -->\n  <tr style=\"height:20px\">\n    <td style=\"border:none\"></td>\n    <td colspan=\"3\" style=\"border:1px solid #000;background:#D9D9D9;text-align:center;font-weight:bold;\">成分名</td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;font-weight:bold;\">原単位</td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;font-weight:bold;\">分量</td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;font-weight:bold;\">秤量者</td>\n    <td style=\"border:1px solid #000;background:#D9D9D9;text-align:center;font-weight:bold;\">原料ロット</td>\n    <td style=\"border:none\"></td>\n  </tr>\n\n  <!-- Rows 10-25: Data rows -->\n  <tr style=\"height:22px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:22px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n  <tr style=\"height:20px\"><td style=\"border:none\"></td><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:none\"></td></tr>\n\n  <!-- Row 26: 備考 -->\n  <tr style=\"height:22px\">\n    <td style=\"border:none\"></td>\n    <td colspan=\"8\" style=\"border:1px solid #000;background:#D9D9D9;\">備考</td>\n    <td style=\"border:none\"></td>\n  </tr>\n</table>",
+      "template": {
+        "sheet_name": "製造指図書",
+        "orientation": "portrait",
+        "col_widths": [
+          6,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "data_rows": 15,
+        "rows": [
+          {
+            "h": 30,
+            "cells": [
+              {
+                "c": 1,
+                "s": 8,
+                "rs": 1,
+                "v": "製造指図書",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "手配No.",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "発行日",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "手配先",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "手配納期",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "作成者",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "品目CD",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "工順",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "発注手配数",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "品目名",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "製番",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "手配内容",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "完成入庫",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "ロットNo.",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "完成日",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 30,
+            "cells": [
+              {
+                "c": 1,
+                "s": 7,
+                "v": "調合票",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "責任者",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 3,
+                "v": "成分名",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "原単位",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "分量",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "秤量者",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "原料ロット",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "確認者",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 30,
+            "cells": [
+              {
+                "c": 1,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 30,
+            "cells": [
+              {
+                "c": 1,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "repeat": 13,
+            "cells": [
+              {
+                "c": 1,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 25,
+            "cells": [
+              {
+                "c": 1,
+                "s": 8,
+                "v": "備考",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table style=\"border-collapse:collapse;width:700px;font-family:MS Gothic,sans-serif;font-size:11px;\">\n<col style=\"width:40px\"><col style=\"width:90px\"><col style=\"width:90px\"><col style=\"width:80px\"><col style=\"width:80px\"><col style=\"width:80px\"><col style=\"width:90px\"><col style=\"width:70px\">\n<tr style=\"height:30px\"><td colspan=\"8\" style=\"border:1px solid #000;text-align:center;font-weight:bold;font-size:15px;\">製造指図書</td></tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">手配No.</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">発行日</td>\n  <td colspan=\"3\" style=\"border:1px solid #000;\"></td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">手配先</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">手配納期</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">作成者</td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">品目CD</td>\n  <td style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">工順</td>\n  <td style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">発注手配数</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">品目名</td>\n  <td colspan=\"3\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">製番</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">手配内容</td>\n  <td colspan=\"3\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">完成入庫</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">ロットNo.</td>\n  <td colspan=\"3\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">完成日</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n</tr>\n<tr style=\"height:30px\">\n  <td colspan=\"7\" style=\"border:1px solid #000;text-align:center;font-weight:bold;font-size:14px;\">調合票</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">責任者</td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"3\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">成分名</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">原単位</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">分量</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">秤量者</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">原料ロット</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">確認者</td>\n</tr>\n<tr style=\"height:30px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:30px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:25px\"><td colspan=\"8\" style=\"border:1px solid #000;\">備考</td></tr>\n</table>",
       "data": [
         {
           "r": 1,
-          "c": 7,
+          "c": 1,
           "v": "0000056473"
         },
         {
-          "r": 2,
+          "r": 1,
           "c": 3,
-          "v": "0000056473"
-        },
-        {
-          "r": 2,
-          "c": 4,
           "v": "1"
         },
         {
-          "r": 2,
-          "c": 6,
+          "r": 1,
+          "c": 5,
           "v": "2018/12/05"
         },
         {
-          "r": 3,
+          "r": 2,
           "c": 3,
           "v": "S00000200 製造1課 倉庫"
         },
         {
-          "r": 3,
-          "c": 5,
-          "v": "平62・3"
+          "r": 2,
+          "c": 3,
+          "v": "平62-3"
         },
         {
-          "r": 3,
-          "c": 8,
+          "r": 2,
+          "c": 5,
           "v": "2018/12/14"
         },
         {
-          "r": 4,
+          "r": 3,
           "c": 3,
           "v": "HA0002610"
         },
         {
-          "r": 4,
-          "c": 6,
+          "r": 3,
+          "c": 5,
           "v": "999"
         },
         {
-          "r": 4,
-          "c": 8,
+          "r": 3,
+          "c": 6,
           "v": "400.72 kg"
         },
         {
-          "r": 5,
+          "r": 4,
           "c": 3,
-          "v": "クレイジーマックスプロテイン（カフェオレ風味）造粒品"
+          "v": "クレイジーマックスプロテイン(カフェオレ風味)造粒品"
         },
         {
-          "r": 5,
-          "c": 8,
+          "r": 4,
+          "c": 6,
           "v": "0000051090"
         },
         {
-          "r": 6,
+          "r": 5,
           "c": 3,
           "v": "30"
         },
         {
-          "r": 6,
+          "r": 5,
           "c": 4,
           "v": "噴霧"
         },
         {
-          "r": 6,
-          "c": 8,
+          "r": 5,
+          "c": 6,
           "v": "S00000200 製造1課 倉庫"
         },
         {
-          "r": 10,
-          "c": 2,
-          "v": "HA0002610　100 仕込\nクレイジーマックスプロテイン（カフェオレ風味）造粒品"
+          "r": 9,
+          "c": 1,
+          "v": "HA0002610　100 仕込\nクレイジーマックスプロテイン(カフェオレ風味)造粒品"
         },
         {
-          "r": 10,
-          "c": 5,
+          "r": 9,
+          "c": 4,
           "v": "100.0000"
         },
         {
-          "r": 10,
-          "c": 6,
+          "r": 9,
+          "c": 5,
           "v": "400.72 kg"
         },
         {
-          "r": 11,
-          "c": 2,
+          "r": 10,
+          "c": 1,
           "v": "H00001630　999 購入\nクラフト袋L イージーオープン"
         },
         {
-          "r": 11,
-          "c": 5,
+          "r": 10,
+          "c": 4,
           "v": "8.3334"
         },
         {
-          "r": 11,
-          "c": 6,
+          "r": 10,
+          "c": 5,
           "v": "33.40 枚"
         }
       ],

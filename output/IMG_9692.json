@@ -1,1693 +1,385 @@
 {
   "pages": [
     {
-      "code": "from openpyxl import Workbook\nfrom openpyxl.styles import Font, Alignment, Border, Side, PatternFill\nfrom openpyxl.utils import get_column_letter\n\ndef build_template(ws):\n    ws.title = \"工事別原価管理表\"\n\n    # Column widths (A=1 through P=16)\n    col_widths = {\n        1: 3,   # spacer\n        2: 4,   # コード\n        3: 22,  # 会社名\n        4: 10,  # 前期繰越累計\n        5: 10,  # 当期請負金額\n        6: 10,  # 請負金額累計\n        7: 6,   # 出来高率\n        8: 10,  # 当期実行予算\n        9: 6,   # 実行予算率\n        10: 10, # 実行予算累計\n        11: 10, # 当期原価\n        12: 10, # 原価累計\n        13: 3,  # spacer\n    }\n    for col, width in col_widths.items():\n        ws.column_dimensions[get_column_letter(col)].width = width\n\n    num_rows = 52\n    num_cols = 13\n\n    # Row heights\n    for r in range(1, num_rows + 1):\n        ws.row_dimensions[r].height = 13.5\n    ws.row_dimensions[1].height = 18\n    ws.row_dimensions[2].height = 18\n    ws.row_dimensions[3].height = 18\n\n    # 1. Apply thin border to every cell\n    thin = Side(style='thin')\n    border = Border(top=thin, bottom=thin, left=thin, right=thin)\n    for row in ws.iter_rows(min_row=1, max_row=num_rows, min_col=1, max_col=num_cols):\n        for cell in row:\n            cell.border = border\n\n    # 2. Fills\n    header_fill = PatternFill(fill_type='solid', fgColor='C0C0C0')\n    subheader_fill = PatternFill(fill_type='solid', fgColor='D9D9D9')\n\n    # Header row fills (row 1 title)\n    for c in range(1, num_cols + 1):\n        ws.cell(row=1, column=c).fill = header_fill\n\n    # Column header rows (rows 2-3)\n    for r in range(2, 4):\n        for c in range(1, num_cols + 1):\n            ws.cell(row=r, column=c).fill = subheader_fill\n\n    # Total row at bottom\n    for c in range(1, num_cols + 1):\n        ws.cell(row=num_rows, column=c).fill = subheader_fill\n\n    # 3. Values, fonts, alignment\n    bold = Font(bold=True, size=9)\n    normal = Font(size=8)\n    center = Alignment(horizontal='center', vertical='center', wrap_text=True)\n    right = Alignment(horizontal='right', vertical='center')\n    left_align = Alignment(horizontal='left', vertical='center')\n\n    # Title row 1\n    ws.cell(row=1, column=2).value = \"工事別原価管理表　期間：2026/2/1～2026/2/28\"\n    ws.cell(row=1, column=2).font = bold\n    ws.cell(row=1, column=2).alignment = left_align\n\n    ws.cell(row=1, column=12).value = \"2026/6/22 10:06\"\n    ws.cell(row=1, column=12).font = normal\n    ws.cell(row=1, column=12).alignment = right\n\n    # Column headers row 2\n    headers_r2 = {\n        2: \"コード\",\n        3: \"会社名\",\n        4: \"前期繰越\\n原価累計\",\n        5: \"当期\\n請負金額\",\n        6: \"請負金額\\n累計\",\n        7: \"出来高率\\n(%)\",\n        8: \"当期\\n実行予算\",\n        9: \"実行予算率\\n(%)\",\n        10: \"実行予算\\n累計\",\n        11: \"当期原価\",\n        12: \"原価累計\",\n    }\n    for c, v in headers_r2.items():\n        ws.cell(row=2, column=c).value = v\n        ws.cell(row=2, column=c).font = bold\n        ws.cell(row=2, column=c).alignment = center\n\n    # Sub-header row 3 (page indicator)\n    ws.cell(row=3, column=2).value = \"1/2ページ\"\n    ws.cell(row=3, column=2).font = normal\n    ws.cell(row=3, column=2).alignment = center\n\n    # Row labels (pre-printed company name labels in column 3, codes in col 2)\n    row_labels = [\n        (4,  \"15\", \"ﾋﾞﾙ管理原価部門\"),\n        (5,  \"ﾒｲ\", \"(株)ﾆｺﾑ\"),\n        (6,  \"ﾄ14\", \"(株)ﾆｺﾑ\"),\n        (7,  \"ﾄ16\", \"(株)ｷｬﾌﾟﾃﾝｻｰﾋﾞｽ\"),\n        (8,  \"ｻ95\", \"(株)ｷｮｳｼﾝ\"),\n        (9,  \"ｻ70\", \"(株)ｻﾝﾍﾞﾙ\"),\n        (10, \"ｻ10\", \"\"),\n        (11, \"ｻ30\", \"㈱施工管理基盤整備(東京)施工補助\"),\n        (12, \"ｻ28\", \"(株)(ﾄﾞｰﾅﾂ)ｷｮｳｼﾝ事業\"),\n        (13, \"ｷ60\", \"(株)ｷｮｳｼﾝ\"),\n        (14, \"ﾔ51\", \"一の原価部門\"),\n        (15, \"ﾔ40\", \"(株)ﾁｪｰﾝ・ｻｰﾋﾞｽﾄﾞ\"),\n        (16, \"ﾔ97\", \"原価部門管理費\"),\n        (17, \"ﾄ70\", \"JUNIOR\"),\n        (18, \"ｷ3\",  \"(株)ｷｮｳｼﾝ\"),\n        (19, \"ｻ32\", \"(ｷｮｳｼﾝ)別個数出来高連絡\"),\n        (20, \"ｻ20\", \"(株)ﾊﾞﾙｻﾝｻｰﾋﾞｽ\"),\n        (21, \"ｴ71\", \"(株)御客様電話窓口\"),\n        (22, \"ｻ20\", \"(株)ﾊﾞﾙｻﾝｴｷｽﾊﾟｰﾄ\"),\n        (23, \"ｴ-\", \"ﾍﾞｽﾄｰﾊﾞｰﾄﾅｰｼｯﾌﾟ(株)\"),\n        (24, \"ｻ15\", \"ｸﾞﾗﾌ\"),\n        (25, \"ｻ15\", \"直出(株)\"),\n        (26, \"ｻ42\", \"(株)ﾄｰﾀﾙｻｰﾋﾞｽ\"),\n        (27, \"ｻ15\", \"GBA①原価部門\"),\n        (28, \"ｻ92\", \"原価部門管理費①\"),\n        (29, \"ｻ58\", \"(株)ｷｬﾌﾟﾃﾝｻｰﾋﾞｽ\"),\n        (30, \"ｻ30\", \"ｻｰﾋﾞｽ(株)ﾄﾞ\"),\n        (31, \"ﾔ23\", \"ｻｰﾋﾞｽ(株)\"),\n        (32, \"ｻ50\", \"ｷｮｳｼﾝ(株)ｰ\"),\n        (33, \"ｷ78\", \"直出(株)ﾊﾞｰﾑｸｰﾍﾝ\"),\n        (34, \"ｷ70\", \"ｻﾞﾍﾞｰﾙｻｰﾋﾞｽ\"),\n        (35, \"ﾄ03\", \"(株)ﾄｰﾀﾙｻｰﾋﾞｽ・ﾄﾞ\"),\n        (36, \"ﾔ13\", \"et maison(株)\"),\n        (37, \"F50\", \"B STONE(株)\"),\n        (38, \"ﾔ11\", \"原価部門管理費\"),\n        (39, \"ｻ03\", \"ｻﾞﾍﾞｰﾙﾐｴ(株)\"),\n        (40, \"ｻ90\", \"原価部門管理費②\"),\n        (41, \"ｻ35\", \"(株)ｲﾝﾃﾙ\"),\n        (42, \"ﾔ13\", \"ｷｮｳｼﾝ原価部門管理費\"),\n        (43, \"ｻ50\", \"\"),\n        (52, \"計\", \"\"),\n    ]\n    for item in row_labels:\n        r = item[0]\n        ws.cell(row=r, column=2).value = item[1]\n        ws.cell(row=r, column=2).font = normal\n        ws.cell(row=r, column=2).alignment = center\n        ws.cell(row=r, column=3).value = item[2]\n        ws.cell(row=r, column=3).font = normal\n        ws.cell(row=r, column=3).alignment = left_align\n\n    # Total label\n    ws.cell(row=num_rows, column=2).value = \"計\"\n    ws.cell(row=num_rows, column=2).font = bold\n    ws.cell(row=num_rows, column=2).alignment = center\n\n    # Numeric columns alignment\n    for r in range(4, num_rows + 1):\n        for c in range(4, 13):\n            ws.cell(row=r, column=c).alignment = right\n            ws.cell(row=r, column=c).font = normal\n\n    # Page setup\n    ws.page_setup.paperSize = 9\n    ws.page_setup.fitToPage = True\n    ws.page_setup.fitToWidth = 1\n    ws.page_setup.fitToHeight = 1\n    ws.page_setup.orientation = \"landscape\"\n    ws.page_margins.left = 0.5\n    ws.page_margins.right = 0.5\n    ws.page_margins.top = 0.5\n    ws.page_margins.bottom = 0.5\n\n    # 4. Merge cells LAST\n    ws.merge_cells('B1:K1')\n    ws.merge_cells('L1:L1')\n    ws.merge_cells('B3:L3')",
-      "html": "<table style=\"border-collapse:collapse;font-size:8px;font-family:Arial,sans-serif;width:100%;\">\n  <colgroup>\n    <col style=\"width:20px\">\n    <col style=\"width:35px\">\n    <col style=\"width:160px\">\n    <col style=\"width:80px\">\n    <col style=\"width:80px\">\n    <col style=\"width:80px\">\n    <col style=\"width:45px\">\n    <col style=\"width:80px\">\n    <col style=\"width:45px\">\n    <col style=\"width:80px\">\n    <col style=\"width:80px\">\n    <col style=\"width:80px\">\n    <col style=\"width:20px\">\n  </colgroup>\n  <tr style=\"height:18px;background:#C0C0C0;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td colspan=\"10\" style=\"border:1px solid #000;font-weight:bold;text-align:left;padding-left:4px;\">工事別原価管理表　期間：2026/2/1～2026/2/28</td>\n    <td style=\"border:1px solid #000;text-align:right;font-size:7px;\">2026/6/22 10:06</td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:28px;background:#D9D9D9;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">コード</td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">会社名</td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">前期繰越<br>原価累計</td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">当期<br>請負金額</td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">請負金額<br>累計</td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">出来高率<br>(%)</td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">当期<br>実行予算</td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">実行予算率<br>(%)</td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">実行予算<br>累計</td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">当期原価</td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">原価累計</td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;background:#D9D9D9;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td colspan=\"10\" style=\"border:1px solid #000;text-align:center;\">1/2ページ</td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">15</td>\n    <td style=\"border:1px solid #000;\">ﾋﾞﾙ管理原価部門</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾒｲ</td>\n    <td style=\"border:1px solid #000;\">(株)ﾆｺﾑ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾄ14</td>\n    <td style=\"border:1px solid #000;\">(株)ﾆｺﾑ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾄ16</td>\n    <td style=\"border:1px solid #000;\">(株)ｷｬﾌﾟﾃﾝｻｰﾋﾞｽ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ95</td>\n    <td style=\"border:1px solid #000;\">(株)ｷｮｳｼﾝ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ70</td>\n    <td style=\"border:1px solid #000;\">(株)ｻﾝﾍﾞﾙ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ10</td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ30</td>\n    <td style=\"border:1px solid #000;\">㈱施工管理基盤整備(東京)施工補助</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ28</td>\n    <td style=\"border:1px solid #000;\">(株)(ﾄﾞｰﾅﾂ)ｷｮｳｼﾝ事業</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｷ60</td>\n    <td style=\"border:1px solid #000;\">(株)ｷｮｳｼﾝ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾔ51</td>\n    <td style=\"border:1px solid #000;\">一の原価部門</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾔ40</td>\n    <td style=\"border:1px solid #000;\">(株)ﾁｪｰﾝ・ｻｰﾋﾞｽﾄﾞ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾔ97</td>\n    <td style=\"border:1px solid #000;\">原価部門管理費</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾄ70</td>\n    <td style=\"border:1px solid #000;\">JUNIOR</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｷ3</td>\n    <td style=\"border:1px solid #000;\">(株)ｷｮｳｼﾝ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ32</td>\n    <td style=\"border:1px solid #000;\">(ｷｮｳｼﾝ)別個数出来高連絡</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ20</td>\n    <td style=\"border:1px solid #000;\">(株)ﾊﾞﾙｻﾝｻｰﾋﾞｽ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｴ71</td>\n    <td style=\"border:1px solid #000;\">(株)御客様電話窓口</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ20</td>\n    <td style=\"border:1px solid #000;\">(株)ﾊﾞﾙｻﾝｴｷｽﾊﾟｰﾄ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｴ-</td>\n    <td style=\"border:1px solid #000;\">ﾍﾞｽﾄｰﾊﾞｰﾄﾅｰｼｯﾌﾟ(株)</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ15</td>\n    <td style=\"border:1px solid #000;\">ｸﾞﾗﾌ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ15</td>\n    <td style=\"border:1px solid #000;\">直出(株)</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ42</td>\n    <td style=\"border:1px solid #000;\">(株)ﾄｰﾀﾙｻｰﾋﾞｽ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ92</td>\n    <td style=\"border:1px solid #000;\">GBA①原価部門</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ58</td>\n    <td style=\"border:1px solid #000;\">原価部門管理費①</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ30</td>\n    <td style=\"border:1px solid #000;\">(株)ｷｬﾌﾟﾃﾝｻｰﾋﾞｽ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾔ23</td>\n    <td style=\"border:1px solid #000;\">ｻｰﾋﾞｽ(株)ﾄﾞ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ50</td>\n    <td style=\"border:1px solid #000;\">ｻｰﾋﾞｽ(株)</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｷ78</td>\n    <td style=\"border:1px solid #000;\">直出(株)ﾊﾞｰﾑｸｰﾍﾝ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｷ70</td>\n    <td style=\"border:1px solid #000;\">ｻﾞﾍﾞｰﾙｻｰﾋﾞｽ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾄ03</td>\n    <td style=\"border:1px solid #000;\">(株)ﾄｰﾀﾙｻｰﾋﾞｽ・ﾄﾞ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾔ13</td>\n    <td style=\"border:1px solid #000;\">et maison(株)</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">F50</td>\n    <td style=\"border:1px solid #000;\">B STONE(株)</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾔ11</td>\n    <td style=\"border:1px solid #000;\">原価部門管理費</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ03</td>\n    <td style=\"border:1px solid #000;\">ｻﾞﾍﾞｰﾙﾐｴ(株)</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ90</td>\n    <td style=\"border:1px solid #000;\">原価部門管理費②</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ35</td>\n    <td style=\"border:1px solid #000;\">(株)ｲﾝﾃﾙ</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ﾔ13</td>\n    <td style=\"border:1px solid #000;\">ｷｮｳｼﾝ原価部門管理費</td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:center;\">ｻ50</td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n  <tr style=\"height:13px;background:#D9D9D9;\">\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;font-weight:bold;text-align:center;\">計</td>\n    <td style=\"border:1px solid #000;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;font-weight:bold;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;font-weight:bold;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;font-weight:bold;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;font-weight:bold;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;font-weight:bold;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;font-weight:bold;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;font-weight:bold;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;font-weight:bold;\"></td>\n    <td style=\"border:1px solid #000;text-align:right;font-weight:bold;\"></td>\n    <td style=\"border:1px solid #000;\"></td>\n  </tr>\n</table>",
+      "template": {
+        "sheet_name": "募集工事費用明細書",
+        "orientation": "landscape",
+        "col_widths": [
+          6,
+          18,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10
+        ],
+        "data_rows": 50,
+        "rows": [
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 10,
+                "rs": 1,
+                "v": "募集工事費用明細書　2026/2/1～2026/2/28　工事費明細書",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 16,
+            "cells": [
+              {
+                "c": 1,
+                "s": 1,
+                "v": "コード",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 2,
+                "s": 1,
+                "v": "会社名",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 1,
+                "v": "前月繰越額",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "当月請求額",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "当月入金額",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "当月調整額",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "当月支払額\n工事費合計",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "当月支払額\n管理費合計",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 9,
+                "s": 1,
+                "v": "当月残高",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 10,
+                "s": 1,
+                "v": "翌月繰越額",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 14,
+            "repeat": 50,
+            "cells": [
+              {
+                "c": 1,
+                "v": "",
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 2,
+                "v": "",
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 3,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 4,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 5,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 6,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 7,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 8,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 9,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 10,
+                "v": "",
+                "a": "right",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 16,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "合計",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "v": "",
+                "a": "right",
+                "x": true,
+                "b": true
+              },
+              {
+                "c": 4,
+                "v": "",
+                "a": "right",
+                "x": true,
+                "b": true
+              },
+              {
+                "c": 5,
+                "v": "",
+                "a": "right",
+                "x": true,
+                "b": true
+              },
+              {
+                "c": 6,
+                "v": "",
+                "a": "right",
+                "x": true,
+                "b": true
+              },
+              {
+                "c": 7,
+                "v": "",
+                "a": "right",
+                "x": true,
+                "b": true
+              },
+              {
+                "c": 8,
+                "v": "",
+                "a": "right",
+                "x": true,
+                "b": true
+              },
+              {
+                "c": 9,
+                "v": "",
+                "a": "right",
+                "x": true,
+                "b": true
+              },
+              {
+                "c": 10,
+                "v": "",
+                "a": "right",
+                "x": true,
+                "b": true
+              }
+            ]
+          }
+        ]
+      },
+      "html": "<table style=\"border-collapse:collapse;font-size:11px;font-family:sans-serif;width:100%;\">\n<col style=\"width:40px\"><col style=\"width:160px\"><col style=\"width:90px\"><col style=\"width:90px\"><col style=\"width:90px\"><col style=\"width:90px\"><col style=\"width:90px\"><col style=\"width:90px\"><col style=\"width:90px\"><col style=\"width:90px\">\n<tr style=\"height:22px\"><td colspan=\"10\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">募集工事費用明細書　2026/2/1～2026/2/28　工事費明細書</td></tr>\n<tr style=\"height:18px\">\n<td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">コード</td>\n<td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">会社名</td>\n<td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">前月繰越額</td>\n<td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">当月請求額</td>\n<td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">当月入金額</td>\n<td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">当月調整額</td>\n<td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">当月支払額<br>工事費合計</td>\n<td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">当月支払額<br>管理費合計</td>\n<td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">当月残高</td>\n<td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">翌月繰越額</td>\n</tr>\n<tr style=\"height:14px\"><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:14px\"><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:16px\"><td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">合計</td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n</table>",
       "data": [
         {
           "r": 1,
-          "c": 2,
-          "v": "工事別原価管理表　期間：2026/2/1～2026/2/28"
+          "c": 1,
+          "v": "1/2ページ"
         },
         {
-          "r": 1,
-          "c": 12,
-          "v": "2026/6/22 10:06"
+          "r": 3,
+          "c": 1,
+          "v": "ｼﾞ50"
         },
         {
           "r": 3,
           "c": 2,
-          "v": "1/2ページ"
+          "v": "(株)ﾍﾞﾙ"
         },
         {
-          "r": 4,
-          "c": 2,
-          "v": "15"
-        },
-        {
-          "r": 4,
+          "r": 3,
           "c": 3,
-          "v": "ﾋﾞﾙ管理原価部門"
+          "v": "66.8"
         },
         {
-          "r": 4,
+          "r": 3,
           "c": 4,
-          "v": "-1,900"
+          "v": "35.2"
         },
         {
-          "r": 4,
-          "c": 8,
-          "v": "-1.5"
-        },
-        {
-          "r": 5,
-          "c": 2,
-          "v": "ﾒｲ"
-        },
-        {
-          "r": 5,
-          "c": 3,
-          "v": "(株)ﾆｺﾑ"
-        },
-        {
-          "r": 5,
-          "c": 4,
-          "v": "0"
-        },
-        {
-          "r": 5,
+          "r": 3,
           "c": 5,
-          "v": "0"
+          "v": "6,008,094"
         },
         {
-          "r": 5,
+          "r": 3,
           "c": 6,
-          "v": "0"
-        },
-        {
-          "r": 5,
-          "c": 7,
-          "v": "0.0"
-        },
-        {
-          "r": 5,
-          "c": 8,
-          "v": "0"
-        },
-        {
-          "r": 5,
-          "c": 9,
-          "v": "0.0"
-        },
-        {
-          "r": 6,
-          "c": 2,
-          "v": "ﾄ14"
-        },
-        {
-          "r": 6,
-          "c": 3,
-          "v": "(株)ﾆｺﾑ"
-        },
-        {
-          "r": 6,
-          "c": 4,
-          "v": "0"
-        },
-        {
-          "r": 6,
-          "c": 5,
-          "v": "0"
-        },
-        {
-          "r": 6,
-          "c": 6,
-          "v": "0"
-        },
-        {
-          "r": 6,
-          "c": 7,
-          "v": "0.0"
-        },
-        {
-          "r": 6,
-          "c": 8,
-          "v": "0"
-        },
-        {
-          "r": 6,
-          "c": 9,
-          "v": "0.0"
-        },
-        {
-          "r": 7,
-          "c": 2,
-          "v": "ﾄ16"
-        },
-        {
-          "r": 7,
-          "c": 3,
-          "v": "(株)ｷｬﾌﾟﾃﾝｻｰﾋﾞｽ"
-        },
-        {
-          "r": 7,
-          "c": 4,
-          "v": "894"
-        },
-        {
-          "r": 7,
-          "c": 5,
-          "v": "2,486"
-        },
-        {
-          "r": 7,
-          "c": 6,
-          "v": "35.9"
-        },
-        {
-          "r": 7,
-          "c": 7,
-          "v": "0.1"
-        },
-        {
-          "r": 7,
-          "c": 8,
-          "v": "0.2"
-        },
-        {
-          "r": 7,
-          "c": 9,
-          "v": "1,136,000"
-        },
-        {
-          "r": 7,
-          "c": 10,
-          "v": "511,000"
-        },
-        {
-          "r": 7,
-          "c": 11,
-          "v": "1,870,782"
-        },
-        {
-          "r": 8,
-          "c": 2,
-          "v": "ｻ95"
-        },
-        {
-          "r": 8,
-          "c": 3,
-          "v": "(株)ｷｮｳｼﾝ"
-        },
-        {
-          "r": 8,
-          "c": 4,
-          "v": "4,045"
-        },
-        {
-          "r": 8,
-          "c": 5,
-          "v": "9,528"
-        },
-        {
-          "r": 8,
-          "c": 6,
-          "v": "42.4"
-        },
-        {
-          "r": 8,
-          "c": 7,
-          "v": "2.6"
-        },
-        {
-          "r": 8,
-          "c": 8,
-          "v": "2.5"
-        },
-        {
-          "r": 8,
-          "c": 9,
-          "v": "375,000"
-        },
-        {
-          "r": 8,
-          "c": 10,
-          "v": "150,000"
-        },
-        {
-          "r": 8,
-          "c": 11,
-          "v": "669,990"
-        },
-        {
-          "r": 9,
-          "c": 2,
-          "v": "ｻ70"
-        },
-        {
-          "r": 9,
-          "c": 3,
-          "v": "(株)ｻﾝﾍﾞﾙ"
-        },
-        {
-          "r": 9,
-          "c": 4,
-          "v": "5,770"
-        },
-        {
-          "r": 9,
-          "c": 5,
-          "v": "15,500"
-        },
-        {
-          "r": 9,
-          "c": 6,
-          "v": "37.2"
-        },
-        {
-          "r": 10,
-          "c": 2,
-          "v": "ｻ10"
-        },
-        {
-          "r": 10,
-          "c": 4,
-          "v": "9,830"
-        },
-        {
-          "r": 10,
-          "c": 5,
-          "v": "26,300"
-        },
-        {
-          "r": 10,
-          "c": 6,
-          "v": "36.1"
-        },
-        {
-          "r": 10,
-          "c": 7,
-          "v": "39.4"
-        },
-        {
-          "r": 10,
-          "c": 9,
-          "v": "66,660"
-        },
-        {
-          "r": 10,
-          "c": 10,
-          "v": "26,664"
-        },
-        {
-          "r": 11,
-          "c": 2,
-          "v": "ｻ30"
-        },
-        {
-          "r": 11,
-          "c": 3,
-          "v": "㈱施工管理基盤整備(東京)施工補助"
-        },
-        {
-          "r": 11,
-          "c": 4,
-          "v": "10,842"
-        },
-        {
-          "r": 11,
-          "c": 5,
-          "v": "17,479"
-        },
-        {
-          "r": 11,
-          "c": 6,
-          "v": "60.8"
-        },
-        {
-          "r": 11,
-          "c": 7,
-          "v": "38.8"
-        },
-        {
-          "r": 12,
-          "c": 2,
-          "v": "ｻ28"
-        },
-        {
-          "r": 12,
-          "c": 3,
-          "v": "(株)(ﾄﾞｰﾅﾂ)ｷｮｳｼﾝ事業"
-        },
-        {
-          "r": 12,
-          "c": 4,
-          "v": "10,847"
-        },
-        {
-          "r": 12,
-          "c": 5,
-          "v": "28,278"
-        },
-        {
-          "r": 12,
-          "c": 6,
-          "v": "38.3"
-        },
-        {
-          "r": 12,
-          "c": 7,
-          "v": "13.5"
-        },
-        {
-          "r": 12,
-          "c": 8,
-          "v": "12.6"
-        },
-        {
-          "r": 12,
-          "c": 9,
-          "v": "223,000"
-        },
-        {
-          "r": 12,
-          "c": 10,
-          "v": "80,280"
-        },
-        {
-          "r": 12,
-          "c": 11,
-          "v": "9,350"
-        },
-        {
-          "r": 13,
-          "c": 2,
-          "v": "ｷ60"
-        },
-        {
-          "r": 13,
-          "c": 4,
-          "v": "14,040"
-        },
-        {
-          "r": 13,
-          "c": 5,
-          "v": "36,000"
-        },
-        {
-          "r": 13,
-          "c": 6,
-          "v": "39.0"
-        },
-        {
-          "r": 14,
-          "c": 2,
-          "v": "ﾔ51"
-        },
-        {
-          "r": 14,
-          "c": 3,
-          "v": "一の原価部門"
-        },
-        {
-          "r": 14,
-          "c": 4,
-          "v": "17,537"
-        },
-        {
-          "r": 14,
-          "c": 5,
-          "v": "42,785"
-        },
-        {
-          "r": 14,
-          "c": 6,
-          "v": "40.9"
-        },
-        {
-          "r": 14,
-          "c": 7,
-          "v": "20.4"
-        },
-        {
-          "r": 14,
-          "c": 8,
-          "v": "20.5"
-        },
-        {
-          "r": 14,
-          "c": 9,
-          "v": "208,000"
-        },
-        {
-          "r": 14,
-          "c": 10,
-          "v": "85,696"
-        },
-        {
-          "r": 15,
-          "c": 2,
-          "v": "ﾔ40"
-        },
-        {
-          "r": 15,
-          "c": 3,
-          "v": "(株)ﾁｪｰﾝ・ｻｰﾋﾞｽﾄﾞ"
-        },
-        {
-          "r": 15,
-          "c": 4,
-          "v": "18,544"
-        },
-        {
-          "r": 15,
-          "c": 5,
-          "v": "44,552"
-        },
-        {
-          "r": 15,
-          "c": 6,
-          "v": "41.6"
-        },
-        {
-          "r": 16,
-          "c": 2,
-          "v": "ﾔ97"
-        },
-        {
-          "r": 16,
-          "c": 3,
-          "v": "原価部門管理費"
-        },
-        {
-          "r": 16,
-          "c": 4,
-          "v": "20,569"
-        },
-        {
-          "r": 16,
-          "c": 5,
-          "v": "46,778"
-        },
-        {
-          "r": 16,
-          "c": 6,
-          "v": "43.9"
-        },
-        {
-          "r": 16,
-          "c": 7,
-          "v": "20.5"
-        },
-        {
-          "r": 16,
-          "c": 8,
-          "v": "28.0"
-        },
-        {
-          "r": 16,
-          "c": 9,
-          "v": "166,660"
-        },
-        {
-          "r": 16,
-          "c": 10,
-          "v": "99,996"
-        },
-        {
-          "r": 17,
-          "c": 2,
-          "v": "ﾄ70"
-        },
-        {
-          "r": 17,
-          "c": 3,
-          "v": "JUNIOR"
-        },
-        {
-          "r": 17,
-          "c": 4,
-          "v": "24,951"
-        },
-        {
-          "r": 17,
-          "c": 5,
-          "v": "138,983"
-        },
-        {
-          "r": 17,
-          "c": 6,
-          "v": "17.9"
-        },
-        {
-          "r": 17,
-          "c": 7,
-          "v": "42.3"
-        },
-        {
-          "r": 17,
-          "c": 8,
-          "v": "75.5"
-        },
-        {
-          "r": 17,
-          "c": 9,
-          "v": "184,000"
-        },
-        {
-          "r": 17,
-          "c": 10,
-          "v": "58,880"
-        },
-        {
-          "r": 17,
-          "c": 11,
-          "v": "625,179"
-        },
-        {
-          "r": 18,
-          "c": 2,
-          "v": "ｷ3"
-        },
-        {
-          "r": 18,
-          "c": 3,
-          "v": "(株)ｷｮｳｼﾝ"
-        },
-        {
-          "r": 18,
-          "c": 4,
-          "v": "28,571"
-        },
-        {
-          "r": 18,
-          "c": 5,
-          "v": "61,230"
-        },
-        {
-          "r": 18,
-          "c": 6,
-          "v": "46.6"
-        },
-        {
-          "r": 18,
-          "c": 7,
-          "v": "104.1"
-        },
-        {
-          "r": 18,
-          "c": 8,
-          "v": "109.3"
-        },
-        {
-          "r": 18,
-          "c": 9,
-          "v": "56,000"
-        },
-        {
-          "r": 18,
-          "c": 10,
-          "v": "27,440"
-        },
-        {
-          "r": 19,
-          "c": 2,
-          "v": "ｻ32"
-        },
-        {
-          "r": 19,
-          "c": 3,
-          "v": "(ｷｮｳｼﾝ)別個数出来高連絡"
-        },
-        {
-          "r": 19,
-          "c": 4,
-          "v": "30,490"
-        },
-        {
-          "r": 19,
-          "c": 5,
-          "v": "120,000"
-        },
-        {
-          "r": 19,
-          "c": 6,
-          "v": "25.4"
-        },
-        {
-          "r": 20,
-          "c": 2,
-          "v": "ｻ20"
-        },
-        {
-          "r": 20,
-          "c": 4,
-          "v": "40,734"
-        },
-        {
-          "r": 20,
-          "c": 5,
-          "v": "103,068"
-        },
-        {
-          "r": 20,
-          "c": 6,
-          "v": "39.5"
-        },
-        {
-          "r": 21,
-          "c": 2,
-          "v": "ｴ71"
-        },
-        {
-          "r": 21,
-          "c": 3,
-          "v": "(株)御客様電話窓口"
-        },
-        {
-          "r": 21,
-          "c": 4,
-          "v": "46,200"
-        },
-        {
-          "r": 21,
-          "c": 5,
-          "v": "105,550"
-        },
-        {
-          "r": 21,
-          "c": 6,
-          "v": "43.7"
-        },
-        {
-          "r": 21,
-          "c": 7,
-          "v": "962.5"
-        },
-        {
-          "r": 21,
-          "c": 8,
-          "v": "879.5"
-        },
-        {
-          "r": 21,
-          "c": 9,
-          "v": "12,000"
-        },
-        {
-          "r": 21,
-          "c": 10,
-          "v": "4,800"
-        },
-        {
-          "r": 22,
-          "c": 2,
-          "v": "ｻ20"
-        },
-        {
-          "r": 22,
-          "c": 3,
-          "v": "(株)ﾊﾞﾙｻﾝｴｷｽﾊﾟｰﾄ"
-        },
-        {
-          "r": 22,
-          "c": 4,
-          "v": "49,588"
-        },
-        {
-          "r": 22,
-          "c": 5,
-          "v": "87,371"
-        },
-        {
-          "r": 22,
-          "c": 6,
-          "v": "56.7"
-        },
-        {
-          "r": 22,
-          "c": 7,
-          "v": "52.7"
-        },
-        {
-          "r": 22,
-          "c": 8,
-          "v": "34.3"
-        },
-        {
-          "r": 22,
-          "c": 9,
-          "v": "254,000"
-        },
-        {
-          "r": 22,
-          "c": 10,
-          "v": "93,980"
-        },
-        {
-          "r": 22,
-          "c": 11,
-          "v": "59,768"
-        },
-        {
-          "r": 23,
-          "c": 2,
-          "v": "ｴ-"
-        },
-        {
-          "r": 23,
-          "c": 3,
-          "v": "ﾍﾞｽﾄｰﾊﾞｰﾄﾅｰｼｯﾌﾟ(株)"
-        },
-        {
-          "r": 23,
-          "c": 4,
-          "v": "58,078"
-        },
-        {
-          "r": 23,
-          "c": 5,
-          "v": "154,215"
-        },
-        {
-          "r": 23,
-          "c": 6,
-          "v": "37.6"
-        },
-        {
-          "r": 23,
-          "c": 7,
-          "v": "132.7"
-        },
-        {
-          "r": 23,
-          "c": 8,
-          "v": "123.3"
-        },
-        {
-          "r": 23,
-          "c": 9,
-          "v": "125,000"
-        },
-        {
-          "r": 23,
-          "c": 10,
-          "v": "43,750"
-        },
-        {
-          "r": 23,
-          "c": 11,
-          "v": "135,087"
-        },
-        {
-          "r": 24,
-          "c": 4,
-          "v": "60,528"
-        },
-        {
-          "r": 24,
-          "c": 5,
-          "v": "137,581"
-        },
-        {
-          "r": 24,
-          "c": 6,
-          "v": "43.9"
-        },
-        {
-          "r": 25,
-          "c": 2,
-          "v": "ｻ15"
-        },
-        {
-          "r": 25,
-          "c": 3,
-          "v": "ｸﾞﾗﾌ"
-        },
-        {
-          "r": 25,
-          "c": 4,
-          "v": "60,708"
-        },
-        {
-          "r": 25,
-          "c": 5,
-          "v": "149,720"
-        },
-        {
-          "r": 25,
-          "c": 6,
-          "v": "40.5"
-        },
-        {
-          "r": 25,
-          "c": 7,
-          "v": "38.7"
-        },
-        {
-          "r": 25,
-          "c": 8,
-          "v": "38.1"
-        },
-        {
-          "r": 25,
-          "c": 9,
-          "v": "392,000"
-        },
-        {
-          "r": 25,
-          "c": 10,
-          "v": "156,800"
-        },
-        {
-          "r": 25,
-          "c": 11,
-          "v": "61,491"
-        },
-        {
-          "r": 26,
-          "c": 2,
-          "v": "ｻ15"
-        },
-        {
-          "r": 26,
-          "c": 3,
-          "v": "直出(株)"
-        },
-        {
-          "r": 26,
-          "c": 4,
-          "v": "98,707"
-        },
-        {
-          "r": 26,
-          "c": 5,
-          "v": "236,550"
-        },
-        {
-          "r": 26,
-          "c": 6,
-          "v": "41.7"
-        },
-        {
-          "r": 26,
-          "c": 7,
-          "v": "116.3"
-        },
-        {
-          "r": 26,
-          "c": 8,
-          "v": "117.0"
-        },
-        {
-          "r": 26,
-          "c": 9,
-          "v": "202,000"
-        },
-        {
-          "r": 26,
-          "c": 10,
-          "v": "84,840"
-        },
-        {
-          "r": 26,
-          "c": 11,
-          "v": "227,533"
-        },
-        {
-          "r": 27,
-          "c": 2,
-          "v": "ｻ42"
-        },
-        {
-          "r": 27,
-          "c": 3,
-          "v": "(株)ﾄｰﾀﾙｻｰﾋﾞｽ"
-        },
-        {
-          "r": 27,
-          "c": 4,
-          "v": "117,155"
-        },
-        {
-          "r": 27,
-          "c": 5,
-          "v": "310,688"
-        },
-        {
-          "r": 27,
-          "c": 6,
-          "v": "37.7"
-        },
-        {
-          "r": 27,
-          "c": 7,
-          "v": "58.7"
-        },
-        {
-          "r": 27,
-          "c": 8,
-          "v": "54.5"
-        },
-        {
-          "r": 27,
-          "c": 9,
-          "v": "570,000"
-        },
-        {
-          "r": 27,
-          "c": 10,
-          "v": "199,500"
-        },
-        {
-          "r": 27,
-          "c": 11,
-          "v": "781,446"
-        },
-        {
-          "r": 28,
-          "c": 2,
-          "v": "ｻ92"
-        },
-        {
-          "r": 28,
-          "c": 3,
-          "v": "GBA①原価部門"
-        },
-        {
-          "r": 28,
-          "c": 4,
-          "v": "156,994"
-        },
-        {
-          "r": 28,
-          "c": 5,
-          "v": "395,605"
-        },
-        {
-          "r": 28,
-          "c": 6,
-          "v": "39.6"
-        },
-        {
-          "r": 28,
-          "c": 7,
-          "v": "44.4"
-        },
-        {
-          "r": 28,
-          "c": 8,
-          "v": "48.8"
-        },
-        {
-          "r": 28,
-          "c": 9,
-          "v": "882,000"
-        },
-        {
-          "r": 28,
-          "c": 10,
-          "v": "352,800"
-        },
-        {
-          "r": 28,
-          "c": 11,
-          "v": "48,818"
-        },
-        {
-          "r": 29,
-          "c": 2,
-          "v": "ｻ58"
-        },
-        {
-          "r": 29,
-          "c": 3,
-          "v": "原価部門管理費①"
-        },
-        {
-          "r": 29,
-          "c": 4,
-          "v": "190,149"
-        },
-        {
-          "r": 29,
-          "c": 5,
-          "v": "478,283"
-        },
-        {
-          "r": 29,
-          "c": 6,
-          "v": "39.7"
-        },
-        {
-          "r": 29,
-          "c": 7,
-          "v": "98.2"
-        },
-        {
-          "r": 29,
-          "c": 8,
-          "v": "89.7"
-        },
-        {
-          "r": 29,
-          "c": 9,
-          "v": "533,000"
-        },
-        {
-          "r": 29,
-          "c": 10,
-          "v": "193,479"
-        },
-        {
-          "r": 29,
-          "c": 11,
-          "v": "376,727"
-        },
-        {
-          "r": 30,
-          "c": 2,
-          "v": "ｻ30"
-        },
-        {
-          "r": 30,
-          "c": 3,
-          "v": "(株)ｷｬﾌﾟﾃﾝｻｰﾋﾞｽ"
-        },
-        {
-          "r": 30,
-          "c": 4,
-          "v": "203,731"
-        },
-        {
-          "r": 30,
-          "c": 5,
-          "v": "474,864"
-        },
-        {
-          "r": 30,
-          "c": 6,
-          "v": "42.9"
-        },
-        {
-          "r": 30,
-          "c": 7,
-          "v": "64.1"
-        },
-        {
-          "r": 30,
-          "c": 8,
-          "v": "61.5"
-        },
-        {
-          "r": 30,
-          "c": 9,
-          "v": "771,000"
-        },
-        {
-          "r": 30,
-          "c": 10,
-          "v": "317,652"
-        },
-        {
-          "r": 30,
-          "c": 11,
-          "v": "898,768"
-        },
-        {
-          "r": 31,
-          "c": 2,
-          "v": "ﾔ23"
-        },
-        {
-          "r": 31,
-          "c": 3,
-          "v": "ｻｰﾋﾞｽ(株)ﾄﾞ"
-        },
-        {
-          "r": 31,
-          "c": 4,
-          "v": "204,607"
-        },
-        {
-          "r": 31,
-          "c": 5,
-          "v": "418,741"
-        },
-        {
-          "r": 31,
-          "c": 6,
-          "v": "49.0"
-        },
-        {
-          "r": 31,
-          "c": 7,
-          "v": "111.5"
-        },
-        {
-          "r": 31,
-          "c": 8,
-          "v": "107.9"
-        },
-        {
-          "r": 31,
-          "c": 9,
-          "v": "386,000"
-        },
-        {
-          "r": 31,
-          "c": 10,
-          "v": "183,350"
-        },
-        {
-          "r": 31,
-          "c": 11,
-          "v": "860,986"
-        },
-        {
-          "r": 32,
-          "c": 2,
-          "v": "ｻ50"
-        },
-        {
-          "r": 32,
-          "c": 3,
-          "v": "ｻｰﾋﾞｽ(株)"
-        },
-        {
-          "r": 32,
-          "c": 4,
-          "v": "219,443"
-        },
-        {
-          "r": 32,
-          "c": 5,
-          "v": "656,520"
-        },
-        {
-          "r": 32,
-          "c": 6,
-          "v": "33.4"
-        },
-        {
-          "r": 32,
-          "c": 7,
-          "v": "123.1"
-        },
-        {
-          "r": 32,
-          "c": 8,
-          "v": "99.4"
-        },
-        {
-          "r": 32,
-          "c": 9,
-          "v": "660,000"
-        },
-        {
-          "r": 32,
-          "c": 10,
-          "v": "178,200"
-        },
-        {
-          "r": 32,
-          "c": 11,
-          "v": "1,499,678"
-        },
-        {
-          "r": 33,
-          "c": 2,
-          "v": "ｷ78"
-        },
-        {
-          "r": 33,
-          "c": 3,
-          "v": "直出(株)ﾊﾞｰﾑｸｰﾍﾝ"
-        },
-        {
-          "r": 33,
-          "c": 4,
-          "v": "224,788"
-        },
-        {
-          "r": 33,
-          "c": 5,
-          "v": "334,024"
-        },
-        {
-          "r": 33,
-          "c": 6,
-          "v": "67.2"
-        },
-        {
-          "r": 33,
-          "c": 7,
-          "v": "151.2"
-        },
-        {
-          "r": 33,
-          "c": 8,
-          "v": "182.5"
-        },
-        {
-          "r": 33,
-          "c": 9,
-          "v": "183,000"
-        },
-        {
-          "r": 33,
-          "c": 10,
-          "v": "148,506"
-        },
-        {
-          "r": 34,
-          "c": 2,
-          "v": "ｷ70"
-        },
-        {
-          "r": 34,
-          "c": 3,
-          "v": "ｻﾞﾍﾞｰﾙｻｰﾋﾞｽ"
-        },
-        {
-          "r": 34,
-          "c": 4,
-          "v": "314,047"
-        },
-        {
-          "r": 34,
-          "c": 5,
-          "v": "790,689"
-        },
-        {
-          "r": 34,
-          "c": 6,
-          "v": "39.7"
-        },
-        {
-          "r": 34,
-          "c": 7,
-          "v": "157.2"
-        },
-        {
-          "r": 34,
-          "c": 8,
-          "v": "190.0"
-        },
-        {
-          "r": 34,
-          "c": 9,
-          "v": "418,000"
-        },
-        {
-          "r": 34,
-          "c": 10,
-          "v": "199,880"
-        },
-        {
-          "r": 35,
-          "c": 2,
-          "v": "ﾄ03"
-        },
-        {
-          "r": 35,
-          "c": 3,
-          "v": "(株)ﾄｰﾀﾙｻｰﾋﾞｽ・ﾄﾞ"
-        },
-        {
-          "r": 35,
-          "c": 4,
-          "v": "336,911"
-        },
-        {
-          "r": 35,
-          "c": 5,
-          "v": "688,073"
-        },
-        {
-          "r": 35,
-          "c": 6,
-          "v": "48.9"
-        },
-        {
-          "r": 35,
-          "c": 7,
-          "v": "134.7"
-        },
-        {
-          "r": 35,
-          "c": 8,
-          "v": "137.6"
-        },
-        {
-          "r": 35,
-          "c": 9,
-          "v": "500,000"
-        },
-        {
-          "r": 35,
-          "c": 10,
-          "v": "250,000"
-        },
-        {
-          "r": 35,
-          "c": 11,
-          "v": "867,282"
-        },
-        {
-          "r": 36,
-          "c": 2,
-          "v": "ﾔ13"
-        },
-        {
-          "r": 36,
-          "c": 3,
-          "v": "et maison(株)"
-        },
-        {
-          "r": 36,
-          "c": 4,
-          "v": "342,474"
-        },
-        {
-          "r": 36,
-          "c": 5,
-          "v": "1,161,649"
-        },
-        {
-          "r": 36,
-          "c": 6,
-          "v": "60.3"
-        },
-        {
-          "r": 36,
-          "c": 7,
-          "v": "29.4"
-        },
-        {
-          "r": 36,
-          "c": 8,
-          "v": "85.9"
-        },
-        {
-          "r": 36,
-          "c": 9,
-          "v": "1,352,000"
-        },
-        {
-          "r": 36,
-          "c": 10,
-          "v": "567,840"
-        },
-        {
-          "r": 36,
-          "c": 11,
-          "v": "4,729,891"
-        },
-        {
-          "r": 37,
-          "c": 2,
-          "v": "F50"
-        },
-        {
-          "r": 37,
-          "c": 3,
-          "v": "B STONE(株)"
-        },
-        {
-          "r": 37,
-          "c": 4,
-          "v": "353,073"
-        },
-        {
-          "r": 37,
-          "c": 5,
-          "v": "717,892"
-        },
-        {
-          "r": 37,
-          "c": 6,
-          "v": "49.1"
-        },
-        {
-          "r": 37,
-          "c": 7,
-          "v": "94.1"
-        },
-        {
-          "r": 37,
-          "c": 8,
-          "v": "86.1"
-        },
-        {
-          "r": 37,
-          "c": 9,
-          "v": "833,300"
-        },
-        {
-          "r": 37,
-          "c": 10,
-          "v": "374,985"
-        },
-        {
-          "r": 38,
-          "c": 2,
-          "v": "ﾔ11"
-        },
-        {
-          "r": 38,
-          "c": 3,
-          "v": "原価部門管理費"
-        },
-        {
-          "r": 38,
-          "c": 4,
-          "v": "357,900"
-        },
-        {
-          "r": 38,
-          "c": 5,
-          "v": "734,205"
-        },
-        {
-          "r": 38,
-          "c": 6,
-          "v": "315.3"
-        },
-        {
-          "r": 38,
-          "c": 7,
-          "v": "48.7"
-        },
-        {
-          "r": 38,
-          "c": 8,
-          "v": "323.4"
-        },
-        {
-          "r": 38,
-          "c": 9,
-          "v": "227,000"
-        },
-        {
-          "r": 38,
-          "c": 10,
-          "v": "113,500"
-        },
-        {
-          "r": 38,
-          "c": 11,
-          "v": "160,835"
-        },
-        {
-          "r": 39,
-          "c": 2,
-          "v": "ｻ03"
-        },
-        {
-          "r": 39,
-          "c": 3,
-          "v": "ｻﾞﾍﾞｰﾙﾐｴ(株)"
-        },
-        {
-          "r": 39,
-          "c": 4,
-          "v": "429,606"
-        },
-        {
-          "r": 39,
-          "c": 5,
-          "v": "983,653"
-        },
-        {
-          "r": 39,
-          "c": 6,
-          "v": "43.6"
-        },
-        {
-          "r": 39,
-          "c": 7,
-          "v": "86.0"
-        },
-        {
-          "r": 39,
-          "c": 8,
-          "v": "80.4"
-        },
-        {
-          "r": 39,
-          "c": 9,
-          "v": "1,627,000"
-        },
-        {
-          "r": 39,
-          "c": 10,
-          "v": "650,800"
-        },
-        {
-          "r": 39,
-          "c": 11,
-          "v": "707,607"
-        },
-        {
-          "r": 40,
-          "c": 2,
-          "v": "ｻ90"
-        },
-        {
-          "r": 40,
-          "c": 3,
-          "v": "原価部門管理費②"
-        },
-        {
-          "r": 40,
-          "c": 4,
-          "v": "838,057"
-        },
-        {
-          "r": 40,
-          "c": 5,
-          "v": "2,056,248"
-        },
-        {
-          "r": 40,
-          "c": 6,
-          "v": "35.8"
-        },
-        {
-          "r": 40,
-          "c": 7,
-          "v": "40.7"
-        },
-        {
-          "r": 40,
-          "c": 8,
-          "v": "86.9"
-        },
-        {
-          "r": 40,
-          "c": 9,
-          "v": "2,364,000"
-        },
-        {
-          "r": 40,
-          "c": 10,
-          "v": "874,680"
-        },
-        {
-          "r": 40,
-          "c": 11,
-          "v": "2,401,757"
-        },
-        {
-          "r": 41,
-          "c": 2,
-          "v": "ｻ35"
-        },
-        {
-          "r": 41,
-          "c": 3,
-          "v": "(株)ｲﾝﾃﾙ"
-        },
-        {
-          "r": 41,
-          "c": 4,
           "v": "838,120"
         },
         {
-          "r": 41,
-          "c": 5,
-          "v": "2,024,436"
-        },
-        {
-          "r": 41,
-          "c": 6,
-          "v": "96.6"
-        },
-        {
-          "r": 41,
+          "r": 3,
           "c": 7,
           "v": "41.4"
         },
         {
-          "r": 41,
+          "r": 3,
           "c": 8,
-          "v": "93.3"
+          "v": "96.6"
         },
         {
-          "r": 41,
+          "r": 3,
           "c": 9,
+          "v": "880,040"
+        },
+        {
+          "r": 3,
+          "c": 10,
           "v": "2,169,000"
         },
         {
-          "r": 41,
-          "c": 10,
-          "v": "880,036"
+          "r": 4,
+          "c": 1,
+          "v": "ｼﾞ13"
         },
         {
-          "r": 41,
-          "c": 11,
-          "v": "867,867"
-        },
-        {
-          "r": 42,
+          "r": 4,
           "c": 2,
-          "v": "ﾔ13"
+          "v": "ｼﾞﾝﾚｲ㈱の工事費明細"
         },
         {
-          "r": 42,
+          "r": 4,
           "c": 3,
-          "v": "ｷｮｳｼﾝ原価部門管理費"
+          "v": "68.7"
         },
         {
-          "r": 42,
+          "r": 4,
           "c": 4,
-          "v": "6,008,094"
+          "v": "31,270,029"
         },
         {
-          "r": 42,
+          "r": 4,
           "c": 5,
           "v": "17,024,012"
         },
         {
-          "r": 42,
+          "r": 4,
           "c": 6,
-          "v": "35.2"
-        },
-        {
-          "r": 42,
-          "c": 7,
           "v": "66.8"
         },
         {
-          "r": 42,
+          "r": 4,
+          "c": 7,
+          "v": "838,057"
+        },
+        {
+          "r": 4,
           "c": 8,
-          "v": "68.7"
+          "v": "40.7"
         },
         {
-          "r": 42,
+          "r": 4,
           "c": 9,
-          "v": "24,750,000"
-        },
-        {
-          "r": 42,
-          "c": 10,
           "v": "8,964,250"
         },
         {
-          "r": 42,
-          "c": 11,
-          "v": "31,270,029"
+          "r": 4,
+          "c": 10,
+          "v": "24,750,000"
         },
         {
           "r": 52,
-          "c": 4,
+          "c": 1,
+          "v": "合計"
+        },
+        {
+          "r": 52,
+          "c": 3,
           "v": "11,744,322"
         },
         {
           "r": 52,
-          "c": 5,
+          "c": 4,
           "v": "30,811,493"
+        },
+        {
+          "r": 52,
+          "c": 5,
+          "v": "72.3"
         },
         {
           "r": 52,
@@ -1697,26 +389,21 @@
         {
           "r": 52,
           "c": 7,
-          "v": "72.3"
-        },
-        {
-          "r": 52,
-          "c": 8,
-          "v": "72.4"
-        },
-        {
-          "r": 52,
-          "c": 9,
           "v": "49,459,490"
         },
         {
           "r": 52,
-          "c": 10,
+          "c": 8,
           "v": "16,240,288"
         },
         {
           "r": 52,
-          "c": 11,
+          "c": 9,
+          "v": "72.4"
+        },
+        {
+          "r": 52,
+          "c": 10,
           "v": "42,522,220"
         }
       ],

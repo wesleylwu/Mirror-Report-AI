@@ -12,7 +12,7 @@ import concurrent.futures
 sys.path.append(str(Path(__file__).parent.parent))
 
 from pipeline.JSONgen import extract_text_from_image
-from pipeline.XLSXgen import execute_code, render_sheet
+from pipeline.XLSXgen import render_sheet
 from pipeline.HTMLgen import render_html
 from openpyxl import Workbook
 
@@ -20,12 +20,7 @@ app = Flask(__name__)
 
 
 def _sheet_name_from_page(page_data: dict, idx: int) -> str:
-    code = page_data.get("code", "")
-    if code:
-        m = re.search(r'ws\.title\s*=\s*["\']([^"\']+)["\']', code)
-        if m:
-            return re.sub(r'[:\\/?*\[\]]', '', m.group(1))[:30].strip()
-    tmpl = page_data.get("template") or page_data
+    tmpl = page_data.get("template") or {}
     name = str(tmpl.get("sheet_name") or f"Sheet {idx + 1}")
     return re.sub(r'[:\\/?*\[\]]', '', name)[:30].strip() or f"Page {idx + 1}"
 
@@ -37,6 +32,10 @@ def _build_workbook(pages: list) -> bytes:
     for idx, page_data in enumerate(pages):
         if "error" in page_data:
             continue
+        tmpl = page_data.get("template")
+        if not tmpl or not isinstance(tmpl, dict):
+            print(f"Page {idx + 1}: no template, skipping", file=sys.stderr)
+            continue
         base = _sheet_name_from_page(page_data, idx)
         name, ctr = base or f"Sheet {idx + 1}", 1
         while name in seen:
@@ -45,17 +44,7 @@ def _build_workbook(pages: list) -> bytes:
             ctr += 1
         seen.add(name)
         ws = wb.create_sheet(title=name)
-        code = page_data.get("code", "")
-        if code:
-            try:
-                execute_code(code, ws)
-            except Exception as e:
-                print(f"Code execution failed for page {idx + 1}: {e}", file=sys.stderr)
-                tmpl = page_data.get("template")
-                if tmpl:
-                    render_sheet(tmpl, ws)
-        else:
-            render_sheet(page_data.get("template") or page_data, ws)
+        render_sheet(tmpl, ws)
     if len(wb.worksheets) > 1:
         wb.remove(default)
     buf = io.BytesIO()
