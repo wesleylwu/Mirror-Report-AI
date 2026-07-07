@@ -3,7 +3,7 @@ import { spawn } from "child_process";
 import { writeFile, readFile, unlink, stat } from "fs/promises";
 import path from "path";
 import os from "os";
-import { ExtractedData } from "../../../../types/template";
+import { ExtractedData } from "../../../types/template";
 
 export const maxDuration = 120;
 
