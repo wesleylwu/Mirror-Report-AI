@@ -17,7 +17,9 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
   const activeFile = uploadedFiles[activeIndex];
 
   const isImage = activeFile?.type.startsWith("image/");
-  const isPdf = activeFile?.type === "application/pdf" || activeFile?.name.toLowerCase().endsWith(".pdf");
+  const isPdf =
+    activeFile?.type === "application/pdf" ||
+    activeFile?.name.toLowerCase().endsWith(".pdf");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -116,7 +118,9 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
       <div className="scrollbar-thumb-mirror-cyan/20 flex w-full scrollbar-thin scrollbar-track-transparent gap-2 overflow-x-auto pb-2">
         {uploadedFiles.map((file, idx) => {
           const fileIsImage = file.type.startsWith("image/");
-          const fileIsPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+          const fileIsPdf =
+            file.type === "application/pdf" ||
+            file.name.toLowerCase().endsWith(".pdf");
           const isActive = idx === activeIndex;
           return (
             <div
