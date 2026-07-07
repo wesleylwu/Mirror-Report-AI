@@ -32,33 +32,42 @@ MODEL_HAIKU  = "claude-haiku-4-5-20251001"
 MODEL_SONNET = "claude-sonnet-4-6"
 MODEL = MODEL_SONNET  # default; overridden by --haiku flag at runtime
 
-PROMPT = """Analyze this document image and output THREE sections. No explanation, no markdown fences.
+PROMPT = """Analyze this document image and output exactly three sections. Begin each section with its marker on its own line exactly as shown. No explanation before the first marker. No markdown fences.
 
----CODE---
-Write a Python function build_template(ws) using openpyxl to recreate this form as a blank Excel template.
-Include all imports (Font, Alignment, Border, Side, PatternFill, get_column_letter, etc.).
-- Transcribe ONLY pre-printed labels. Read every character exactly — ン vs ソ, サ vs セ, 両 vs 吋.
-- Count every column including narrow spacer columns. Count only rows within the outer border.
-- Only assign fills to cells with a clearly visible background color. White/plain cells get NO fill.
-- Order: (1) ws.title, column widths, row heights — (2) apply thin Border to every cell in one loop — (3) set values/fills/fonts/alignment — (4) ws.merge_cells() LAST.
-- Set ws.page_setup.paperSize=9, fitToPage=True, fitToWidth=1, fitToHeight=1, orientation, ws.page_margins (0.5 all sides).
+---TEMPLATE---
+JSON object describing the blank form structure. Pre-printed labels and structure only — no filled-in values.
+Read every character exactly — ン vs ソ, サ vs セ, 両 vs 吋.
+{"sheet_name":"<name>","orientation":"portrait|landscape","col_widths":[<float>,...],"data_rows":<count of repeating data rows in original>,"rows":[{"h":<height>,"cells":[{"c":<col>,"s":<colspan>,"rs":<rowspan>,"v":"<label>","b":<bold>,"a":"left|center|right","x":<border>,"f":"<RRGGBB>"}]}]}
+Rules:
+- Before writing anything, count the columns by tracing each vertical line from top to bottom. Write the count in col_widths — one entry per column, no more, no less.
+- col_widths in Excel character units: narrow=4-6, standard=8-12, wide=15-25. Never use pixel values.
+- Do NOT pad "v" values with spaces. Cell width is set by col_widths only.
+- Include narrow spacer columns. Count only rows within the outer border.
+- Count the exact number of repeating data rows visible in the image and set "data_rows" to that count.
+- In "rows": include ALL rows — headers, labels, AND all blank data rows in their correct positions.
+- Blank data rows MUST have "v":"" (empty string) on every cell — NEVER put handwritten, typed, or stamped values in the template. Those go in DATA only.
+- For runs of identical blank data rows (same height, same column pattern, no labels), use the compact form: {"h":<height>,"repeat":<count>,"cells":[...one row's cells...]} instead of repeating each row individually. This saves tokens.
+- "x": REQUIRED on every cell with any visible border. true/"tlbr" = all sides, "b" = bottom only, "tb" = top+bottom, "lr" = left+right. Omit only for cells with zero visible borders.
+- Every cell inside a ruled table, grid, or bordered box must have "x" set — including full-width title/section rows that span all columns. If the section is enclosed by any outer border at all, set "x": true.
+- "f": hex only for visibly shaded cells, omit for white.
 
 ---HTML---
-<table> representing the blank form template. Inline styles only. No <html>/<body> wrapper.
-- colspan=N for merged cells, border:1px solid #000 on bordered cells, background:#RRGGBB for shaded cells.
-- Approximate column widths with <col style="width:Npx">, row heights with <tr style="height:Npx">.
-- Pre-printed labels only — no filled-in data.
+<table> of the blank form structure. Inline styles only. No <html>/<body> wrapper.
+colspan/rowspan for merges, border:1px solid #000 for borders, background:#RRGGBB for shading.
+<col style="width:Npx"> for widths, <tr style="height:Npx"> for heights. Pre-printed labels only.
 
 ---DATA---
-JSON array of filled-in values (handwritten, typed, stamped — NOT pre-printed labels):
+JSON array — filled-in values only (handwritten, typed, stamped — NOT pre-printed labels):
 [{"r":<row>,"c":<col>,"v":"<value>"},...]
-Omit empty cells."""
+Omit empty cells. Output at most 30 rows — if document has more, output first 30 only."""
 
 MAX_IMAGE_PX = 2800
 
 
 def _try_json(s: str):
     s = s.strip()
+    # Fix common model error: "key">value  →  "key":value
+    s = re.sub(r'"(\w+)">', r'"\1":', s)
     try:
         return json.loads(s)
     except json.JSONDecodeError:
@@ -74,13 +83,18 @@ def _try_json(s: str):
 
 
 def _parse_sections(raw: str) -> dict:
-    """Split ---CODE--- / ---HTML--- / ---DATA--- sections from a combined response."""
-    m_code = re.search(r'---CODE---\s*', raw)
-    m_html = re.search(r'---HTML---\s*', raw)
-    m_data = re.search(r'---DATA---\s*', raw)
+    """Split ---TEMPLATE--- / ---HTML--- / ---DATA--- sections from a combined response."""
+    # Use the LAST occurrence of each marker — model sometimes self-restarts mid-output
+    def _last(pattern):
+        matches = list(re.finditer(pattern, raw))
+        return matches[-1] if matches else None
+
+    m_tmpl = _last(r'---TEMPLATE---\s*')
+    m_html = _last(r'---HTML---\s*')
+    m_data = _last(r'---DATA---\s*')
 
     markers = sorted(
-        [(m, name) for m, name in [(m_code, 'code'), (m_html, 'html'), (m_data, 'data')] if m],
+        [(m, name) for m, name in [(m_tmpl, 'template'), (m_html, 'html'), (m_data, 'data')] if m],
         key=lambda x: x[0].start(),
     )
 
@@ -89,15 +103,26 @@ def _parse_sections(raw: str) -> dict:
         end = markers[i + 1][0].start() if i + 1 < len(markers) else len(raw)
         sections[name] = re.sub(r'```[a-z]*\n?|```', '', raw[m.end():end]).strip()
 
-    code = sections.get('code', '')
+    template_text = sections.get('template', '')
     html = sections.get('html', '')
     data_text = sections.get('data', '')
 
+    # Fallback: if no ---TEMPLATE--- marker but raw starts with '{', treat whole
+    # pre-HTML block as the template (model forgot the marker)
+    if not template_text and not sections:
+        html_start = m_html.start() if m_html else len(raw)
+        candidate = re.sub(r'```[a-z]*\n?|```', '', raw[:html_start]).strip()
+        # strip any leading prose line (e.g. "JSON object describing...")
+        first_brace = candidate.find('{')
+        if first_brace != -1:
+            template_text = candidate[first_brace:]
+
+    template = _try_json(template_text) if template_text else None
     data = _try_json(data_text) if data_text else []
     if not isinstance(data, list):
         data = []
 
-    return {"code": code, "html": html, "data": data}
+    return {"template": template, "html": html, "data": data}
 
 
 MAX_CONTINUATIONS = 2  # max extra turns after the first; 3 total turns max
@@ -134,7 +159,7 @@ def _stream_response(client, messages: list, label: str, max_tokens: int = 16000
         total_cr  += getattr(message.usage, "cache_read_input_tokens", 0) or 0
         total_cw  += getattr(message.usage, "cache_creation_input_tokens", 0) or 0
 
-        chunk = message.content[0].text
+        chunk = message.content[0].text if message.content else ""
         accumulated += chunk
 
         if message.stop_reason != "max_tokens":
@@ -145,7 +170,13 @@ def _stream_response(client, messages: list, label: str, max_tokens: int = 16000
             print(f"  [{label}] Hit continuation cap ({MAX_CONTINUATIONS}), stopping early.", file=sys.stderr)
             break
 
-        messages.append({"role": "assistant", "content": chunk})
+        # API rejects continuation if the assistant turn is whitespace-only
+        clean_chunk = re.sub(r"[\x00-\x1f]", " ", chunk).strip()
+        if not clean_chunk:
+            print(f"  [{label}] Empty chunk, cannot continue.", file=sys.stderr)
+            break
+
+        messages.append({"role": "assistant", "content": clean_chunk})
         tail = accumulated[-120:].replace('"', '\\"')
         messages.append({"role": "user", "content":
             f'The output was cut off. Continue from exactly where it stopped. '
@@ -180,7 +211,7 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
     }]
 
     text, total_in, total_out, total_cr, total_cw = _stream_response(
-        client, messages, label=debug_name, max_tokens=16000
+        client, messages, label=debug_name, max_tokens=12000
     )
 
     print(
@@ -193,14 +224,14 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
     text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", text)
 
     result = _parse_sections(text)
-    if result.get("code"):
+    if result.get("template"):
         return result
 
     raw_path = debug_name + ".raw_response.txt"
     with open(raw_path, "w", encoding="utf-8") as f:
         f.write(text)
     print(f"Parse failed in {debug_name} — raw response saved to {raw_path}", file=sys.stderr)
-    return {"code": "", "html": "", "data": []}
+    return {"template": None, "html": "", "data": []}
 
 
 def extract_all(paths: list[str]) -> dict:

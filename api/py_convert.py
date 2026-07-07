@@ -20,12 +20,7 @@ app = Flask(__name__)
 
 
 def _sheet_name_from_page(page_data: dict, idx: int) -> str:
-    code = page_data.get("code", "")
-    if code:
-        m = re.search(r'ws\.title\s*=\s*["\']([^"\']+)["\']', code)
-        if m:
-            return re.sub(r'[:\\/?*\[\]]', '', m.group(1))[:30].strip()
-    tmpl = page_data.get("template") or page_data
+    tmpl = page_data.get("template") or {}
     name = str(tmpl.get("sheet_name") or f"Sheet {idx + 1}")
     return re.sub(r'[:\\/?*\[\]]', '', name)[:30].strip() or f"Page {idx + 1}"
 
@@ -36,6 +31,10 @@ def _build_workbook(pages: list) -> bytes:
     seen: set = set()
     for idx, page_data in enumerate(pages):
         if "error" in page_data:
+            continue
+        tmpl = page_data.get("template")
+        if not tmpl or not isinstance(tmpl, dict):
+            print(f"Page {idx + 1}: no template, skipping", file=sys.stderr)
             continue
         base = _sheet_name_from_page(page_data, idx)
         name, ctr = base or f"Sheet {idx + 1}", 1
