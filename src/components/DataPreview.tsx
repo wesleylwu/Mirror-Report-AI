@@ -2,7 +2,13 @@
 
 import { useCallback } from "react";
 import { FaFileExcel, FaSpinner } from "react-icons/fa";
-import { ExtractedData, HeaderRow, TableRow, TaggedRow, TaggedRowStyle } from "../types/template";
+import {
+  ExtractedData,
+  HeaderRow,
+  TableRow,
+  TaggedRow,
+  TaggedRowStyle,
+} from "../types/template";
 
 interface DataPreviewProps {
   extractedData: ExtractedData;
@@ -15,10 +21,16 @@ interface DataPreviewProps {
 }
 
 const isFullWidthRow = (row: TableRow): row is { _full_width: string } =>
-  !Array.isArray(row) && typeof row === "object" && row !== null && "_full_width" in row;
+  !Array.isArray(row) &&
+  typeof row === "object" &&
+  row !== null &&
+  "_full_width" in row;
 
 const isTaggedRow = (row: TableRow): row is TaggedRow =>
-  !Array.isArray(row) && typeof row === "object" && row !== null && "_tag" in row;
+  !Array.isArray(row) &&
+  typeof row === "object" &&
+  row !== null &&
+  "_tag" in row;
 
 const NAMED_FILLS: Record<string, string> = {
   none: "transparent",
@@ -115,7 +127,9 @@ const DataPreview = ({
       const header = (extractedData.header || []).map(
         (row: HeaderRow, ri: number) =>
           ri === rowIndex
-            ? row.map((cell, ci) => (ci === cellIndex ? { ...cell, value } : cell))
+            ? row.map((cell, ci) =>
+                ci === cellIndex ? { ...cell, value } : cell,
+              )
             : row,
       );
       onExtractedDataChange?.({ ...extractedData, header });
@@ -205,11 +219,17 @@ const DataPreview = ({
             {headerRows.length > 0 && (
               <div className="flex flex-col gap-1 border-b border-gray-200 pb-3">
                 {headerRows.map((row: HeaderRow, rowIndex: number) => (
-                  <div key={`h-${rowIndex}`} className="flex flex-wrap gap-x-4 gap-y-1">
+                  <div
+                    key={`h-${rowIndex}`}
+                    className="flex flex-wrap gap-x-4 gap-y-1"
+                  >
                     {row.map((cell, cellIndex) => {
                       if (!cell.label && !cell.value) return null;
                       return (
-                        <div key={cellIndex} className="flex items-baseline gap-1">
+                        <div
+                          key={cellIndex}
+                          className="flex items-baseline gap-1"
+                        >
                           {cell.label && (
                             <span className="text-mirror-gray shrink-0 font-semibold">
                               {cell.label}
@@ -270,31 +290,39 @@ const DataPreview = ({
                           {row._full_width}
                         </td>
                       </tr>
-                    ) : isTaggedRow(row) ? (() => {
-                      const ts = tagStyleMap[row._tag] ?? DEFAULT_TAG_STYLE;
-                      return (
-                        <tr key={`r-${rowIndex}`} style={{ backgroundColor: ts.background }}>
-                          {columns.map((_, colIndex) => (
-                            <td
-                              key={colIndex}
-                              contentEditable={isEditable}
-                              suppressContentEditableWarning={true}
-                              onBlur={(e) =>
-                                handleCellChange(
-                                  rowIndex,
-                                  colIndex,
-                                  e.currentTarget.textContent || "",
-                                )
-                              }
-                              style={{ fontWeight: ts.fontWeight, textAlign: ts.textAlign }}
-                              className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 cursor-text border border-gray-400 px-1.5 py-1 outline-none"
-                            >
-                              {row.values[colIndex] ?? ""}
-                            </td>
-                          ))}
-                        </tr>
-                      );
-                    })() : (
+                    ) : isTaggedRow(row) ? (
+                      (() => {
+                        const ts = tagStyleMap[row._tag] ?? DEFAULT_TAG_STYLE;
+                        return (
+                          <tr
+                            key={`r-${rowIndex}`}
+                            style={{ backgroundColor: ts.background }}
+                          >
+                            {columns.map((_, colIndex) => (
+                              <td
+                                key={colIndex}
+                                contentEditable={isEditable}
+                                suppressContentEditableWarning={true}
+                                onBlur={(e) =>
+                                  handleCellChange(
+                                    rowIndex,
+                                    colIndex,
+                                    e.currentTarget.textContent || "",
+                                  )
+                                }
+                                style={{
+                                  fontWeight: ts.fontWeight,
+                                  textAlign: ts.textAlign,
+                                }}
+                                className="hover:border-mirror-cyan/40 focus:border-mirror-cyan focus:bg-mirror-cyan/5 cursor-text border border-gray-400 px-1.5 py-1 outline-none"
+                              >
+                                {row.values[colIndex] ?? ""}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })()
+                    ) : (
                       <tr key={`r-${rowIndex}`}>
                         {columns.map((_, colIndex) => (
                           <td
