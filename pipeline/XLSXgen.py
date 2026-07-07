@@ -353,6 +353,24 @@ def _unique_name(base: str, seen: set) -> str:
     return name
 
 
+def populate_data(ws, data_list: list) -> None:
+    """Populate data values into the worksheet."""
+    if not data_list:
+        return
+    from openpyxl.cell.cell import MergedCell
+    for item in data_list:
+        r = item.get("r") or item.get("row")
+        c = item.get("c") or item.get("col")
+        v = item.get("v") or item.get("value")
+        if r is not None and c is not None and v is not None:
+            try:
+                cell = ws.cell(row=int(r), column=int(c))
+                if not isinstance(cell, MergedCell):
+                    cell.value = v
+            except Exception as e:
+                print(f"Failed to write cell data at row {r}, col {c}: {e}", file=sys.stderr)
+
+
 def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
@@ -377,6 +395,7 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
             ws = wb.create_sheet(title=_unique_name(raw_name, seen))
             try:
                 execute_code(code, ws)
+                populate_data(ws, page_data.get("data"))
             except Exception as e:
                 print(f"Code execution failed for page {idx + 1}: {e}", file=sys.stderr)
         else:

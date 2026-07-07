@@ -10,6 +10,8 @@ import json
 import sys
 import html as _html
 from pathlib import Path
+from html.parser import HTMLParser
+import re
 
 
 PX_PER_CHAR = 7.0   # approximate px width per character-unit column width
@@ -116,6 +118,116 @@ def render_html(data: dict) -> str:
     return "\n".join(parts)
 
 
+class HTMLPopulator(HTMLParser):
+    def __init__(self, data_list):
+        super().__init__()
+        self.data_map = {}
+        for item in (data_list or []):
+            r = item.get("r") or item.get("row")
+            c = item.get("c") or item.get("col")
+            v = item.get("v") or item.get("value")
+            if r is not None and c is not None and v is not None:
+                self.data_map[(int(r), int(c))] = str(v)
+        
+        self.output = []
+        self.current_row = 0
+        self.current_col = 1
+        self.in_td = False
+        self.td_attrs = []
+        self.td_content = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "tr":
+            self.current_row += 1
+            self.current_col = 1
+            self.output.append(f"<tr{self._render_attrs(attrs)}>")
+        elif tag == "td":
+            self.in_td = True
+            self.td_attrs = attrs
+            self.td_content = []
+        else:
+            attr_str = self._render_attrs(attrs)
+            tag_str = f"<{tag}{attr_str}>"
+            if self.in_td:
+                self.td_content.append(tag_str)
+            else:
+                self.output.append(tag_str)
+
+    def handle_endtag(self, tag):
+        if tag == "tr":
+            self.output.append("</tr>")
+        elif tag == "td":
+            self.in_td = False
+            colspan = 1
+            for name, val in self.td_attrs:
+                if name == "colspan":
+                    try:
+                        colspan = int(val)
+                    except ValueError:
+                        pass
+            
+            val = self.data_map.get((self.current_row, self.current_col))
+            if val is not None:
+                content_str = _html.escape(val).replace("\n", "<br>")
+            else:
+                content_str = "".join(self.td_content)
+                
+            attr_str = self._render_attrs(self.td_attrs)
+            self.output.append(f"<td{attr_str}>{content_str}</td>")
+            self.current_col += colspan
+        else:
+            tag_str = f"</{tag}>"
+            if self.in_td:
+                self.td_content.append(tag_str)
+            else:
+                self.output.append(tag_str)
+
+    def handle_data(self, data):
+        if self.in_td:
+            self.td_content.append(data)
+        else:
+            self.output.append(data)
+
+    def _render_attrs(self, attrs):
+        if not attrs:
+            return ""
+        parts = []
+        for name, val in attrs:
+            if val is not None:
+                parts.append(f'{name}="{val}"')
+            else:
+                parts.append(name)
+        return " " + " ".join(parts)
+
+
+def populate_html_with_data(html_str: str, data_list: list) -> str:
+    populator = HTMLPopulator(data_list)
+    populator.feed(html_str)
+    return "".join(populator.output)
+
+
+def _sheet_name_from_page(page_data: dict, idx: int) -> str:
+    code = page_data.get("code", "")
+    if code:
+        m = re.search(r'ws\.title\s*=\s*["\']([^"\']+)["\']', code)
+        if m:
+            return re.sub(r'[:\\/?*\[\]]', '', m.group(1))[:30].strip()
+    tmpl = page_data.get("template") or page_data
+    name = str(tmpl.get("sheet_name") or f"Sheet {idx + 1}")
+    return re.sub(r'[:\\/?*\[\]]', '', name)[:30].strip() or f"Page {idx + 1}"
+
+
+def get_html_content(page_data: dict) -> str:
+    raw_html = page_data.get("html")
+    data_list = page_data.get("data")
+    if raw_html:
+        if data_list:
+            return populate_html_with_data(raw_html, data_list)
+        return raw_html
+    tmpl = page_data.get("template") or page_data
+    return render_html(tmpl)
+
+
 def json_to_html(json_path: str, html_path: str) -> None:
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
@@ -127,7 +239,6 @@ def json_to_html(json_path: str, html_path: str) -> None:
     for idx, page_data in enumerate(pages):
         if "error" in page_data:
             continue
-        tmpl = page_data.get("template") or page_data
 
         if len(pages) == 1:
             out = html_path
@@ -135,8 +246,8 @@ def json_to_html(json_path: str, html_path: str) -> None:
             p = Path(html_path)
             out = str(p.parent / f"{p.stem}_{idx + 1}{p.suffix}")
 
-        table_html = render_html(tmpl)
-        sheet_name = _html.escape(tmpl.get("sheet_name") or "")
+        table_html = get_html_content(page_data)
+        sheet_name = _html.escape(_sheet_name_from_page(page_data, idx))
         full_html = (
             "<!DOCTYPE html>\n<html>\n<head>"
             f'<meta charset="utf-8"><title>{sheet_name}</title>'

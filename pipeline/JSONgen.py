@@ -19,6 +19,8 @@ import threading
 import concurrent.futures
 from pathlib import Path
 
+sys.path.append(str(Path(__file__).parent))
+
 import anthropic
 import fitz  # PyMuPDF
 from PIL import Image, ImageOps
@@ -253,6 +255,12 @@ def extract_all(paths: list[str]) -> dict:
                 else:
                     title = raw_title
                 res_dict["filename"] = title
+                if res_dict.get("html") and res_dict.get("data"):
+                    try:
+                        from HTMLgen import populate_html_with_data
+                        res_dict["html"] = populate_html_with_data(res_dict["html"], res_dict["data"])
+                    except Exception as pe:
+                        print(f"Failed to populate HTML for {title}: {pe}", file=sys.stderr)
                 pages_data.append(res_dict)
         except KeyboardInterrupt:
             _STOP.set()

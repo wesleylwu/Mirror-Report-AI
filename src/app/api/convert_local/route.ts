@@ -91,8 +91,9 @@ export async function POST(req: NextRequest) {
     const extractedData = JSON.parse(jsonContent); // always structured as { pages: [...] }
 
     const pagesList = extractedData.pages || [];
-    const pagesResult = pagesList.map((pageData: Record<string, unknown>) => ({
+    const pagesResult = pagesList.map((pageData: Record<string, any>) => ({
       extractedData: pageData,
+      htmlContent: pageData.html,
       filename: pageData.filename,
     }));
 
