@@ -241,7 +241,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
               errMessage = text || `HTTP error ${res.status}`;
             }
           }
-        } catch (e) {
+        } catch {
           errMessage = `HTTP error ${res.status}`;
         }
         throw new Error(errMessage);

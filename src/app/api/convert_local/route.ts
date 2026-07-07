@@ -3,6 +3,7 @@ import { spawn } from "child_process";
 import { writeFile, readFile, unlink, stat } from "fs/promises";
 import path from "path";
 import os from "os";
+import { ExtractedData } from "../../../../types/template";
 
 export const maxDuration = 120;
 
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
     const extractedData = JSON.parse(jsonContent); // always structured as { pages: [...] }
 
     const pagesList = extractedData.pages || [];
-    const pagesResult = pagesList.map((pageData: Record<string, any>) => ({
+    const pagesResult = pagesList.map((pageData: ExtractedData) => ({
       extractedData: pageData,
       htmlContent: pageData.html,
       filename: pageData.filename,
