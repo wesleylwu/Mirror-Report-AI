@@ -286,10 +286,10 @@ def extract_all(paths: list[str]) -> dict:
                 else:
                     title = raw_title
                 res_dict["filename"] = title
-                if res_dict.get("html") and res_dict.get("data"):
+                if res_dict.get("html"):
                     try:
                         from HTMLgen import populate_html_with_data
-                        res_dict["html"] = populate_html_with_data(res_dict["html"], res_dict["data"])
+                        res_dict["html"] = populate_html_with_data(res_dict["html"], res_dict.get("data") or [])
                     except Exception as pe:
                         print(f"Failed to populate HTML for {title}: {pe}", file=sys.stderr)
                 pages_data.append(res_dict)

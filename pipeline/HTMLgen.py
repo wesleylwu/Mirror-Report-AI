@@ -232,11 +232,9 @@ def _sheet_name_from_page(page_data: dict, idx: int) -> str:
 
 def get_html_content(page_data: dict) -> str:
     raw_html = page_data.get("html")
-    data_list = page_data.get("data")
+    data_list = page_data.get("data") or []
     if raw_html:
-        if data_list:
-            return populate_html_with_data(raw_html, data_list)
-        return raw_html
+        return populate_html_with_data(raw_html, data_list)
     tmpl = page_data.get("template") or page_data
     return render_html(tmpl)
 
