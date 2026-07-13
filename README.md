@@ -5,6 +5,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Python](https://img.shields.io/badge/Python_3-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![OpenPyXL](https://img.shields.io/badge/OpenPyXL-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)
 ![Claude](https://img.shields.io/badge/Claude_API-D97757?style=for-the-badge&logo=anthropic&logoColor=white)
 
@@ -16,11 +17,10 @@ An enterprise document verification dashboard that creates a high-fidelity digit
 
 - **Dual-Pane Verification:** Side-by-side desktop layout comparing physical source images with extracted data.
 - **LLM-Powered OCR:** Uses Claude API to parse images into structured datasets.
-- **Dynamic Document Routing:** Automatically classifies incoming documents and maps JSON payloads to dedicated React templates.
+- **Two-Step Database Architecture:** Persists parsed document schemas, cell data coordinates, and layout-generation Python codes to a PostgreSQL database on upload, returning lightweight rendering specs to the browser.
 - **Interactive Browser Editing:** Directly modify text headers, product tags, data cells, and table rows within the high-fidelity preview pane.
-- **On-Demand Excel Export:** Automatically re-compiles edited layouts through the Python engine to export newly updated Excel spreadsheets.
+- **Merged Excel Export:** Modifying cell values in the browser updates database records, triggering the Next.js server to fetch records, merge browser edits, and invoke Python's openpyxl compiler to build spreadsheets.
 - **High-Fidelity UI:** Responsive modular layouts styled entirely with Tailwind CSS that visually mirror the original paper documents.
-- **Template-Based Architecture:** Supports multiple manufacturing document types through reusable component designs.
 
 ---
 
@@ -30,9 +30,9 @@ An enterprise document verification dashboard that creates a high-fidelity digit
 | :--------------------- | :---------------------------------------- |
 | **Frontend**           | React, Next.js (App Router), Tailwind CSS |
 | **Backend**            | Python, OpenPyXL                          |
+| **Database**           | PostgreSQL (pg / psycopg2-binary)         |
 | **Type Safety**        | TypeScript                                |
 | **AI / OCR Engine**    | Claude API (Anthropic SDK)                |
-| **Storage**            | Local / In-Memory                         |
 | **Document Rendering** | Dynamic CSS Grid, HTML Tables             |
 
 ---
@@ -43,31 +43,54 @@ An enterprise document verification dashboard that creates a high-fidelity digit
 
 - Node.js 20+
 - Python 3.10+
-- Anthropic API Key (`ANTHROPIC_API_KEY` set in environment)
+- A running PostgreSQL database (e.g., Supabase, Neon, or local Postgres)
+- Anthropic API Key (`ANTHROPIC_API_KEY`)
+
+### Database Setup
+
+Run the following SQL script in your database to initialize the document table:
+
+```sql
+CREATE TABLE parsed_documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    filename TEXT NOT NULL,
+    template_schema JSONB NOT NULL,
+    extracted_data JSONB NOT NULL,
+    code TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+```
 
 ### Installation
 
-1. Clone the repository and set up environment keys.
+1. Clone the repository and configure environment keys.
 
-2. Install frontend dependencies:
+2. Create a `.env` file in the root folder with the following variables:
+
+```env
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+DATABASE_URL=postgresql://username:password@hostname:port/database_name?sslmode=require
+```
+
+3. Install frontend dependencies:
 
 ```bash
 npm install
 ```
 
-3. Install backend python dependencies:
+4. Install backend python dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Run the development server:
+5. Run the development server:
 
 ```bash
 npm run dev
 ```
 
-5. Open http://localhost:3000 with your browser to see the result.
+6. Open http://localhost:3000 with your browser to see the result.
 
 ---
 
