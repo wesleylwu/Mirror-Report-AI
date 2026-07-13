@@ -73,20 +73,25 @@ def convert():
     filename = page_data.get("filename") or "document"
     template_schema = page_data.get("template") or {}
     extracted_data = page_data.get("data") or []
+    code = page_data.get("code") or ""
     html = get_html_content(page_data)
 
-    db_url = os.environ.get("DATABASE_URL")
-    conn = psycopg2.connect(db_url)
-    cur = conn.cursor()
-    code = page_data.get("code") or ""
-    cur.execute(
-        "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) VALUES (%s, %s, %s, %s) RETURNING id",
-        (filename, json.dumps(template_schema), json.dumps(extracted_data), code)
-    )
-    doc_id = cur.fetchone()[0]
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        db_url = os.environ.get("DATABASE_URL")
+        if not db_url:
+            return jsonify({"error": "DATABASE_URL environment variable is missing"}), 500
+        conn = psycopg2.connect(db_url)
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) VALUES (%s, %s, %s, %s) RETURNING id",
+            (filename, json.dumps(template_schema), json.dumps(extracted_data), code)
+        )
+        doc_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        return jsonify({"error": f"Database connection/insertion failed: {e}"}), 500
 
     return jsonify({
         "id": str(doc_id),
