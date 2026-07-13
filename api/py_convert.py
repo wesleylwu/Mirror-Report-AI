@@ -56,6 +56,7 @@ def _build_workbook(pages: list) -> bytes:
                     render_sheet(tmpl, ws)
         else:
             render_sheet(page_data.get("template") or page_data, ws)
+            populate_data(ws, page_data.get("data"))
     if len(wb.worksheets) > 1:
         wb.remove(default)
     buf = io.BytesIO()
@@ -131,6 +132,7 @@ def convert():
         page_data["filename"] = filename
         html = get_html_content(page_data)
         pages_result.append({
+            "extractedData": page_data,
             "dataJson":    _extract_data(page_data),
             "htmlContent": html,
             "filename":    filename,

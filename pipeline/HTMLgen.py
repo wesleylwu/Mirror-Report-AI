@@ -55,7 +55,7 @@ def render_html(data: dict) -> str:
         parts.append(f'<col style="width: {w:.0f}px"/>')
     parts.append("</colgroup>")
 
-    for row in rows:
+    for r_idx, row in enumerate(rows, start=1):
         try:
             rh = max(MIN_ROW_PX, float(row.get("h") or row.get("height") or 15) * PX_PER_PT)
         except (ValueError, TypeError):
@@ -105,7 +105,7 @@ def render_html(data: dict) -> str:
 
             colspan_attr = f' colspan="{span}"' if span > 1 else ""
             parts.append(
-                f'<td{colspan_attr} style="{"; ".join(styles)}">{_html.escape(value)}</td>'
+                f'<td{colspan_attr} contenteditable="true" data-row="{r_idx}" data-col="{col}" style="{"; ".join(styles)}">{_html.escape(value)}</td>'
             )
             col_cursor = col + span
 
@@ -172,7 +172,20 @@ class HTMLPopulator(HTMLParser):
             else:
                 content_str = "".join(self.td_content)
                 
-            attr_str = self._render_attrs(self.td_attrs)
+            # Add contenteditable, data-row and data-col to attributes for frontend editing
+            new_attrs = []
+            has_editable = False
+            for name, val in self.td_attrs:
+                if name == "contenteditable":
+                    has_editable = True
+                new_attrs.append((name, val))
+            
+            if not has_editable:
+                new_attrs.append(("contenteditable", "true"))
+            new_attrs.append(("data-row", str(self.current_row)))
+            new_attrs.append(("data-col", str(self.current_col)))
+            
+            attr_str = self._render_attrs(new_attrs)
             self.output.append(f"<td{attr_str}>{content_str}</td>")
             self.current_col += colspan
         else:

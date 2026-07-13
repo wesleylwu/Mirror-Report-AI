@@ -125,6 +125,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
           next[activePageIndex] = {
             ...next[activePageIndex],
             extractedData: newData,
+            htmlContent: newData.html || next[activePageIndex].htmlContent,
           };
         }
         return next;
