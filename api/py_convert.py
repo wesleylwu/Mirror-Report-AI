@@ -49,7 +49,7 @@ def convert():
             try:
                 doc = fitz.open(stream=fbytes, filetype="pdf")
                 for i in range(len(doc)):
-                    pix = doc.load_page(i).get_pixmap(dpi=150)
+                    pix = doc.load_page(i).get_pixmap(dpi=200)
                     tasks.append((Image.open(io.BytesIO(pix.tobytes("jpeg"))), f"{fname} (page {i+1})"))
             except Exception as e:
                 return jsonify({"error": f"PDF error: {e}"}), 500

@@ -261,7 +261,7 @@ def extract_all(paths: list[str]) -> dict:
                 doc = fitz.open(p)
                 for page_idx in range(len(doc)):
                     page = doc.load_page(page_idx)
-                    pix = page.get_pixmap(dpi=150)
+                    pix = page.get_pixmap(dpi=200)
                     img_data = pix.tobytes("jpeg")
                     img = Image.open(io.BytesIO(img_data))
                     tasks.append((img, f"{orig_name} (page {page_idx + 1})"))
