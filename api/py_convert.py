@@ -131,6 +131,7 @@ def convert():
         filename = f"{m.group(1)}{m.group(3) or ''}" if m else raw
         page_data["filename"] = filename
         html = get_html_content(page_data)
+        page_data["html"] = html
         pages_result.append({
             "extractedData": page_data,
             "dataJson":    _extract_data(page_data),

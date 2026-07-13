@@ -225,6 +225,12 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
 
     result = _parse_sections(text)
     if result.get("template"):
+        if result.get("html"):
+            try:
+                from HTMLgen import populate_html_with_data
+                result["html"] = populate_html_with_data(result["html"], result.get("data") or [])
+            except Exception as pe:
+                print(f"Failed to populate HTML in OCR: {pe}", file=sys.stderr)
         return result
 
     raw_path = debug_name + ".raw_response.txt"
