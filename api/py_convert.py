@@ -1,71 +1,29 @@
-from flask import Flask, request, jsonify
 import io
 import json
 import base64
 import re
 import sys
+import os
+import concurrent.futures
 from pathlib import Path
+from flask import Flask, request, jsonify
 from PIL import Image
 import fitz
-import concurrent.futures
+import psycopg2
 
 sys.path.append(str(Path(__file__).parent.parent))
 
 from pipeline.JSONgen import extract_text_from_image
-from pipeline.XLSXgen import execute_code, render_sheet, populate_data
-from pipeline.HTMLgen import render_html, get_html_content
-from openpyxl import Workbook
+from pipeline.HTMLgen import get_html_content
 
 app = Flask(__name__)
-
 
 def _sheet_name_from_page(page_data: dict, idx: int) -> str:
     tmpl = page_data.get("template") or {}
     name = str(tmpl.get("sheet_name") or f"Sheet {idx + 1}")
     return re.sub(r'[:\\/?*\[\]]', '', name)[:30].strip() or f"Page {idx + 1}"
 
-
-def _build_workbook(pages: list) -> bytes:
-    wb = Workbook()
-    default = wb.active
-    seen: set = set()
-    for idx, page_data in enumerate(pages):
-        if "error" in page_data:
-            continue
-        tmpl = page_data.get("template")
-        if not tmpl or not isinstance(tmpl, dict):
-            print(f"Page {idx + 1}: no template, skipping", file=sys.stderr)
-            continue
-        base = _sheet_name_from_page(page_data, idx)
-        name, ctr = base or f"Sheet {idx + 1}", 1
-        while name in seen:
-            suffix = f"_{ctr}"
-            name = base[: 30 - len(suffix)] + suffix
-            ctr += 1
-        seen.add(name)
-        ws = wb.create_sheet(title=name)
-        code = page_data.get("code", "")
-        if code:
-            try:
-                execute_code(code, ws)
-                populate_data(ws, page_data.get("data"))
-            except Exception as e:
-                print(f"Code execution failed for page {idx + 1}: {e}", file=sys.stderr)
-                tmpl = page_data.get("template")
-                if tmpl:
-                    render_sheet(tmpl, ws)
-        else:
-            render_sheet(page_data.get("template") or page_data, ws)
-            populate_data(ws, page_data.get("data"))
-    if len(wb.worksheets) > 1:
-        wb.remove(default)
-    buf = io.BytesIO()
-    wb.save(buf)
-    return buf.getvalue()
-
-
 def _extract_data(page_data: dict) -> dict:
-    """Return the data values extracted from the document."""
     sheet_name = _sheet_name_from_page(page_data, 0)
     cells = []
     for item in (page_data.get("data") or []):
@@ -76,22 +34,9 @@ def _extract_data(page_data: dict) -> dict:
             cells.append({"row": int(row), "col": int(col), "value": val})
     return {"sheet_name": sheet_name, "cells": cells}
 
-
 @app.route("/api/convert", methods=["POST"])
 @app.route("/api/py_convert", methods=["POST"])
 def convert():
-    # JSON payload — re-render edited spec to xlsx
-    if request.is_json:
-        body = request.get_json()
-        extracted = body.get("extractedData", {})
-        pages = extracted.get("pages") or [extracted]
-        try:
-            xlsx_bytes = _build_workbook(pages)
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-        return jsonify({"xlsx": base64.b64encode(xlsx_bytes).decode()})
-
-    # Multipart file upload — full pipeline
     files = request.files.getlist("file")
     if not files or files[0].filename == "":
         return jsonify({"error": "No files provided"}), 400
@@ -124,32 +69,26 @@ def convert():
     except Exception as e:
         return jsonify({"error": f"OCR failed: {e}"}), 500
 
-    pages_result = []
-    for idx, page_data in enumerate(pages_data):
-        raw = tasks[idx][1]
-        m = re.match(r"^(.*)\.([a-zA-Z0-9]+)\s*(\(page \d+\))?$", raw)
-        filename = f"{m.group(1)}{m.group(3) or ''}" if m else raw
-        page_data["filename"] = filename
-        html = get_html_content(page_data)
-        page_data["html"] = html
-        pages_result.append({
-            "extractedData": page_data,
-            "dataJson":    _extract_data(page_data),
-            "htmlContent": html,
-            "filename":    filename,
-        })
+    page_data = pages_data[0]
+    filename = page_data.get("filename") or "document"
+    template_schema = page_data.get("template") or {}
+    extracted_data = page_data.get("data") or []
+    html = get_html_content(page_data)
 
-    try:
-        xlsx_bytes = _build_workbook(pages_data)
-    except Exception as e:
-        return jsonify({"error": f"Excel error: {e}"}), 500
-
-    out_filename = "batch_export.xlsx"
-    if len(files) == 1:
-        out_filename = f"{Path(files[0].filename).stem}.xlsx"
+    db_url = os.environ.get("DATABASE_URL")
+    conn = psycopg2.connect(db_url)
+    cur = conn.cursor()
+    code = page_data.get("code") or ""
+    cur.execute(
+        "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) VALUES (%s, %s, %s, %s) RETURNING id",
+        (filename, json.dumps(template_schema), json.dumps(extracted_data), code)
+    )
+    doc_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
 
     return jsonify({
-        "pages":    pages_result,
-        "xlsx":     base64.b64encode(xlsx_bytes).decode(),
-        "filename": out_filename,
+        "id": str(doc_id),
+        "html": html
     })
