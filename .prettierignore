@@ -24,6 +24,5 @@ public
 *.svg
 *.ico
 
-# Pipeline output and templates
+# Pipeline output
 output/
-pipeline/templates/

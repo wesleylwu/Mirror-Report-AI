@@ -1,104 +1,52 @@
-export interface BorderSpec {
-  top?: string | null;
-  bottom?: string | null;
-  left?: string | null;
-  right?: string | null;
+export interface HeaderCell {
+  label: string;
+  value: string;
 }
 
-export interface FontSpec {
+export type HeaderRow = HeaderCell[];
+
+export interface FullWidthRow {
+  _full_width: string;
+}
+
+export interface TaggedRowStyle {
   bold?: boolean;
-  size?: number;
-  underline?: boolean;
+  fill?:
+    | "none"
+    | "light_gray"
+    | "light_blue"
+    | "light_yellow"
+    | "light_green"
+    | "light_orange";
+  align?: "left" | "center" | "right";
 }
 
-export interface AlignSpec {
-  h?: "center" | "right" | "left";
-  v?: "center" | "bottom" | "top";
-  wrap?: boolean;
+export interface TaggedRow {
+  _tag: string;
+  _style?: TaggedRowStyle;
+  values: string[];
 }
 
-export interface CellSpec {
-  fixed?: boolean;
-  value?: string;
-  key?: string;
-  col: number;
-  end_col: number;
-  border?: BorderSpec;
-  align?: AlignSpec;
-  font?: FontSpec;
-  value_part?: "main" | "tail";
-  title_part?: "left" | "center" | "right";
-  concat_keys?: string[];
-  label_prefix?: boolean;
-  fill?: { color?: string };
-}
+export type TableRow = string[] | FullWidthRow | TaggedRow;
 
-export interface HeaderRowSpec {
-  height?: number;
-  cells: CellSpec[];
-}
-
-export interface ColumnSpec {
-  key?: string;
-  format?: string;
-  format_options?: {
-    code_to_type_spaces?: number;
-    type_internal_spaces?: number;
-  };
-  col: number;
-  end_col: number;
-  border?: BorderSpec;
-  first_row_border?: BorderSpec;
-  align?: AlignSpec;
-  font?: FontSpec;
-  col_index?: number;
-  concat_col_index?: number;
-  concat_sep?: string;
-  fallback_col_indices?: number[];
-  split_rows?: boolean;
-}
-
-export interface DataRowsSpec {
-  columns: ColumnSpec[];
-  count?: number;
-  row_height?: number;
-  last_row_fill?: { color?: string };
-}
-
-export interface FooterSpec {
-  height?: number;
-  cells: CellSpec[];
-}
-
-export interface MatchedTemplate {
-  id?: string;
-  orientation?: "portrait" | "landscape";
-  column_widths?: Record<string, number>;
-  header?: HeaderRowSpec[];
-  col_headers?: {
-    row_heights?: number[];
-    height?: number;
-    cells: CellSpec[];
-    fill?: { color?: string };
-  };
-  data_rows?: DataRowsSpec;
-  footer?: FooterSpec;
-  group_table?: boolean;
-  group_size?: number;
-  group_col?: CellSpec;
-  columns?: ColumnSpec[];
-  row_height?: number;
-  n_cols?: number;
+export interface DataCell {
+  r: number;
+  c: number;
+  v: string;
 }
 
 export interface ExtractedData {
   title?: string;
   section_header?: string;
-  header?: Record<string, string>;
+  header?: HeaderRow[];
   table?: {
     columns?: string[];
-    rows?: Record<string, string>[];
+    rows?: TableRow[];
   };
+  html?: string;
+  data?: DataCell[];
+  template?: Record<string, unknown>;
+  filename?: string;
 }
 
 export type ExtractedDataPage = ExtractedData;

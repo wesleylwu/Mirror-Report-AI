@@ -1,10 +1,9 @@
-from flask import Flask, request, send_file, make_response, jsonify
+from flask import Flask, request, jsonify
 import io
 import json
 import base64
-import urllib.parse
-import sys
 import re
+import sys
 from pathlib import Path
 from PIL import Image
 import fitz
@@ -13,131 +12,144 @@ import concurrent.futures
 sys.path.append(str(Path(__file__).parent.parent))
 
 from pipeline.JSONgen import extract_text_from_image
-from pipeline.XLSXgen import _load_templates, _match_template, fill_template
+from pipeline.XLSXgen import execute_code, render_sheet, populate_data
+from pipeline.HTMLgen import render_html, get_html_content
 from openpyxl import Workbook
 
 app = Flask(__name__)
 
+
+def _sheet_name_from_page(page_data: dict, idx: int) -> str:
+    tmpl = page_data.get("template") or {}
+    name = str(tmpl.get("sheet_name") or f"Sheet {idx + 1}")
+    return re.sub(r'[:\\/?*\[\]]', '', name)[:30].strip() or f"Page {idx + 1}"
+
+
+def _build_workbook(pages: list) -> bytes:
+    wb = Workbook()
+    default = wb.active
+    seen: set = set()
+    for idx, page_data in enumerate(pages):
+        if "error" in page_data:
+            continue
+        tmpl = page_data.get("template")
+        if not tmpl or not isinstance(tmpl, dict):
+            print(f"Page {idx + 1}: no template, skipping", file=sys.stderr)
+            continue
+        base = _sheet_name_from_page(page_data, idx)
+        name, ctr = base or f"Sheet {idx + 1}", 1
+        while name in seen:
+            suffix = f"_{ctr}"
+            name = base[: 30 - len(suffix)] + suffix
+            ctr += 1
+        seen.add(name)
+        ws = wb.create_sheet(title=name)
+        code = page_data.get("code", "")
+        if code:
+            try:
+                execute_code(code, ws)
+                populate_data(ws, page_data.get("data"))
+            except Exception as e:
+                print(f"Code execution failed for page {idx + 1}: {e}", file=sys.stderr)
+                tmpl = page_data.get("template")
+                if tmpl:
+                    render_sheet(tmpl, ws)
+        else:
+            render_sheet(page_data.get("template") or page_data, ws)
+            populate_data(ws, page_data.get("data"))
+    if len(wb.worksheets) > 1:
+        wb.remove(default)
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def _extract_data(page_data: dict) -> dict:
+    """Return the data values extracted from the document."""
+    sheet_name = _sheet_name_from_page(page_data, 0)
+    cells = []
+    for item in (page_data.get("data") or []):
+        row = item.get("r") or item.get("row")
+        col = item.get("c") or item.get("col")
+        val = item.get("v") or item.get("value") or ""
+        if val and row and col:
+            cells.append({"row": int(row), "col": int(col), "value": val})
+    return {"sheet_name": sheet_name, "cells": cells}
+
+
 @app.route("/api/convert", methods=["POST"])
 @app.route("/api/py_convert", methods=["POST"])
 def convert():
+    # JSON payload — re-render edited spec to xlsx
     if request.is_json:
         body = request.get_json()
-        extracted_data = body.get("extractedData", {})
-        wb = Workbook()
-        default_sheet = wb.active
-        pages = extracted_data.get("pages")
-        if pages is None:
-            pages = [extracted_data]
-        templates = _load_templates()
-        for idx, page_data in enumerate(pages):
-            tmpl = _match_template(page_data, templates)
-            title = page_data.get("title", f"Sheet {idx+1}")
-            clean_title = re.sub(r'[:\\/?*\[\]]', '', title)[:30].strip() or f"Page {idx+1}"
-            orig_title = clean_title
-            ctr = 1
-            while clean_title in wb.sheetnames:
-                suffix = f"_{ctr}"
-                clean_title = orig_title[:30 - len(suffix)] + suffix
-                ctr += 1
-            ws = wb.create_sheet(title=clean_title)
-            fill_template(tmpl, page_data, ws)
-        if len(wb.worksheets) > 1:
-            wb.remove(default_sheet)
-        out_stream = io.BytesIO()
-        wb.save(out_stream)
-        xlsx_data = out_stream.getvalue()
-        base64_xlsx = base64.b64encode(xlsx_data).decode("utf-8")
-        return jsonify({
-            "xlsx": base64_xlsx
-        })
+        extracted = body.get("extractedData", {})
+        pages = extracted.get("pages") or [extracted]
+        try:
+            xlsx_bytes = _build_workbook(pages)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        return jsonify({"xlsx": base64.b64encode(xlsx_bytes).decode()})
 
+    # Multipart file upload — full pipeline
     files = request.files.getlist("file")
     if not files or files[0].filename == "":
         return jsonify({"error": "No files provided"}), 400
 
     tasks = []
     for file in files:
-        filename = file.filename
-        file_bytes = file.read()
-        if filename.lower().endswith(".pdf"):
+        fname = file.filename
+        fbytes = file.read()
+        if fname.lower().endswith(".pdf"):
             try:
-                doc = fitz.open(stream=file_bytes, filetype="pdf")
-                for page_idx in range(len(doc)):
-                    page = doc.load_page(page_idx)
-                    pix = page.get_pixmap(dpi=150)
-                    img_data = pix.tobytes("jpeg")
-                    img = Image.open(io.BytesIO(img_data))
-                    tasks.append((img, f"{filename} (page {page_idx + 1})"))
+                doc = fitz.open(stream=fbytes, filetype="pdf")
+                for i in range(len(doc)):
+                    pix = doc.load_page(i).get_pixmap(dpi=150)
+                    tasks.append((Image.open(io.BytesIO(pix.tobytes("jpeg"))), f"{fname} (page {i+1})"))
             except Exception as e:
-                return jsonify({"error": f"Error parsing PDF: {str(e)}"}), 500
+                return jsonify({"error": f"PDF error: {e}"}), 500
         else:
             try:
-                img = Image.open(io.BytesIO(file_bytes))
-                tasks.append((img, filename))
+                tasks.append((Image.open(io.BytesIO(fbytes)), fname))
             except Exception as e:
-                return jsonify({"error": f"Error parsing image: {str(e)}"}), 500
+                return jsonify({"error": f"Image error: {e}"}), 500
 
     if not tasks:
-        return jsonify({"error": "No valid pages to process"}), 400
+        return jsonify({"error": "No valid pages"}), 400
 
-    pages_data = []
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [executor.submit(extract_text_from_image, task[0], task[1]) for task in tasks]
-            for f in futures:
-                pages_data.append(f.result())
+            futures = [executor.submit(extract_text_from_image, t[0], t[1]) for t in tasks]
+            pages_data = [f.result() for f in futures]
     except Exception as e:
-        return jsonify({"error": f"OCR extraction failed: {str(e)}"}), 500
+        return jsonify({"error": f"OCR failed: {e}"}), 500
 
-    wb = Workbook()
-    default_sheet = wb.active
-    templates = _load_templates()
     pages_result = []
-
     for idx, page_data in enumerate(pages_data):
-        try:
-            tmpl = _match_template(page_data, templates)
+        raw = tasks[idx][1]
+        m = re.match(r"^(.*)\.([a-zA-Z0-9]+)\s*(\(page \d+\))?$", raw)
+        filename = f"{m.group(1)}{m.group(3) or ''}" if m else raw
+        page_data["filename"] = filename
+        html = get_html_content(page_data)
+        page_data["html"] = html
+        pages_result.append({
+            "extractedData": page_data,
+            "dataJson":    _extract_data(page_data),
+            "htmlContent": html,
+            "filename":    filename,
+        })
 
-            raw_title = tasks[idx][1]
-            match = re.match(r"^(.*)\.([a-zA-Z0-9]+)\s*(\(page \d+\))?$", raw_title)
-            if match:
-                title = f"{match.group(1)}{match.group(3) or ''}"
-            else:
-                title = raw_title
-
-            clean_title = re.sub(r'[:\\/?*\[\]]', '', title)[:30].strip() or f"Page {idx+1}"
-            orig_title = clean_title
-            ctr = 1
-            while clean_title in wb.sheetnames:
-                suffix = f"_{ctr}"
-                clean_title = orig_title[:30 - len(suffix)] + suffix
-                ctr += 1
-            ws = wb.create_sheet(title=clean_title)
-            fill_template(tmpl, page_data, ws)
-            pages_result.append({
-                "extractedData": page_data,
-                "template": tmpl,
-                "filename": title
-            })
-        except Exception as e:
-            return jsonify({"error": f"Excel generation failed: {str(e)}"}), 500
-
-    if len(wb.worksheets) > 1:
-        wb.remove(default_sheet)
-
-    out_stream = io.BytesIO()
-    wb.save(out_stream)
-    xlsx_data = out_stream.getvalue()
-    base64_xlsx = base64.b64encode(xlsx_data).decode("utf-8")
+    try:
+        xlsx_bytes = _build_workbook(pages_data)
+    except Exception as e:
+        return jsonify({"error": f"Excel error: {e}"}), 500
 
     out_filename = "batch_export.xlsx"
     if len(files) == 1:
-        base_name = Path(files[0].filename).stem
-        out_filename = f"{base_name}.xlsx"
+        out_filename = f"{Path(files[0].filename).stem}.xlsx"
 
     return jsonify({
-        "pages": pages_result,
-        "xlsx": base64_xlsx,
-        "filename": out_filename
+        "pages":    pages_result,
+        "xlsx":     base64.b64encode(xlsx_bytes).decode(),
+        "filename": out_filename,
     })

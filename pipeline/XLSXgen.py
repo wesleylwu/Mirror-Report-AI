@@ -1,1148 +1,397 @@
-"""Fill an Excel template from extracted JSON text (produced by JSONgen).
+"""Render an Excel workbook from JSON produced by JSONgen.
 
-Scans pipeline/templates/*.json, picks the template whose title and
-section_header match the extracted document, then writes every keyed cell.
+Each page in the JSON must have a "template" key containing the declarative
+cell-grid schema output by the model.
 
 Usage:
     python XLSXgen.py <json_path> [output.xlsx]
 """
-import difflib
 import json
+import re
+import sys
 from pathlib import Path
 
 from openpyxl import Workbook
+from openpyxl.cell.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.utils import get_column_letter
+from openpyxl.utils import get_column_letter, range_boundaries
 
-import re as _re
-import unicodedata as _ud
 
+_THIN = Side(style="thin")
+_BORDER_ALL = Border(top=_THIN, bottom=_THIN, left=_THIN, right=_THIN)
+_BORDER_NONE = Border()
 
-def _vwidth(s: str) -> int:
-    """Approximate rendered width: full-width/wide chars count as 2, others 1."""
-    return sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in s)
+# A4 usable column width in Excel char units (0.5" margins, Calibri 11pt)
+_A4_PORTRAIT_COLS  = 100.0
+_A4_LANDSCAPE_COLS = 128.0
 
 
-def _vljust(s: str, target: int, fillchar: str = " ") -> str:
-    """Left-justify s with fillchar until its visual width reaches target."""
-    pad = target - _vwidth(s)
-    if pad <= 0:
-        return s
-    fw = _vwidth(fillchar) or 1
-    out = s + fillchar * (pad // fw)
-    if pad % fw:
-        out += " " * (pad % fw)
-    return out
+class _NullCell:
+    """Stand-in for a MergedCell position — silently swallows all writes."""
+    def __setattr__(self, name, value): pass
+    def __getattr__(self, name): return None
 
 
-def _fmt_item_code(text: str, opts: dict | None = None) -> str:
-    """Move type tokens (e.g. '999 購入', '100 中込') onto the code line.
-    Handles both multiline input (\n-separated) and single-line input (space-separated).
-    Spacing is controlled by format_options in the template."""
-    if not text:
-        return text
-    opts = opts or {}
-    code_to_type  = " " * opts.get("code_to_type_spaces", 8)
-    type_internal = " " * opts.get("type_internal_spaces", 1)
+def _guard(obj):
+    """Replace MergedCell instances with _NullCell, recursively for tuples."""
+    if isinstance(obj, MergedCell):
+        return _NullCell()
+    if isinstance(obj, tuple):
+        return tuple(_guard(item) for item in obj)
+    return obj
 
-    # Matches lines that are ONLY digits + one word (e.g. "999 購入", "100 中込")
-    # Whole line is just a type token: "999 購入"
-    type_pat      = _re.compile(r"^(\d+)\s+(\S+)$")
-    code_pat      = _re.compile(r"^[A-Za-z][A-Za-z0-9]{3,}")
-    # Type token at START of remainder, followed by more text: "999 購入 <name>"
-    start_type_pat = _re.compile(r"^(\d+)\s+(\S+)\s+")
-    # Type token at END of remainder: "<name> 999 購入"
-    end_type_pat  = _re.compile(r"\s+(\d+)\s+(\S+)\s*$")
 
-    code_line, type_token, name_lines = "", "", []
-    for line in text.split("\n"):
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if code_pat.match(stripped) and not code_line:
-            parts = stripped.split(None, 1)
-            code_line = parts[0]  # only the code token (e.g. "GE0006280")
-            if len(parts) > 1:
-                remainder = parts[1].strip()
-                # Entire remainder IS the type token: "CODE TYPE_NUM TYPE_WORD"
-                m = type_pat.match(remainder)
-                if m and len(remainder) <= 12:
-                    type_token = f"{m.group(1)}{type_internal}{m.group(2)}"
-                else:
-                    # Check type token at START of remainder (CODE TYPE NAME order)
-                    m = start_type_pat.match(remainder)
-                    if m and len(f"{m.group(1)} {m.group(2)}") <= 12:
-                        type_token = f"{m.group(1)}{type_internal}{m.group(2)}"
-                        name_part = remainder[m.end():].strip()
-                        if name_part:
-                            name_lines.append(name_part)
-                    else:
-                        # Check type token at END of remainder (CODE NAME TYPE order)
-                        m = end_type_pat.search(remainder)
-                        if m and len(f"{m.group(1)} {m.group(2)}") <= 12:
-                            type_token = f"{m.group(1)}{type_internal}{m.group(2)}"
-                            name_part = remainder[:m.start()].strip()
-                            if name_part:
-                                name_lines.append(name_part)
-                        else:
-                            name_lines.append(remainder)
-        else:
-            m = type_pat.match(stripped)
-            if m and len(stripped) <= 12:
-                type_token = f"{m.group(1)}{type_internal}{m.group(2).strip()}"
-            else:
-                # Type token may sit at the END of a name line (e.g. "<name> 999 購入")
-                m2 = end_type_pat.search(stripped) if not type_token else None
-                if m2 and len(f"{m2.group(1)} {m2.group(2)}") <= 12:
-                    type_token = f"{m2.group(1)}{type_internal}{m2.group(2)}"
-                    name_part = stripped[:m2.start()].strip()
-                    if name_part:
-                        name_lines.append(name_part)
-                else:
-                    name_lines.append(stripped)
+class _SafeWS:
+    """Proxy around openpyxl Worksheet that turns MergedCell access into no-ops.
 
-    if not type_token:
-        injected = (opts.get("injected_type") or "").strip()
-        if injected:
-            type_token = injected.replace(" ", type_internal, 1)
-    first_line = f"{code_line}{code_to_type}{type_token}" if type_token else code_line
-    rest = "\n".join(name_lines)
-    return f"{first_line}\n{rest}" if rest else first_line
-
-
-_SIDES = {
-    "thin":   Side(style="thin"),
-    "medium": Side(style="medium"),
-    "thick":  Side(style="thick"),
-    "dashed": Side(style="dashed"),
-    None:     Side(style=None),
-}
-
-
-def _side(s):
-    return _SIDES.get(s, Side(style=None))
-
-def _side_colored(weight="medium", color="FFFFFF"):
-    """Return a border side with the given weight and explicit color."""
-    return Side(style=weight, color=color)
-
-def _side_white(weight="medium"):
-    return _side_colored(weight, "FFFFFF")
-
-
-def _border(spec: dict) -> Border:
-    def _s(side: str):
-        style = spec.get(side)
-        color = spec.get(f"{side}_color")
-        if style is None:
-            return Side(style=None)
-        return Side(style=style, color=color) if color else _side(style)
-    return Border(
-        top=_s("top"),
-        bottom=_s("bottom"),
-        left=_s("left"),
-        right=_s("right"),
-    )
-
-
-def _write_cell(ws, row: int, col: int, end_col: int, end_row: int,
-                value: str, font_spec: dict | None, align_spec: dict | None, border_spec: dict | None,
-                fill_spec: dict | None = None):
-    font_spec = font_spec or {}
-    align_spec = align_spec or {}
-    border_spec = border_spec or {}
-    font = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 10),
-                underline="single" if font_spec.get("underline") else None)
-    align = Alignment(
-        horizontal=align_spec.get("h", "left"),
-        vertical=align_spec.get("v", "center"),
-        wrap_text=align_spec.get("wrap", True),
-    )
-    outer = _border(border_spec)
-    no_side = Side(style=None)
-
-    ws.cell(row=row, column=col, value=value or None)
-
-    if end_col > col or end_row > row:
-        ws.merge_cells(start_row=row, end_row=end_row, start_column=col, end_column=end_col)
-
-    is_negative = isinstance(value, str) and value.strip().startswith("-")
-    for r in range(row, end_row + 1):
-        for c in range(col, end_col + 1):
-            is_top    = r == row
-            is_bottom = r == end_row
-            is_left   = c == col
-            is_right  = c == end_col
-            cell = ws.cell(row=r, column=c)
-            cell.font = Font(bold=font.bold, size=font.size, color="FF0000" if is_negative else "000000")
-            cell.alignment = Alignment(
-                horizontal=align.horizontal,
-                vertical=align.vertical,
-                wrap_text=align.wrap_text,
-            )
-            cell.border = Border(
-                top=outer.top       if is_top    else no_side,
-                bottom=outer.bottom if is_bottom else no_side,
-                left=outer.left     if is_left   else no_side,
-                right=outer.right   if is_right  else no_side,
-            )
-            if fill_spec:
-                cell.fill = PatternFill("solid", fgColor=fill_spec.get("color", "FFFFFF"))
-
-
-def _normalize_row(row, col_names: list) -> dict:
-    """Convert a positional list-row (preferred — avoids JSON key-collision
-    issues with duplicate/blank column headers) into the dict-row shape the
-    rest of this module expects. Dict rows (e.g. {"_full_width": ...}) pass
-    through unchanged."""
-    if isinstance(row, dict):
-        return row
-    if isinstance(row, list):
-        result: dict = {}
-        seen: dict[str, int] = {}
-        for i, cn in enumerate(col_names):
-            cnt = seen.get(cn, 0)
-            seen[cn] = cnt + 1
-            if cn:
-                key = cn if cnt == 0 else f"{cn}_{cnt + 1}"
-            else:
-                key = f"col_{i + 1}"
-            result[key] = row[i] if i < len(row) else ""
-        return result
-    return {}
-
-
-def _normalize_rows(rows: list, col_names: list) -> list:
-    return [_normalize_row(rw, col_names) for rw in rows]
-
-
-def _split_title_3(title: str) -> tuple[str, str, str]:
-    """Split a top-line title string into (left, center, right) parts.
-    Left = leading period like '2026年2月'; right = trailing date/page marker
-    like '2026/6/22 PAGE:1'; center = whatever document-name text remains."""
-    title = (title or "").strip()
-    left = right = ""
-    center = title
-    m = _re.match(r'^(\d{4}年\d{1,2}月)\s+(.*)$', center)
-    if m:
-        left, center = m.group(1), m.group(2)
-    m = _re.search(r'^(.*?)\s+(\d{4}/\d{1,2}/\d{1,2}.*)$', center)
-    if m:
-        center, right = m.group(1), m.group(2)
-    return left, center.strip(), right.strip()
-
-
-def _fuzzy_get(d: dict, key: str, cutoff: float = 0.45,
-               _used: set | None = None) -> str:
-    """Return d[key] if it exists, otherwise return the value whose key best
-    matches `key` by sequence similarity (above cutoff). Returns '' if nothing
-    matches well enough. Pass a shared `_used` set to prevent the same source
-    key from being consumed by two different template keys."""
-    if key in d:
-        return d[key]
-    candidates = [k for k in d.keys() if _used is None or k not in _used]
-    matches = difflib.get_close_matches(key, candidates, n=1, cutoff=cutoff)
-    if matches:
-        if _used is not None:
-            _used.add(matches[0])
-        return d[matches[0]]
-    return ""
-
-
-# ── Template discovery ────────────────────────────────────────────────────────
-
-def _load_templates() -> list[dict]:
-    templates_dir = Path(__file__).parent / "templates"
-    templates = []
-    for path in sorted(templates_dir.glob("*.json")):
-        with open(path, encoding="utf-8") as f:
-            templates.append(json.load(f))
-    return templates
-
-
-def _normalize_title(t: str) -> str:
-    res = []
-    for c in t:
-        code = ord(c)
-        if 0xFF10 <= code <= 0xFF19 or 0xFF21 <= code <= 0xFF3A or 0xFF41 <= code <= 0xFF5A:
-            res.append(chr(code - 0xFEE0))
-        else:
-            res.append(c)
-    return "".join(res).strip()
-
-
-def _match_template(data: dict, templates: list[dict]) -> dict:
-    title   = _normalize_title(data.get("title") or "")
-    section = (data.get("section_header") or "").strip()
-
-    # 1. First attempt match on title and section
-    for tmpl in templates:
-        m = tmpl.get("match", {})
-        t_title   = _normalize_title(m.get("title") or "")
-        t_section = (m.get("section_header") or "").strip()
-        is_title_match = (
-            t_title == title or
-            (t_title != "" and title.startswith(t_title)) or
-            (tmpl.get("id") == "売上実績表" and (title == "得意先別／営業目標" or title == "売上実績表"))
-        )
-        if is_title_match and t_section == section:
-            return tmpl
-
-    # Collect all text tokens present in the extracted data
-    data_tokens: set[str] = set()
-    data_tokens.add(title)
-    data_tokens.add(section)
-    data_tokens.update(data.get("header", {}).keys())
-    table = data.get("table", {})
-    col_names = table.get("columns", [])
-    data_tokens.update(c for c in col_names if c)
-    for row in _normalize_rows(table.get("rows", []), col_names):
-        data_tokens.update(k for k in row.keys() if k and k != "_full_width")
-    data_tokens.discard("")
-
-    best_tmpl  = None
-    best_score = -1.0
-
-    for tmpl in templates:
-        signals = tmpl.get("match_signals", [])
-        if not signals:
-            signal_score = 0.0
-        else:
-            hits         = sum(1 for s in signals if s in data_tokens)
-            signal_score = hits / len(signals)
-
-        # Title + section similarity as tiebreaker (weighted 0..0.5)
-        m          = tmpl.get("match", {})
-        t_title    = _normalize_title(m.get("title") or "")
-        t_section  = (m.get("section_header") or "").strip()
-        title_sim  = difflib.SequenceMatcher(None, title,   t_title).ratio()
-        section_sim= difflib.SequenceMatcher(None, section, t_section).ratio()
-        score      = signal_score + 0.25 * title_sim + 0.25 * section_sim
-
-        if score > best_score:
-            best_score = score
-            best_tmpl  = tmpl
-
-    if best_tmpl is not None:
-        return best_tmpl
-
-    # Last resort fallback: default to the first template with a warning
-    if templates:
-        import sys
-        print(
-            f"Warning: No template matched for title={title!r} section={section!r}. "
-            f"Falling back to: {templates[0].get('id')}",
-            file=sys.stderr
-        )
-        return templates[0]
-
-    raise ValueError(
-        f"No template found for title={title!r} section={section!r}. "
-        f"Available: {[t.get('id') for t in templates]}"
-    )
-
-
-# ── Sheet builder ─────────────────────────────────────────────────────────────
-
-def fill_grouped_template(tmpl: dict, data: dict, ws) -> None:
-    """Render a month-grouped table (e.g. 売上実績表): col A is a merged month cell
-    spanning group_size rows; remaining cols render each inner row independently."""
-    import re as _re2
-
-    for col_letter, width in tmpl.get("column_widths", {}).items():
-        ws.column_dimensions[col_letter].width = width
-
-    for row_spec in tmpl.get("header", []):
-        r = row_spec["row"]
-        ws.row_dimensions[r].height = row_spec.get("height", 14)
-        for cell in row_spec["cells"]:
-            if cell.get("fixed", True):
-                value = cell.get("value", "")
-            else:
-                key = cell.get("key", "")
-                if key in ("title", "section_header"):
-                    value = data.get(key, "")
-                else:
-                    value = _fuzzy_get(data.get("header", {}), key)
-            _write_cell(ws, r, cell["col"], cell["end_col"], r,
-                        value, cell.get("font"), cell.get("align"), cell.get("border"))
-
-    ch = tmpl.get("col_headers", {})
-    if ch:
-        r_hdr = ch.get("row", 2)
-        ws.row_dimensions[r_hdr].height = ch.get("height", 14)
-        for cell in ch.get("cells", []):
-            _write_cell(ws, r_hdr, cell["col"], cell["end_col"], r_hdr,
-                        cell.get("value", ""), cell.get("font"), cell.get("align"), cell.get("border"))
-
-    table_rows = _normalize_rows(data.get("table", {}).get("rows", []),
-                                  data.get("table", {}).get("columns", []))
-    data_rows = [rw for rw in table_rows if "_full_width" not in rw]
-
-    month_source = tmpl.get("month_source", "full_width")
-    month_key    = tmpl.get("month_key", "月別")
-    group_size   = tmpl.get("group_size", 4)
-
-    n_groups    = tmpl.get("n_groups", 15)
-
-    if month_source == "col":
-        # Split into fixed-size chunks so summary rows (上半期合計 etc.) don't
-        # corrupt group boundaries — the month label may appear on any row in the group
-        groups: list[list[dict]] = [
-            data_rows[i:i + group_size] for i in range(0, len(data_rows), group_size)
-        ]
-
-        def _fmt_month(name: str) -> str:
-            if name.endswith("合計"):
-                return name[:-2] + "\n合計"
-            return name
-
-        def _get_month(grp: list[dict]) -> str:
-            for row in grp:
-                val = row.get(month_key, "")
-                if val:
-                    return val
-            return ""
-
-        month_names = [_fmt_month(_get_month(g)) for g in groups]
-    else:
-        groups = []
-        month_names = []
-        for rw in table_rows:
-            if "_full_width" in rw:
-                parts = _re2.split(r'[\s　]+', rw["_full_width"].strip())
-                month_names = [p for p in parts if p]
-    start_row   = tmpl.get("data_start_row", 3)
-    row_height  = tmpl.get("row_height", 14.0)
-    gc          = tmpl.get("group_col", {})
-    col_defs    = tmpl.get("columns", [])
-    no_side     = Side(style=None)
-
-    for g in range(n_groups):
-        month          = month_names[g] if g < len(month_names) else ""
-        grp_start      = start_row + g * group_size
-        grp_end        = grp_start + group_size - 1
-        gc_col         = gc.get("col", 1)
-        gc_end_col     = gc.get("end_col", 1)
-        gc_font        = gc.get("font", {})
-        gc_align       = gc.get("align", {})
-        gc_border      = gc.get("border", {})
-
-        ws.merge_cells(start_row=grp_start, end_row=grp_end,
-                       start_column=gc_col, end_column=gc_end_col)
-
-        for r_idx in range(grp_start, grp_end + 1):
-            is_first_r = r_idx == grp_start
-            is_last_r  = r_idx == grp_end
-            c_cell     = ws.cell(row=r_idx, column=gc_col)
-            if is_first_r:
-                c_cell.value     = month or None
-                c_cell.font      = Font(bold=gc_font.get("bold", False),
-                                        size=gc_font.get("size", 8))
-                c_cell.alignment = Alignment(horizontal=gc_align.get("h", "center"),
-                                             vertical=gc_align.get("v", "center"),
-                                             wrap_text=True)
-            c_cell.border = Border(
-                top=_side(gc_border.get("top"))    if is_first_r else no_side,
-                bottom=_side(gc_border.get("bottom", "medium")) if is_last_r else no_side,
-                left=_side(gc_border.get("left")),
-                right=_side(gc_border.get("right")),
-            )
-
-        for i in range(group_size):
-            r          = grp_start + i
-            ws.row_dimensions[r].height = row_height
-            if groups:
-                row_data = groups[g][i] if g < len(groups) and i < len(groups[g]) else {}
-            else:
-                data_idx = g * group_size + i
-                row_data = data_rows[data_idx] if data_idx < len(data_rows) else {}
-            is_first   = i == 0
-            is_last    = i == group_size - 1
-
-            col_names = data.get("table", {}).get("columns", [])
-            # Build positional value list to handle duplicate column header keys
-            pos_values = []
-            seen: dict[str, int] = {}
-            for col_name in col_names:
-                count = seen.get(col_name, 0)
-                seen[col_name] = count + 1
-                if count == 0:
-                    pos_values.append(row_data.get(col_name, "") if row_data else "")
-                else:
-                    dedup_key = f"{col_name}_{count + 1}" if col_name else f"_{count + 1}"
-                    pos_values.append(row_data.get(dedup_key, "") if row_data else "")
-            for col_def in col_defs:
-                if "col_index" in col_def:
-                    idx = col_def["col_index"]
-                    value = pos_values[idx] if idx < len(pos_values) else ""
-                else:
-                    key = col_def.get("key", "")
-                    if row_data:
-                        value = row_data.get(key, "")
-                        if not value:
-                            for alias in col_def.get("key_aliases", []):
-                                value = row_data.get(alias, "")
-                                if value:
-                                    break
-                    else:
-                        value = ""
-                base_b     = col_def.get("border", {})
-                border_spec = {
-                    "top":    "medium" if is_first else base_b.get("top", "thin"),
-                    "bottom": "medium" if is_last  else base_b.get("bottom", "thin"),
-                    "left":   base_b.get("left"),
-                    "right":  base_b.get("right"),
-                }
-                _write_cell(ws, r, col_def["col"], col_def["end_col"], r,
-                            value, col_def.get("font", {}), col_def.get("align", {}),
-                            border_spec)
-
-
-def _fill_sections(tmpl: dict, data: dict, ws, col_defs: list, start_row: int,
-                   table_rows: list, row_h: float, dr: dict) -> None:
-    """Render data rows described by a sections array.
-
-    Each section entry:
-      pairs          – number of 2-row pairs in this section
-      block_pairs    – how many pairs = 1 "block" (B gets medium-top at block start)
-      fill           – hex color or null for D3:O cols and B col
-      col_A_border   – "medium" | "thick" | null
-      col_A_span     – true → merge A for the whole section
-      col_right      – right-border style for last col (default "medium")
-      sub_sections   – optional list of {pairs, fill} for fill-variation within section
-
-    pair_merge_col  (int, 1-based) in dr → merge that column every 2 rows.
+    Claude-generated code often writes to every cell in a range (e.g. to apply
+    borders) without checking whether cells are inside a merge region. This proxy
+    intercepts those writes and drops them silently so execution continues.
     """
-    no_side = Side(style=None)
-    pair_col = dr.get("pair_merge_col")   # 1-based col index to merge per pair
-    pair_col_labels = dr.get("pair_col_labels")  # fixed labels cycling per pair-in-block (overrides dynamic split)
-    sections = dr.get("sections", [])
-    collapse_cols   = dr.get("collapse_empty_row_cols", [])   # 1-based; if all empty, shrink row
-    collapse_height = dr.get("collapse_height", 2)
+    __slots__ = ("_ws",)
 
-    # Build positional value list from each row
-    col_names = data.get("table", {}).get("columns", [])
-    if pair_col_labels:
-        # The model sometimes emits its own redundant 当月/累計-style column even though
-        # we already render that via pair_col_labels — drop it so positional indices
-        # for the numeric columns don't shift.
-        def _is_pair_label_col(cn: str) -> bool:
-            if not cn:
-                return False
-            stripped = cn
-            for lbl in pair_col_labels:
-                stripped = stripped.replace(lbl, "")
-            stripped = _re.sub(r'[/\s　,、]+', '', stripped)
-            return stripped == ""
-        col_names = [cn for cn in col_names if not _is_pair_label_col(cn)]
+    def __init__(self, ws):
+        object.__setattr__(self, "_ws", ws)
 
-    def _pos_values(row_data: dict) -> list:
-        seen: dict[str, int] = {}
-        vals = []
-        for cn in col_names:
-            cnt = seen.get(cn, 0)
-            seen[cn] = cnt + 1
-            if cnt == 0:
-                vals.append(row_data.get(cn, "") if row_data else "")
-            else:
-                dk = f"{cn}_{cnt+1}" if cn else f"_{cnt+1}"
-                vals.append(row_data.get(dk, "") if row_data else "")
-        return vals
+    def __getattr__(self, name):
+        return getattr(object.__getattribute__(self, "_ws"), name)
 
-    def _cell_value(col_def: dict, row_data: dict, pos_vals: list) -> str:
-        if col_def.get("fixed"):
-            return col_def.get("value", "")
-        if "col_index" in col_def:
-            idx = col_def["col_index"]
-            val = pos_vals[idx] if idx < len(pos_vals) else ""
-            concat_idx = col_def.get("concat_col_index")
-            if concat_idx is not None:
-                extra = pos_vals[concat_idx] if concat_idx < len(pos_vals) else ""
-                if extra:
-                    sep = col_def.get("concat_sep", " ")
-                    val = (val + sep + extra).strip() if val else extra
-            concat_all = col_def.get("concat_all_indices")
-            if concat_all:
-                sep = col_def.get("concat_sep", " ")
-                skip = set(pair_col_labels) if pair_col_labels else set()
-                pieces = [val] if val and val not in skip else []
-                for ci in concat_all:
-                    piece = pos_vals[ci] if ci < len(pos_vals) else ""
-                    if piece and piece not in skip:
-                        pieces.append(piece)
-                val = sep.join(pieces)
-            second_seg = col_def.get("second_segment_indices")
-            if second_seg:
-                skip = set(pair_col_labels) if pair_col_labels else set()
-                lbl_idx, val_idx = second_seg
-                lbl = pos_vals[lbl_idx] if lbl_idx < len(pos_vals) else ""
-                v2  = pos_vals[val_idx] if val_idx < len(pos_vals) else ""
-                if lbl in skip:
-                    lbl = ""
-                if v2 in skip:
-                    v2 = ""
-                inner_sep = col_def.get("second_segment_inner_sep", " ")
-                seg_text = (lbl + inner_sep + v2).strip() if (lbl or v2) else ""
-                if seg_text:
-                    pad_to = col_def.get("second_segment_pad_to")
-                    if pad_to:
-                        val = _vljust(val, pad_to, "　")
-                    sep = col_def.get("second_segment_sep", "   ")
-                    val = (val + sep + seg_text) if val else seg_text
-            second_pair = col_def.get("second_pair_indices")
-            if second_pair and val:
-                lbl_idx, val_idx = second_pair
-                lbl = pos_vals[lbl_idx] if lbl_idx < len(pos_vals) else ""
-                v2  = pos_vals[val_idx] if val_idx < len(pos_vals) else ""
-                pair_text = (lbl + " " + v2).strip()
-                if pair_text:
-                    pad_to = col_def.get("second_pair_pad_to")
-                    if pad_to and len(val) < pad_to:
-                        val = val.ljust(pad_to, "　")
-                    sep = col_def.get("second_pair_sep", "   ")
-                    val = val + sep + pair_text
-            if not val:
-                guard_idx = col_def.get("fallback_guard_index")
-                guard_blocks = (guard_idx is not None and guard_idx < len(pos_vals)
-                                and pos_vals[guard_idx])
-                if not guard_blocks:
-                    for fb in col_def.get("fallback_col_indices", []):
-                        val = pos_vals[fb] if fb < len(pos_vals) else ""
-                        if val:
-                            break
-            return val
-        key = col_def.get("key", "")
-        return _fuzzy_get(row_data, key) if row_data else ""
+    def __setattr__(self, name, value):
+        setattr(object.__getattribute__(self, "_ws"), name, value)
 
-    row_idx = 0   # index into table_rows
-    excel_row = start_row
+    def cell(self, row=None, column=None, value=None, **kw):
+        ws = object.__getattribute__(self, "_ws")
+        c = ws.cell(row=row, column=column)
+        if isinstance(c, MergedCell):
+            return _NullCell()
+        if value is not None:
+            c.value = value
+        return c
 
-    for sec in sections:
-        n_pairs     = sec.get("pairs", 0)
-        block_pairs = sec.get("block_pairs", n_pairs)  # all pairs = one block if not specified
-        col_a_border = sec.get("col_A_border", "medium")
-        col_a_span  = sec.get("col_A_span", False)
-        col_right   = sec.get("col_right", "medium")  # right border of last column
+    def __getitem__(self, key):
+        return _guard(object.__getattribute__(self, "_ws")[key])
 
-        # Build per-row fill lookup from sub_sections or flat fill
-        sub_secs = sec.get("sub_sections")
-        if sub_secs:
-            row_fills = []
-            for ss in sub_secs:
-                row_fills.extend([ss.get("fill")] * (ss["pairs"] * 2))
-        else:
-            row_fills = [sec.get("fill")] * (n_pairs * 2)
+    def __setitem__(self, key, value):
+        ws = object.__getattribute__(self, "_ws")
+        if not isinstance(ws[key], MergedCell):
+            ws[key] = value
 
-        sec_start_row = excel_row
-        sec_end_row   = excel_row + n_pairs * 2 - 1
+    def iter_rows(self, **kw):
+        for row in object.__getattribute__(self, "_ws").iter_rows(**kw):
+            yield tuple(_NullCell() if isinstance(c, MergedCell) else c for c in row)
 
-        block_c_chunks: list = [''] * block_pairs  # pre-split C label per pair within block
+    def iter_cols(self, **kw):
+        for col in object.__getattribute__(self, "_ws").iter_cols(**kw):
+            yield tuple(_NullCell() if isinstance(c, MergedCell) else c for c in col)
 
-        for pair_idx in range(n_pairs):
-            is_first_pair_of_sec = pair_idx == 0
-            is_last_pair_of_sec  = pair_idx == n_pairs - 1
-            is_block_start       = (pair_idx % block_pairs) == 0
+    def merge_cells(self, range_string=None, start_row=None, end_row=None,
+                    start_column=None, end_column=None):
+        # Normalize range_string to row/col coords
+        if range_string is not None:
+            try:
+                sc, sr, ec, er = range_boundaries(str(range_string).upper())
+                start_row, end_row, start_column, end_column = sr, er, sc, ec
+            except Exception:
+                return
 
-            pair_start = excel_row
-            pair_end   = excel_row + 1
-            _a_carry   = ""  # holds the 2nd token of a split col-A value for the pair's bottom row
+        if start_row is None:
+            return
 
-            # Apply pair merge for col_C etc.
-            if pair_col:
-                ws.merge_cells(start_row=pair_start, end_row=pair_end,
-                               start_column=pair_col, end_column=pair_col)
+        # Single-cell merges are invalid OOXML
+        if start_row == end_row and start_column == end_column:
+            return
 
-            # Pre-compute block C split: scan pair-tops from last to first; split evenly
-            if is_block_start and pair_col and pair_col_labels:
-                block_c_chunks = [pair_col_labels[_i % len(pair_col_labels)] for _i in range(block_pairs)]
-            elif is_block_start and pair_col:
-                _blk_label = ""
-                for _bp in range(block_pairs - 1, -1, -1):
-                    _td = row_idx + _bp * 2
-                    _rd = table_rows[_td] if _td < len(table_rows) else {}
-                    _pv = _pos_values(_rd)
-                    for _cd in col_defs:
-                        if _cd.get("col") == pair_col and "col_index" in _cd:
-                            _v = _pv[_cd["col_index"]] if _cd["col_index"] < len(_pv) else ""
-                            if _v:
-                                _blk_label = _v
-                                break
-                    if _blk_label:
-                        break
-                _n = len(_blk_label)
-                _chunk = (_n + block_pairs - 1) // block_pairs if block_pairs and _n else 0
-                if _chunk:
-                    block_c_chunks = [_blk_label[_i*_chunk:min((_i+1)*_chunk, _n)] for _i in range(block_pairs)]
-                else:
-                    block_c_chunks = [''] * block_pairs
+        ws = object.__getattribute__(self, "_ws")
 
-            for sub_row in range(2):  # 0=odd(top), 1=even(bottom)
-                r = excel_row + sub_row
-                ws.row_dimensions[r].height = row_h
-                row_data = table_rows[row_idx + sub_row] if (row_idx + sub_row) < len(table_rows) else {}
-                pos_vals = _pos_values(row_data)
-                fill_color = row_fills[pair_idx * 2 + sub_row]
-                fill_spec  = {"color": fill_color} if fill_color else None
+        # Overlapping merges corrupt the file — openpyxl silently writes both,
+        # producing invalid XML. Skip any range that touches an existing merge.
+        for existing in ws.merged_cells.ranges:
+            if not (end_row < existing.min_row or start_row > existing.max_row or
+                    end_column < existing.min_col or start_column > existing.max_col):
+                return
 
-                is_pair_top    = sub_row == 0
-                is_pair_bottom = sub_row == 1
-                is_sec_top     = is_first_pair_of_sec and is_pair_top
-                is_sec_bottom  = is_last_pair_of_sec  and is_pair_bottom
-
-                for col_def in col_defs:
-                    c     = col_def["col"]
-                    ec    = col_def["end_col"]
-                    value = _cell_value(col_def, row_data, pos_vals)
-                    font_spec  = col_def.get("font", {"bold": False, "size": 8})
-                    align_spec = col_def.get("align", {"h": "left", "v": "center", "wrap": False})
-
-                    # Color for internal "hidden" borders — match fill so lines disappear into bg
-                    hidden_color = fill_color if fill_color else "FFFFFF"
-
-                    # ── Column A ──────────────────────────────────────────────
-                    if c == 1:
-                        if col_a_span:
-                            # A is merged for the whole section; only write cell once
-                            if is_sec_top:
-                                ws.merge_cells(start_row=sec_start_row, end_row=sec_end_row,
-                                               start_column=1, end_column=1)
-                                span_val = sec.get("col_A_span_value", value)
-                                a_cell = ws.cell(row=sec_start_row, column=1, value=span_val or None)
-                                a_cell.font      = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 8))
-                                a_cell.alignment = Alignment(horizontal=align_spec.get("h","center"),
-                                                             vertical=align_spec.get("v","center"), wrap_text=True)
-                                a_cell.border    = Border(
-                                    top=_side(col_a_border), bottom=_side(col_a_border),
-                                    left=_side(col_a_border), right=_side("medium"))
-                                # Apply border to all cells in the merge (openpyxl requirement)
-                                for ra in range(sec_start_row + 1, sec_end_row + 1):
-                                    # pick fill color at this row for the hidden border color
-                                    row_fill_at = row_fills[min((ra - sec_start_row), len(row_fills) - 1)]
-                                    hc = row_fill_at if row_fill_at else "FFFFFF"
-                                    c2 = ws.cell(row=ra, column=1)
-                                    c2.border = Border(
-                                        top=_side_colored(col_a_border, hc),
-                                        bottom=_side(col_a_border) if ra == sec_end_row else _side_colored(col_a_border, hc),
-                                        left=_side(col_a_border), right=_side("medium"))
-                            continue  # all other rows handled by merge
-                        else:
-                            # A is per-row; block-boundary borders visible, internal hidden
-                            is_block_bnd_top = is_pair_top and (pair_idx % block_pairs == 0) and not is_sec_top
-                            is_block_bnd_bot = is_pair_bottom and ((pair_idx + 1) % block_pairs == 0) and not is_sec_bottom
-                            if is_sec_top:
-                                top_a = _side(col_a_border)
-                            elif is_block_bnd_top:
-                                top_a = _side("medium")
-                            else:
-                                top_a = _side_colored(col_a_border, hidden_color)
-                            if is_sec_bottom:
-                                bot_a = _side(sec.get("last_outer_bottom", col_a_border))
-                            elif is_block_bnd_bot:
-                                bot_a = _side("medium")
-                            else:
-                                bot_a = _side_colored(col_a_border, hidden_color)
-                            if col_def.get("split_rows"):
-                                if is_pair_top:
-                                    tokens = _re.split(r'[ 　]+', value) if value else [""]
-                                    if len(tokens) > 1:
-                                        a_val = " ".join(tokens[:-1])
-                                        _a_carry = tokens[-1]
-                                    else:
-                                        a_val = tokens[0]
-                                        _a_carry = ""
-                                else:
-                                    # Fall back to this row's own value if the top row had
-                                    # nothing to carry down (model may put it here directly)
-                                    a_val = _a_carry or value
-                            else:
-                                a_val = value
-                                if col_def.get("space_to_newline") and a_val:
-                                    a_val = a_val.replace(" ", "\n")
-                            a_cell = ws.cell(row=r, column=1, value=a_val or None)
-                            a_cell.font      = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 8))
-                            a_cell.alignment = Alignment(horizontal=align_spec.get("h","left"),
-                                                         vertical=align_spec.get("v","center"),
-                                                         wrap_text=bool(col_def.get("space_to_newline")))
-                            a_cell.border = Border(top=top_a, bottom=bot_a,
-                                                   left=_side(col_a_border), right=_side(col_a_border))
-                            if fill_spec:
-                                a_cell.fill = PatternFill("solid", fgColor=fill_spec["color"])
-                        continue
-
-                    # ── Free-text columns between A and the pair-merge column ──
-                    if 1 < c < pair_col:
-                        # Top: section outer at start; medium at block start (pair_top); else hidden
-                        if is_sec_top:
-                            top_b = _side(col_a_border)
-                        elif is_block_start and is_pair_top:
-                            top_b = _side("medium")
-                        else:
-                            top_b = _side_colored("thin", hidden_color)
-                        # Bottom: thick/medium at section end; medium at block end; else hidden
-                        sec_bot_weight = sec.get("last_outer_bottom", col_a_border)
-                        if is_sec_bottom:
-                            bot_b = _side(sec_bot_weight)
-                        elif is_pair_bottom and (pair_idx % block_pairs) == (block_pairs - 1):
-                            bot_b = _side("medium")
-                        else:
-                            bot_b = _side_colored("thin", hidden_color)
-                        b_fill = fill_spec
-                        b_cell = ws.cell(row=r, column=c, value=value or None)
-                        b_cell.font      = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 8))
-                        b_cell.alignment = Alignment(horizontal=align_spec.get("h","left"),
-                                                     vertical=align_spec.get("v","center"), wrap_text=False)
-                        left_side  = _side("medium") if c == 2 else _side_colored("thin", hidden_color)
-                        right_side = _side("medium") if c == pair_col - 1 else _side_colored("thin", hidden_color)
-                        b_cell.border    = Border(top=top_b, bottom=bot_b,
-                                                  left=left_side, right=right_side)
-                        if b_fill:
-                            b_cell.fill = PatternFill("solid", fgColor=b_fill["color"])
-                        continue
-
-                    # ── Pair-merge column (e.g. 当月/累計) ──────────────────────
-                    if c == pair_col:
-                        if is_pair_top:
-                            # Top row of merged pair; use pre-split block chunk for this pair
-                            pair_pos_in_block = pair_idx % block_pairs
-                            c_val = block_c_chunks[pair_pos_in_block] if pair_pos_in_block < len(block_c_chunks) else value
-                            top_c = col_a_border if is_sec_top else ("medium" if is_block_start else None)
-                            c_fill = fill_spec
-                            _write_cell(ws, r, pair_col, pair_col, r, c_val, font_spec, align_spec,
-                                        {"top": top_c, "bottom": "thin",
-                                         "left": None, "right": "thin"},
-                                        c_fill)
-                        else:
-                            # Bottom row of merged pair
-                            bot_c = sec.get("last_outer_bottom", col_a_border) if is_sec_bottom else "thin"
-                            _write_cell(ws, r, pair_col, pair_col, r, "", font_spec, align_spec,
-                                        {"top": None, "bottom": bot_c,
-                                         "left": None, "right": "thin"})
-                        continue
-
-                    # ── Columns D–O ───────────────────────────────────────────
-                    # In filled rows, dashed dividers use gray so they're visible but harmonious
-                    dash_color = "808080" if fill_color else "000000"
-                    is_last_col = (ec == col_defs[-1]["end_col"])
-                    left_b  = "medium" if c == pair_col + 1 else "thin"  # first numeric col = medium left
-                    right_b = col_right if is_last_col else "thin"
-                    if is_pair_top:
-                        top_b  = col_a_border if is_sec_top else ("medium" if is_block_start else "dashed")
-                        bot_b  = "dashed"
-                    else:
-                        top_b  = "dashed"
-                        bot_b  = sec.get("last_outer_bottom", col_a_border) if is_sec_bottom else "medium"
-
-                    # Write cell directly to apply colored dashed sides where needed
-                    xc = ws.cell(row=r, column=c, value=value or None)
-                    xc.font      = Font(bold=font_spec.get("bold", False), size=font_spec.get("size", 8))
-                    xc.alignment = Alignment(horizontal=align_spec.get("h","right"),
-                                             vertical=align_spec.get("v","center"), wrap_text=False)
-                    def _s(name):
-                        if name == "dashed":
-                            return _side_colored("dashed", dash_color)
-                        return _side(name)
-                    xc.border = Border(top=_s(top_b), bottom=_s(bot_b),
-                                       left=_side(left_b), right=_side(right_b))
-                    if fill_spec:
-                        xc.fill = PatternFill("solid", fgColor=fill_spec["color"])
-
-                if collapse_cols and all(not ws.cell(row=r, column=cc).value for cc in collapse_cols):
-                    ws.row_dimensions[r].height = collapse_height
-
-            excel_row += 2
-            row_idx   += 2
+        try:
+            ws.merge_cells(start_row=start_row, end_row=end_row,
+                           start_column=start_column, end_column=end_column)
+        except Exception:
+            pass
 
 
-def fill_template(tmpl: dict, data: dict, ws) -> None:
-    if tmpl.get("group_table"):
-        fill_grouped_template(tmpl, data, ws)
-        return
+def _post_process_sheet(ws) -> None:
+    """Hide trailing empty cells, clear spacer borders, fix text wrapping and accidental fills."""
+    max_col = ws.max_column or 1
+    max_row = ws.max_row or 1
 
-    header_vals = data.get("header", {})
-    table       = data.get("table", {})
-    dr_pre      = tmpl.get("data_rows", {})
-    raw_rows    = table.get("rows", [])
-    filter_rules = dr_pre.get("filter_rows_if_all_empty_indices", [])
-    if filter_rules:
-        def _pos(row, idx):
-            return (row[idx] if idx < len(row) else "") if isinstance(row, list) else ""
-        raw_rows = [
-            rw for rw in raw_rows
-            if not any(all(not _pos(rw, i) for i in rule) for rule in filter_rules)
-        ]
-    table_rows  = _normalize_rows(raw_rows, table.get("columns", []))
-    if tmpl.get("id") == "基準客先ABC":
-        mapping = {
-            '＝39': 'ﾘ39', '＝42': 'ﾆ42', 'Ａ21': 'ｸ21', 'Ａ29': 'ｷ29', 'Ａ31': 'ｶ31',
-            'Ｂ50': 'ﾋ50', 'Ｅ03': 'ｴ03', 'Ｅ10': 'ｱ10', 'Ｅ15': 'ﾓ15', 'Ｅ30': 'ｺ30',
-            'Ｅ60': 'ｴ60', 'Ｅ70': 'ｴ70', 'Ｆ20': 'ｷ20', 'Ｇ48': 'ｺ48', 'Ｊ03': 'ｼ03',
-            'Ｊ11': 'ｼ11', 'Ｊ12': 'ｼ12', 'Ｊ13': 'ｼ13', 'Ｊ17': 'ｿ17', 'Ｊ20': 'ｼ20',
-            'Ｊ22': 'ｼ22', 'Ｊ50': 'ｼ50', 'Ｊ58': 'ｼ58', 'Ｊ72': 'ｼ72', 'Ｊ90': 'ｾ90',
-            'Ｊ92': 'ｼ92', 'Ｊ99': 'ｼ99', 'Ｋ70': 'ｷ70', 'Ｋ91': 'ｷ91', 'Ｋ92': 'ｷ92',
-            'Ｋ93': 'ｷ93', 'Ｔ01': '701', 'Ｔ13': '713', 'Ｔ23': '723', 'Ｔ30': 'ﾅ30',
-            'Ｔ35': '735', 'Ｔ40': '740', 'Ｔ78': 'ﾄ78', 'Ｔ80': 'ﾗ80', 'Ｙ01': 'ｸ01',
-            'Ｙ04': 'ｸ04', 'Ｙ50': 'ﾀ50', 'Ｙ60': 'ﾄ60', 'Ｚ15': 'ｽ15', 'Ｄ60': 'ﾄ60',
-            'Ｄ70': 'ﾄ70', 'Ｙ60': 'ｹ60'
-        }
-        for row in table_rows:
-            code = row.get("基準客先名")
-            if isinstance(code, str) and code in mapping:
-                row["基準客先名"] = mapping[code]
+    # Build a set of (row, col) pairs that are anchors of full-width merges
+    # (e.g. the title row A1:O1). These carry a value but shouldn't count
+    # as real column content — they're just the storage cell for the title.
+    half_cols = (max_col or 1) // 2
+    full_width_anchors: set = set()
+    for mr in ws.merged_cells.ranges:
+        if (mr.max_col - mr.min_col) >= half_cols:
+            full_width_anchors.add((mr.min_row, mr.min_col))
 
-    # Column widths
-    for col_letter, width in tmpl.get("column_widths", {}).items():
-        ws.column_dimensions[col_letter].width = width
+    # Find the real content boundary.
+    # full_width_anchors are excluded from column tracking (so title merges don't
+    # inflate eff_max_col) but their ROWS still count toward eff_max_row.
+    content_rows: set = set()
+    content_cols: set = set()
+    for row in ws.iter_rows(min_row=1, max_row=max_row, min_col=1, max_col=max_col):
+        for cell in row:
+            if isinstance(cell, MergedCell):
+                continue
+            if (cell.row, cell.column) in full_width_anchors:
+                content_rows.add(cell.row)   # row counts, column does not
+                continue
+            if cell.value is not None or (cell.fill and cell.fill.fill_type == "solid"):
+                content_rows.add(cell.row)
+                content_cols.add(cell.column)
 
-    # ── Header rows ───────────────────────────────────────────────────────────
-    _used_header_keys: set = set()
-    for row_spec in tmpl.get("header", []):
-        r = row_spec["row"]
-        ws.row_dimensions[r].height = row_spec.get("height", 15)
-        for cell in row_spec["cells"]:
-            key = cell.get("key", "")
-            if cell.get("fixed"):
-                value = cell.get("value", "")
-            elif key in ("title", "section_header"):
-                value = data.get(key, "")
-            elif "title_part" in cell:
-                left, center, right = _split_title_3(data.get("title", ""))
-                value = {"left": left, "center": center, "right": right}[cell["title_part"]]
-            elif "concat_keys" in cell:
-                parts = [_fuzzy_get(header_vals, k, _used=_used_header_keys) for k in cell["concat_keys"]]
-                value = " ".join(p for p in parts if p)
-            elif "value_part" in cell:
-                raw = _fuzzy_get(header_vals, key, _used=_used_header_keys)
-                tokens = _re.split(r'[ 　]+', raw.strip()) if raw else [""]
-                if cell["value_part"] == "tail" and len(tokens) > 1:
-                    value = tokens[-1]
-                elif cell["value_part"] == "tail":
-                    value = ""
-                else:
-                    value = " ".join(tokens[:-1]) if len(tokens) > 1 else tokens[0]
-            else:
-                value = _fuzzy_get(header_vals, key, _used=_used_header_keys)
-                if cell.get("label_prefix") and value:
-                    value = f"{key} {value}"
-            _write_cell(
-                ws, r, cell["col"], cell["end_col"], r,
-                value, cell["font"], cell["align"], cell["border"],
-                cell.get("fill"),
-            )
+    eff_max_row = max(content_rows) if content_rows else max_row
+    eff_max_col = max(content_cols) if content_cols else max_col
 
-    # ── Column headers (span two rows) ────────────────────────────────────────
-    ch = tmpl.get("col_headers", {})
-    r1 = ch.get("start_row", 0)
-    r2 = ch.get("end_row", r1)
-    heights = ch.get("row_heights", [15, 15])
-    if r1:
-        ws.row_dimensions[r1].height = heights[0] if heights else 15
-    if r2 and r2 != r1:
-        ws.row_dimensions[r2].height = heights[1] if len(heights) > 1 else 15
-    ch_fill = ch.get("fill")
-    col_names = table.get("columns", [])
-    for cell in ch.get("cells", []):
-        if "col_index" in cell:
-            idx = cell["col_index"]
-            value = col_names[idx] if idx < len(col_names) else ""
-        else:
-            value = cell.get("value", "")
-        merge_rows = cell.get("merge_rows", True)
-        cell_r2 = r2 if merge_rows else r1
-        _write_cell(
-            ws, r1, cell["col"], cell["end_col"], cell_r2,
-            value, cell["font"], cell["align"], cell["border"],
-            cell.get("fill") or ch_fill,
-        )
-        # For non-merged header cells write the second row with its own border
-        if not merge_rows and r2 != r1 and "row2_border" in cell:
-            _write_cell(
-                ws, r2, cell["col"], cell["end_col"], r2,
-                cell.get("row2_value", ""), cell["font"], cell["align"], cell["row2_border"],
-                cell.get("fill") or ch_fill,
-            )
+    # Hide rows/cols entirely outside the content boundary.
+    # Also unhide everything inside — Claude sometimes hides blank data rows.
+    for r in range(1, eff_max_row + 1):
+        ws.row_dimensions[r].hidden = False
+    for r in range(eff_max_row + 1, max_row + 1):
+        ws.row_dimensions[r].hidden = True
+    for c in range(eff_max_col + 1, max_col + 1):
+        ws.column_dimensions[get_column_letter(c)].hidden = True
 
-    # ── Data rows ─────────────────────────────────────────────────────────────
-    dr = tmpl.get("data_rows", {})
-    start    = dr.get("start_row", r2 + 1 if r2 else 1)
-    count    = dr.get("count", 0)
-    row_h    = dr.get("row_height", 30)
-    col_defs = dr.get("columns", [])
-
-    # Column header names — used to filter out misidentified full_width rows
-    col_header_names = {c["value"] for c in ch.get("cells", []) if "value" in c}
-
-    # Strip any _full_width rows whose text is just a column header name
-    table_rows = [
-        rw for rw in table_rows
-        if not ("_full_width" in rw and rw["_full_width"].strip() in col_header_names)
-    ]
-
-    # Filter fully-blank data rows if requested
-    if dr.get("filter_empty_rows"):
-        def _row_is_empty(rw):
-            if "_full_width" in rw:
-                return False
-            return all(v == "" or v is None for v in rw.values())
-        table_rows = [rw for rw in table_rows if not _row_is_empty(rw)]
-
-    # Inject any fixed rows that always appear before the JSON data
-    prepend = dr.get("prepend_rows", [])
-    table_rows = prepend + table_rows
-
-    # Pop last row into footer if flagged
-    footer_row_data = {}
-    if dr.get("last_row_is_footer") and table_rows and "_full_width" not in table_rows[-1]:
-        footer_row_data = table_rows.pop()
-
-    # Sections-based rendering (for complex per-row styled documents)
-    if dr.get("sections"):
-        _fill_sections(tmpl, data, ws, col_defs, start, table_rows, row_h, dr)
-        return
-
-    # Number of rows to render: at least template count, expand for extra data
-    data_count = len([rw for rw in table_rows if "_full_width" not in rw])
-    n_rows = max(count, data_count)
-
-    for i in range(n_rows):
-        r = start + i
-        ws.row_dimensions[r].height = row_h
-        row_data = table_rows[i] if i < len(table_rows) else {}
-        is_first = (i == 0)
-        is_last = (i == n_rows - 1)
-        last_row_fill = dr.get("last_row_fill") if is_last else None
-
-        if "_full_width" in row_data:
-            # Rare: full-width text row — write across all cols
-            n_cols = tmpl.get("n_cols", 24)
-            first_col = col_defs[0]["col"] if col_defs else 1
-            last_col  = col_defs[-1]["end_col"] if col_defs else n_cols
-            border_spec = col_defs[0].get("border", {}) if col_defs else {}
-            _write_cell(
-                ws, r, first_col, last_col, r,
-                row_data["_full_width"],
-                {"bold": False, "size": 10},
-                {"h": "left", "v": "top", "wrap": True},
-                border_spec,
-            )
+    # Strip borders from spacer columns: narrow (≤ 6 chars) + no real values
+    # + not interior of a merge. Full-width merge anchors don't disqualify a column.
+    for c in range(1, eff_max_col + 1):
+        if float(ws.column_dimensions[get_column_letter(c)].width or 8.43) > 6.0:
             continue
+        is_spacer = True
+        for r in range(1, eff_max_row + 1):
+            cell = ws.cell(row=r, column=c)
+            if isinstance(cell, MergedCell):
+                is_spacer = False
+                break
+            if cell.value is not None and (r, c) not in full_width_anchors:
+                is_spacer = False
+                break
+        if is_spacer:
+            for r in range(1, eff_max_row + 1):
+                cell = ws.cell(row=r, column=c)
+                if not isinstance(cell, MergedCell):
+                    cell.border = _BORDER_NONE
 
-        col_names = table.get("columns", [])
-        seen: dict[str, int] = {}
-        pos_values = []
-        for i, col_name in enumerate(col_names):
-            cnt = seen.get(col_name, 0)
-            seen[col_name] = cnt + 1
-            if col_name:
-                key = col_name if cnt == 0 else f"{col_name}_{cnt + 1}"
-            else:
-                key = f"col_{i + 1}"
-            pos_values.append(row_data.get(key, "") if row_data else "")
+    # Scale columns to fit the page width (columns only — row scaling distorts proportions)
+    orientation = (getattr(ws.page_setup, "orientation", None) or "portrait").lower()
+    target_cols = _A4_LANDSCAPE_COLS if orientation == "landscape" else _A4_PORTRAIT_COLS
+    col_widths = [
+        float(ws.column_dimensions[get_column_letter(c)].width or 8.43)
+        for c in range(1, eff_max_col + 1)
+    ]
+    raw_col_total = sum(col_widths) or 1.0
+    col_scale = min(1.0, target_cols / raw_col_total)
+    if col_scale < 1.0:
+        for c, w in enumerate(col_widths, start=1):
+            ws.column_dimensions[get_column_letter(c)].width = max(2.0, w * col_scale)
 
-        # Pre-process pos_values:
-        # Case A: If Column 1 (index 1, "原単位") is ONLY a type token (like "100 仕込" or "999 購入"),
-        # and Column 2 (index 2, "分量") contains the unit value and the quantity merged (like "100.0000\n400.72\nkg"),
-        # correct the OCR column alignment shift.
-        # Case B: If Column 1 contains both the type token and the unit value (like "999 購入\n89.8383"),
-        # move the type token to Column 0.
-        if len(pos_values) > 1 and pos_values[0]:
-            has_item_code = any(cd.get("col_index") == 0 and cd.get("format") == "item_code" for cd in col_defs)
-            if has_item_code:
-                val0 = str(pos_values[0])
-                val1 = str(pos_values[1]) if len(pos_values) > 1 else ""
-                val2 = str(pos_values[2]) if len(pos_values) > 2 else ""
-                type_pat = _re.compile(r"^(\d+)\s+(\S+)$")
-                
-                # Check for Case A: Column 1 is just a type token, Column 2 has merged lines
-                is_type_token = bool(type_pat.match(val1.strip()))
-                val2_lines = [l.strip() for l in val2.split("\n") if l.strip()]
-                is_val2_split = False
-                if len(val2_lines) >= 2:
-                    first_is_num = bool(_re.match(r"^\d+(\.\d+)?$", val2_lines[0]))
-                    second_has_num = bool(_re.search(r"\d+", val2_lines[1]))
-                    is_val2_split = first_is_num and second_has_num
+    _WHITE = {"FFFFFF", "00FFFFFF", "FFFFFFFF"}
 
-                if is_type_token and is_val2_split:
-                    # Move type token from Col 1 to Col 0
-                    pos_values[0] = val0 + "\n" + val1.strip()
-                    # Move unit value from Col 2 to Col 1
-                    pos_values[1] = val2_lines[0]
-                    # Keep remaining lines in Col 2
-                    pos_values[2] = "\n".join(val2_lines[1:])
-                else:
-                    # Case B: Standard extraction from Column 1
-                    val1_lines = val1.split("\n")
-                    cleaned_val1_lines = []
-                    extracted_types = []
-                    for line in val1_lines:
-                        stripped = line.strip()
-                        if type_pat.match(stripped) and len(stripped) <= 12:
-                            extracted_types.append(stripped)
-                        else:
-                            cleaned_val1_lines.append(line)
-                    if extracted_types:
-                        pos_values[1] = "\n".join(cleaned_val1_lines).strip()
-                        pos_values[0] = val0 + "\n" + "\n".join(extracted_types)
 
-        for col_def in col_defs:
-            if "col_index" in col_def:
-                idx = col_def["col_index"]
-                value = pos_values[idx] if idx < len(pos_values) else ""
-            else:
-                key   = col_def.get("key", "")
-                value = _fuzzy_get(row_data, key) if row_data else ""
-            if col_def.get("format") == "item_code":
-                value = _fmt_item_code(value, col_def.get("format_options"))
-            border_spec = col_def.get("first_row_border", col_def["border"]) if is_first \
-                          else col_def["border"]
-            if is_last and tmpl.get("id") == "課別基準客先別売上粗利":
-                border_spec = dict(border_spec)
-                border_spec["bottom"] = "medium"
-            _write_cell(
-                ws, r, col_def["col"], col_def["end_col"], r,
-                value, col_def["font"], col_def["align"], border_spec,
-                fill_spec=last_row_fill,
-            )
+def execute_code(code: str, ws) -> None:
+    """Execute a Claude-generated build_template(ws) function in place."""
+    ns: dict = {}
+    exec(compile(code, "<claude_generated>", "exec"), ns)  # noqa: S102
+    fn = ns.get("build_template")
+    if callable(fn):
+        fn(_SafeWS(ws))
+    _post_process_sheet(ws)
 
-    # ── Footer ────────────────────────────────────────────────────────────────
-    footer = tmpl.get("footer")
-    if footer:
-        # If we added extra data rows, shift the footer down accordingly
-        extra = max(0, n_rows - count)
-        footer_fill = footer.get("fill")
-        footer_col_names = table.get("columns", [])
-        footer_seen: dict[str, int] = {}
-        footer_pos: list[str] = []
-        for cn in footer_col_names:
-            cnt = footer_seen.get(cn, 0)
-            footer_seen[cn] = cnt + 1
-            if cnt == 0:
-                footer_pos.append(footer_row_data.get(cn, "") if footer_row_data else "")
-            else:
-                dk = f"{cn}_{cnt+1}" if cn else f"_{cnt+1}"
-                footer_pos.append(footer_row_data.get(dk, "") if footer_row_data else "")
-        for cell in footer["cells"]:
-            fr = footer["row"] + extra
-            ws.row_dimensions[fr].height = footer.get("height", 30)
-            if "col_index" in cell:
-                idx = cell["col_index"]
-                value = footer_pos[idx] if idx < len(footer_pos) else ""
-            elif cell.get("fixed", False):
-                value = cell.get("value", "")
-            else:
-                key = cell.get("key", "")
-                if key == "_full_width":
-                    rows = data.get("table", {}).get("rows", [])
-                    fw = next((r["_full_width"] for r in rows if "_full_width" in r), "")
-                    value = fw
-                else:
-                    value = footer_row_data.get(key, "") if footer_row_data else data.get(key, "")
-            _write_cell(
-                ws, fr, cell["col"], cell["end_col"], fr,
-                value,
-                cell["font"], cell["align"], cell["border"],
-                cell.get("fill") or footer_fill,
-            )
+
+def render_sheet(data: dict, ws) -> None:
+    col_widths  = data.get("col_widths") or []
+    rows        = data.get("rows") or []
+    orientation = str(data.get("orientation") or "portrait").lower()
+    sheet_name  = data.get("sheet_name")
+    if sheet_name:
+        try:
+            ws.title = str(sheet_name)[:31]
+        except Exception:
+            pass
+
+    # Expand "repeat" shorthand: {"h":N,"repeat":K,"cells":[...]} → K identical rows
+    expanded_rows = []
+    for row in rows:
+        count = int(row.get("repeat") or 1)
+        if count > 1:
+            base = {k: v for k, v in row.items() if k != "repeat"}
+            expanded_rows.extend([base] * count)
+        else:
+            expanded_rows.append(row)
+    rows = expanded_rows
+
+    num_rows = int(data.get("num_rows") or len(rows))
+    row_by_r: dict[int, dict] = {}
+    for idx, row in enumerate(rows):
+        r = row.get("r") or row.get("row") or (idx + 1)
+        row_by_r[int(r)] = row
+
+    # Scale columns down to fit A4 (never scale up)
+    target_cols = _A4_LANDSCAPE_COLS if orientation == "landscape" else _A4_PORTRAIT_COLS
+    raw_col_total = sum(max(1.0, float(w)) for w in col_widths) if col_widths else 1.0
+    col_scale = target_cols / raw_col_total
+
+    for i, w in enumerate(col_widths, start=1):
+        try:
+            ws.column_dimensions[get_column_letter(i)].width = max(4.0, float(w) * col_scale)
+        except (ValueError, TypeError):
+            ws.column_dimensions[get_column_letter(i)].width = 8.0
+
+    def _render_cell_spec(cell_spec, row_idx):
+        try:
+            col   = int(cell_spec.get("c") or cell_spec.get("col") or 1)
+            span  = max(1, int(cell_spec.get("s") or cell_spec.get("span") or 1))
+            rspan = max(1, int(cell_spec.get("rs") or cell_spec.get("rowspan") or 1))
+        except (ValueError, TypeError):
+            col, span, rspan = 1, 1, 1
+
+        top_left = ws.cell(row=row_idx, column=col)
+        if isinstance(top_left, MergedCell):
+            return
+
+        value      = cell_spec.get("v") or cell_spec.get("value") or None
+        bold       = bool(cell_spec.get("b") or cell_spec.get("bold") or False)
+        align      = cell_spec.get("a") or cell_spec.get("align") or "left"
+        fill_hex   = cell_spec.get("f") or cell_spec.get("fill")
+        x          = cell_spec.get("x") if "x" in cell_spec else cell_spec.get("border")
+        end_col    = col + span - 1
+        end_row    = row_idx + rspan - 1
+
+        top_left.value     = value
+        top_left.font      = Font(bold=bold)
+        top_left.alignment = Alignment(horizontal=align, vertical="center", wrap_text=False)
+
+        if fill_hex:
+            hex_val = str(fill_hex).lstrip("#")
+            if len(hex_val) == 6:
+                try:
+                    top_left.fill = PatternFill(
+                        start_color=hex_val, end_color=hex_val, fill_type="solid"
+                    )
+                except Exception:
+                    pass
+
+        # Normalize model output: string "true"/"false" instead of JSON boolean
+        if isinstance(x, str):
+            if x.lower() == "true":
+                x = True
+            elif x.lower() in ("false", "none"):
+                x = False
+
+        # Determine per-side border flags
+        if x is True or x == "all" or x == "tlbr":
+            wt = wb = wl = wr = True
+        elif isinstance(x, str) and x:
+            wt = "t" in x; wb = "b" in x; wl = "l" in x; wr = "r" in x
+        else:
+            wt = wb = wl = wr = False
+
+        # Stamp borders on every EDGE cell of the span BEFORE merging.
+        # openpyxl only lets us style the top-left after merge_cells(), so
+        # the right/bottom edges of a multi-cell span must be written now,
+        # while all positions are still regular Cell objects.
+        for r in range(row_idx, end_row + 1):
+            for c in range(col, end_col + 1):
+                target = ws.cell(row=r, column=c)
+                if isinstance(target, MergedCell):
+                    continue
+                prev = target.border
+                target.border = Border(
+                    top    = _THIN if (wt and r == row_idx)  else prev.top,
+                    bottom = _THIN if (wb and r == end_row)  else prev.bottom,
+                    left   = _THIN if (wl and c == col)      else prev.left,
+                    right  = _THIN if (wr and c == end_col)  else prev.right,
+                )
+
+        # Merge after borders are stamped
+        if span > 1 or rspan > 1:
+            try:
+                ws.merge_cells(
+                    start_row=row_idx, end_row=end_row,
+                    start_column=col,  end_column=end_col,
+                )
+            except Exception:
+                pass
+
+    # Render rows and cells
+    for row_idx in range(1, num_rows + 1):
+        row = row_by_r.get(row_idx, {})
+        try:
+            height = float(row.get("h") or row.get("height") or 15)
+        except (ValueError, TypeError):
+            height = 15.0
+        ws.row_dimensions[row_idx].height = max(5.0, height)
+
+        for cell_spec in (row.get("cells") or []):
+            _render_cell_spec(cell_spec, row_idx)
+
+    # Bump column widths to fit cell text (CJK chars ≈ 2 units, ASCII ≈ 1)
+    num_cols = len(col_widths)
+    half_cols = num_cols // 2
+    for r in range(1, num_rows + 1):
+        for c in range(1, num_cols + 1):
+            cell = ws.cell(row=r, column=c)
+            if not cell.value or isinstance(cell, MergedCell):
+                continue
+            text = str(cell.value)
+            # Skip cells that are part of a wide merge spanning more than half the columns
+            mr_spans = [mr for mr in ws.merged_cells.ranges
+                        if mr.min_row <= r <= mr.max_row
+                        and mr.min_col <= c <= mr.max_col
+                        and (mr.max_col - mr.min_col + 1) > half_cols]
+            if mr_spans:
+                continue
+            needed = sum(2.0 if ord(ch) > 127 else 1.0 for ch in text) * 0.75 + 1
+            current = float(ws.column_dimensions[get_column_letter(c)].width or 8.0)
+            if needed > current:
+                ws.column_dimensions[get_column_letter(c)].width = min(needed, 30.0)
+
+    # Page setup — A4, correct orientation, fit to one page
+    ws.page_setup.paperSize   = 9  # A4
+    ws.page_setup.orientation = orientation
+    ws.page_setup.fitToPage   = True
+    ws.page_setup.fitToWidth  = 1
+    ws.page_setup.fitToHeight = 1
+    ws.page_margins.left   = 0.5
+    ws.page_margins.right  = 0.5
+    ws.page_margins.top    = 0.5
+    ws.page_margins.bottom = 0.5
+
+
+def _unique_name(base: str, seen: set) -> str:
+    clean = re.sub(r'[:\\/?*\[\]]', "", base)[:30].strip() or "Sheet"
+    name, ctr = clean, 1
+    while name in seen:
+        suffix = f"_{ctr}"
+        name = clean[: 30 - len(suffix)] + suffix
+        ctr += 1
+    seen.add(name)
+    return name
+
+
+def populate_data(ws, data_list: list) -> None:
+    """Populate data values into the worksheet."""
+    if not data_list:
+        return
+    from openpyxl.cell.cell import MergedCell
+    for item in data_list:
+        r = item.get("r") or item.get("row")
+        c = item.get("c") or item.get("col")
+        v = item.get("v") or item.get("value")
+        if r is not None and c is not None and v is not None:
+            try:
+                cell = ws.cell(row=int(r), column=int(c))
+                if not isinstance(cell, MergedCell):
+                    cell.value = v
+            except Exception as e:
+                print(f"Failed to write cell data at row {r}, col {c}: {e}", file=sys.stderr)
 
 
 def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
@@ -1151,70 +400,51 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
 
     wb = Workbook()
     default_sheet = wb.active
+    seen: set = set()
 
     pages = data.get("pages")
     if pages is None:
         pages = [data]
 
-    templates = _load_templates()
-
     for idx, page_data in enumerate(pages):
-        tmpl = _match_template(page_data, templates)
-        title = page_data.get("title", f"Sheet {idx+1}")
-        clean_title = _re.sub(r'[:\\/?*\[\]]', '', title)[:30].strip() or f"Page {idx+1}"
+        if "error" in page_data:
+            continue
 
-        # Ensure sheet name uniqueness
-        orig_title = clean_title
-        ctr = 1
-        while clean_title in wb.sheetnames:
-            suffix = f"_{ctr}"
-            clean_title = orig_title[:30 - len(suffix)] + suffix
-            ctr += 1
-
-        ws = wb.create_sheet(title=clean_title)
-        orient = tmpl.get("orientation")
-        if orient:
-            ws.page_setup.orientation = orient
-        fill_template(tmpl, page_data, ws)
+        code = page_data.get("code", "")
+        if code:
+            # New code-based approach — extract sheet name from code if present
+            m = re.search(r'ws\.title\s*=\s*["\']([^"\']+)["\']', code)
+            raw_name = m.group(1) if m else f"Sheet {idx + 1}"
+            ws = wb.create_sheet(title=_unique_name(raw_name, seen))
+            try:
+                execute_code(code, ws)
+                populate_data(ws, page_data.get("data"))
+            except Exception as e:
+                print(f"Code execution failed for page {idx + 1}: {e}", file=sys.stderr)
+        else:
+            # Legacy JSON template approach
+            tmpl = page_data.get("template") or page_data
+            raw_name = str(tmpl.get("sheet_name") or f"Sheet {idx + 1}")
+            ws = wb.create_sheet(title=_unique_name(raw_name, seen))
+            render_sheet(tmpl, ws)
+            populate_data(ws, page_data.get("data"))
 
     if len(wb.worksheets) > 1:
         wb.remove(default_sheet)
 
     wb.save(xlsx_path)
-    print(f"Saved {xlsx_path}", file=__import__('sys').stderr)
-
-
-def blank_xlsx(template_id: str, xlsx_path: str) -> None:
-    templates = _load_templates()
-    tmpl = next((t for t in templates if t["id"] == template_id), None)
-    if tmpl is None:
-        ids = [t["id"] for t in templates]
-        raise ValueError(f"Template '{template_id}' not found. Available: {ids}")
-    data = {"title": "", "section_header": "", "header": {}, "table": {"columns": [], "rows": []}}
-    wb = Workbook()
-    ws = wb.active
-    fill_template(tmpl, data, ws)
-    wb.save(xlsx_path)
-    import sys
-    print(f"Saved blank {xlsx_path} (template: {tmpl['id']})", file=sys.stderr)
+    print(f"Saved {xlsx_path}", file=sys.stderr)
 
 
 def main():
     import argparse
-    p = argparse.ArgumentParser()
-    p.add_argument("json_path", nargs="?")
-    p.add_argument("xlsx_path", nargs="?")
-    p.add_argument("--blank", metavar="TEMPLATE_ID", help="Generate a blank sheet for the given template ID")
-    args = p.parse_args()
 
-    if args.blank:
-        out = args.json_path or args.xlsx_path or f"{args.blank}_blank.xlsx"
-        blank_xlsx(args.blank, out)
-    else:
-        if not args.json_path:
-            p.error("json_path is required unless --blank is used")
-        xlsx_path = args.xlsx_path or str(Path(args.json_path).with_suffix(".xlsx"))
-        json_to_xlsx(args.json_path, xlsx_path)
+    p = argparse.ArgumentParser()
+    p.add_argument("json_path")
+    p.add_argument("xlsx_path", nargs="?")
+    args = p.parse_args()
+    xlsx_path = args.xlsx_path or str(Path(args.json_path).with_suffix(".xlsx"))
+    json_to_xlsx(args.json_path, xlsx_path)
 
 
 if __name__ == "__main__":

@@ -1,150 +1,634 @@
 {
   "pages": [
     {
-      "title": "製造指図書",
-      "section_header": "調合票",
-      "header": {
-        "手配No.": "0000056473 1",
-        "発行日": "2018/12/05",
-        "手配先": "S00000200 製造1課 倉庫",
-        "手配納期": "2018/12/14",
-        "品目CD": "HA0002610",
-        "工順": "999",
-        "発注手配数": "400.72 kg",
-        "品目名": "クレイジーマックスプロテイン(カフェオレ風味)造粒品",
-        "製番": "0000051090",
-        "手配内容": "30 噴霧",
-        "完成入庫": "S00000200 製造1課 倉庫",
-        "ロットNo.": "",
-        "完成日": ""
-      },
-      "table": {
-        "columns": [
-          "成分名",
-          "原単位",
-          "分量",
-          "秤量者",
-          "原料ロット",
-          "確認者"
+      "template": {
+        "sheet_name": "製造指図書",
+        "orientation": "portrait",
+        "col_widths": [
+          6,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
         ],
+        "data_rows": 15,
         "rows": [
-          [
-            "HA0002610　　　100 仕込\nクレイジーマックスプロテイン(カフェオレ風味)造粒品",
-            "100.0000",
-            "400.72\nkg",
-            "",
-            "",
-            ""
-          ],
-          [
-            "H00001630　　　999 購入\nクラフト袋L イージーオープン",
-            "8.3334",
-            "33.40\n枚",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
           {
-            "_full_width": "備考"
+            "h": 30,
+            "cells": [
+              {
+                "c": 1,
+                "s": 8,
+                "rs": 1,
+                "v": "製造指図書",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "手配No.",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "発行日",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "手配先",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "手配納期",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "作成者",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "品目CD",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "工順",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "発注手配数",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "品目名",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "製番",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "手配内容",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "完成入庫",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "ロットNo.",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "完成日",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 2,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 30,
+            "cells": [
+              {
+                "c": 1,
+                "s": 7,
+                "v": "調合票",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "責任者",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 3,
+                "v": "成分名",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "原単位",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "分量",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "秤量者",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "原料ロット",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "確認者",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 30,
+            "cells": [
+              {
+                "c": 1,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 30,
+            "cells": [
+              {
+                "c": 1,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 20,
+            "repeat": 13,
+            "cells": [
+              {
+                "c": 1,
+                "s": 3,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 4,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 25,
+            "cells": [
+              {
+                "c": 1,
+                "s": 8,
+                "v": "備考",
+                "b": false,
+                "a": "left",
+                "x": true
+              }
+            ]
           }
         ]
-      }
+      },
+      "html": "<table style=\"border-collapse:collapse;width:700px;font-family:MS Gothic,sans-serif;font-size:11px;\">\n<col style=\"width:40px\"><col style=\"width:90px\"><col style=\"width:90px\"><col style=\"width:80px\"><col style=\"width:80px\"><col style=\"width:80px\"><col style=\"width:90px\"><col style=\"width:70px\">\n<tr style=\"height:30px\"><td colspan=\"8\" style=\"border:1px solid #000;text-align:center;font-weight:bold;font-size:15px;\">製造指図書</td></tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">手配No.</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">発行日</td>\n  <td colspan=\"3\" style=\"border:1px solid #000;\"></td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">手配先</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">手配納期</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">作成者</td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">品目CD</td>\n  <td style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">工順</td>\n  <td style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">発注手配数</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">品目名</td>\n  <td colspan=\"3\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">製番</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">手配内容</td>\n  <td colspan=\"3\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">完成入庫</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"2\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">ロットNo.</td>\n  <td colspan=\"3\" style=\"border:1px solid #000;\"></td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">完成日</td>\n  <td colspan=\"2\" style=\"border:1px solid #000;\"></td>\n</tr>\n<tr style=\"height:30px\">\n  <td colspan=\"7\" style=\"border:1px solid #000;text-align:center;font-weight:bold;font-size:14px;\">調合票</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">責任者</td>\n</tr>\n<tr style=\"height:20px\">\n  <td colspan=\"3\" style=\"border:1px solid #000;text-align:center;font-weight:bold;\">成分名</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">原単位</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">分量</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">秤量者</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">原料ロット</td>\n  <td style=\"border:1px solid #000;text-align:center;font-weight:bold;\">確認者</td>\n</tr>\n<tr style=\"height:30px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:30px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:20px\"><td colspan=\"3\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:25px\"><td colspan=\"8\" style=\"border:1px solid #000;\">備考</td></tr>\n</table>",
+      "data": [
+        {
+          "r": 1,
+          "c": 1,
+          "v": "0000056473"
+        },
+        {
+          "r": 1,
+          "c": 3,
+          "v": "1"
+        },
+        {
+          "r": 1,
+          "c": 5,
+          "v": "2018/12/05"
+        },
+        {
+          "r": 2,
+          "c": 3,
+          "v": "S00000200 製造1課 倉庫"
+        },
+        {
+          "r": 2,
+          "c": 3,
+          "v": "平62-3"
+        },
+        {
+          "r": 2,
+          "c": 5,
+          "v": "2018/12/14"
+        },
+        {
+          "r": 3,
+          "c": 3,
+          "v": "HA0002610"
+        },
+        {
+          "r": 3,
+          "c": 5,
+          "v": "999"
+        },
+        {
+          "r": 3,
+          "c": 6,
+          "v": "400.72 kg"
+        },
+        {
+          "r": 4,
+          "c": 3,
+          "v": "クレイジーマックスプロテイン(カフェオレ風味)造粒品"
+        },
+        {
+          "r": 4,
+          "c": 6,
+          "v": "0000051090"
+        },
+        {
+          "r": 5,
+          "c": 3,
+          "v": "30"
+        },
+        {
+          "r": 5,
+          "c": 4,
+          "v": "噴霧"
+        },
+        {
+          "r": 5,
+          "c": 6,
+          "v": "S00000200 製造1課 倉庫"
+        },
+        {
+          "r": 9,
+          "c": 1,
+          "v": "HA0002610　100 仕込\nクレイジーマックスプロテイン(カフェオレ風味)造粒品"
+        },
+        {
+          "r": 9,
+          "c": 4,
+          "v": "100.0000"
+        },
+        {
+          "r": 9,
+          "c": 5,
+          "v": "400.72 kg"
+        },
+        {
+          "r": 10,
+          "c": 1,
+          "v": "H00001630　999 購入\nクラフト袋L イージーオープン"
+        },
+        {
+          "r": 10,
+          "c": 4,
+          "v": "8.3334"
+        },
+        {
+          "r": 10,
+          "c": 5,
+          "v": "33.40 枚"
+        }
+      ],
+      "filename": "IMG_9689"
     }
   ]
 }

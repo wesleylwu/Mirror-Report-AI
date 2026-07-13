@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { FaSpinner, FaExclamationCircle } from "react-icons/fa";
-import { ExtractedData, MatchedTemplate } from "../types/template";
+import { ExtractedData } from "../types/template";
 import DocumentUploader from "./DocumentUploader";
 import DocumentPreview from "./DocumentPreview";
-import TemplateViewer from "./TemplateViewer";
+import DataPreview from "./DataPreview";
 
 interface MirrorProps {
   uploadedFiles: File[];
@@ -15,7 +15,7 @@ interface MirrorProps {
 
 interface PageResult {
   extractedData: ExtractedData;
-  template: MatchedTemplate;
+  htmlContent?: string;
   filename?: string;
 }
 
@@ -26,7 +26,7 @@ const LOADING_STEPS = [
   "Correcting document rotation & perspective (deskewing)...",
   "Connecting to Document Analysis API...",
   "Analyzing report layout and reading text characters...",
-  "Fuzzy-matching OCR results against layout schemas...",
+  "Structuring extracted fields into rows and columns...",
   "Building custom sheets and styling Excel borders...",
   "Finalizing Excel spreadsheet binary generation...",
 ];
@@ -125,6 +125,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
           next[activePageIndex] = {
             ...next[activePageIndex],
             extractedData: newData,
+            htmlContent: newData.html || next[activePageIndex].htmlContent,
           };
         }
         return next;
@@ -241,7 +242,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
               errMessage = text || `HTTP error ${res.status}`;
             }
           }
-        } catch (e) {
+        } catch {
           errMessage = `HTTP error ${res.status}`;
         }
         throw new Error(errMessage);
@@ -262,109 +263,24 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
         const extracted = { ...page.extractedData };
 
         if (extracted.table?.rows) {
-          extracted.table.rows = extracted.table.rows.filter(
-            (r: Record<string, unknown>) =>
-              !(
-                "_full_width" in r &&
-                typeof r._full_width === "string" &&
-                r._full_width.replace(/\s+/g, "") === "備考"
-              ),
-          );
-        }
-
-        const title = (extracted.title || "").trim();
-        const normTitle = title.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) =>
-          String.fromCharCode(s.charCodeAt(0) - 0xfee0),
-        );
-        if (normTitle.startsWith("基準客先ABC") && extracted.table?.rows) {
-          const mapping: Record<string, string> = {
-            "＝39": "ﾘ39",
-            "＝42": "ﾆ42",
-            Ａ21: "ｸ21",
-            Ａ29: "ｷ29",
-            Ａ31: "ｶ31",
-            Ｂ50: "ﾋ50",
-            Ｅ03: "ｴ03",
-            Ｅ10: "ｱ10",
-            Ｅ15: "ﾓ15",
-            Ｅ30: "ｺ30",
-            Ｅ60: "ｴ60",
-            Ｅ70: "ｴ70",
-            Ｆ20: "ｷ20",
-            Ｇ48: "ｺ48",
-            Ｊ03: "ｼ03",
-            Ｊ11: "ｼ11",
-            Ｊ12: "ｼ12",
-            Ｊ13: "ｼ13",
-            Ｊ17: "ｿ17",
-            Ｊ20: "ｼ20",
-            Ｊ22: "ｼ22",
-            Ｊ50: "ｼ50",
-            Ｊ58: "ｼ58",
-            Ｊ72: "ｼ72",
-            Ｊ90: "ｾ90",
-            Ｊ92: "ｼ92",
-            Ｊ99: "ｼ99",
-            Ｋ70: "ｷ70",
-            Ｋ91: "ｷ91",
-            Ｋ92: "ｷ92",
-            Ｋ93: "ｷ93",
-            Ｔ01: "701",
-            Ｔ13: "713",
-            Ｔ23: "723",
-            Ｔ30: "ﾅ30",
-            Ｔ35: "735",
-            Ｔ40: "740",
-            Ｔ78: "ﾄ78",
-            Ｔ80: "ﾗ80",
-            Ｙ01: "ｸ01",
-            Ｙ04: "ｸ04",
-            Ｙ50: "ﾀ50",
-            Ｚ15: "ｽ15",
-            Ｄ60: "ﾄ60",
-            Ｄ70: "ﾄ70",
-            Ｙ60: "ｹ60",
+          extracted.table = {
+            ...extracted.table,
+            rows: extracted.table.rows.filter(
+              (r) =>
+                !(
+                  !Array.isArray(r) &&
+                  "_full_width" in r &&
+                  typeof r._full_width === "string" &&
+                  r._full_width.replace(/\s+/g, "") === "備考"
+                ),
+            ),
           };
-          extracted.table.rows = extracted.table.rows.map((r: unknown) => {
-            if (Array.isArray(r) && r.length > 1) {
-              const code = r[1];
-              if (typeof code === "string" && mapping[code]) {
-                const newRow = [...r];
-                newRow[1] = mapping[code];
-                return newRow;
-              }
-            } else if (r && typeof r === "object") {
-              const obj = r as Record<string, unknown>;
-              const code = (obj["基準客先名"] || obj[1]) as string | undefined;
-              if (typeof code === "string" && mapping[code]) {
-                return { ...obj, 基準客先名: mapping[code] };
-              }
-            }
-            return r;
-          }) as Record<string, string>[];
-        }
-
-        if (extracted.header) {
-          if (extracted.header["店番"] === "S50") {
-            extracted.header["店番"] = "シ50";
-          }
-          const rawNo = extracted.header["手配No."] || "";
-          if (typeof rawNo === "string" && rawNo.includes("　")) {
-            const parts = rawNo.split("　");
-            extracted.header["手配No."] = parts[0];
-            extracted.header["手配No._sub"] = parts[1] || "1";
-          } else if (typeof rawNo === "string" && rawNo.includes(" ")) {
-            const parts = rawNo.split(" ");
-            extracted.header["手配No."] = parts[0];
-            extracted.header["手配No._sub"] = parts[1] || "1";
-          } else {
-            extracted.header["手配No._sub"] = "1";
-          }
         }
 
         return {
           ...page,
           extractedData: extracted,
+          htmlContent: extracted.html || page.htmlContent,
         };
       });
 
@@ -584,9 +500,9 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
             </div>
           ) : (
             pages[activePageIndex] && (
-              <TemplateViewer
-                matchedTemplate={pages[activePageIndex].template}
+              <DataPreview
                 extractedData={pages[activePageIndex].extractedData}
+                htmlContent={pages[activePageIndex].htmlContent}
                 onExtractedDataChange={handleExtractedDataChange}
                 isRegeneratingExcel={isRegenerating}
                 onDownloadExcel={handleDownloadExcel}

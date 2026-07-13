@@ -1,491 +1,711 @@
 {
   "pages": [
     {
-      "title": "基準客先別シンプルリスト",
-      "section_header": "",
-      "header": {
-        "2026年2月": "",
-        "2026/6/22 PAGE:1": ""
-      },
-      "table": {
-        "columns": [
-          "基準客先",
-          "",
-          "",
-          "",
-          "",
-          "営業粗利額 粗利達成率",
-          "粗利率 可処率",
-          "純売上額 売上達成率",
-          "上海荷り+正式貿易 上海振い分の割合",
-          "本部売上 経費控除粗利率",
-          "デザイン経費 品質検査経費",
-          "在庫機 在庫機備期間",
-          "死蔵品額 死蔵品比率",
-          "印字仕入額 印字仕入数",
-          "発送件数 運賃",
-          "物流経費 システム開発費",
-          "調達信用額 調達年上額"
+      "template": {
+        "sheet_name": "業務発生明細サンプルリスト",
+        "orientation": "landscape",
+        "col_widths": [
+          6,
+          8,
+          8,
+          8,
+          8,
+          6,
+          10,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
         ],
+        "data_rows": 10,
         "rows": [
-          [
-            "シ50",
-            "(株)ジュン",
-            "",
-            "",
-            "当月",
-            "6,008,094 66.9",
-            "35.3 68.8",
-            "17,024,012 49.9",
-            "8,500,080 104,736",
-            "",
-            "0",
-            "31,270,029 2.7",
-            "362,832 3.9",
-            "2,519,776 674,476",
-            "483 609,174",
-            "411,042 93,840",
-            "8,984,250 24,750,000"
-          ],
-          [
-            "",
-            "実績粗利 115,407,750 率 34",
-            "実績売上",
-            "339,753,881",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "目標粗利 123,500,000 率 36",
-            "目標売上",
-            "340,000,000",
-            "累計",
-            "102,967,486 91.1",
-            "35.8 34.6",
-            "287,650,236 92.4",
-            "182,124,664 63.3",
-            "1,118,068",
-            "0",
-            "27,410,622 0.0",
-            "463,398",
-            "35,835,714 10,973,554",
-            "6,601 12,086,717",
-            "5,135,954 1,881,400",
-            "113,074,640 311,280,000"
-          ],
-          [
-            "",
-            "",
-            "目標在庫",
-            "28,000,000",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "シ50 元決済",
-            "(株)ジュン",
-            "",
-            "",
-            "当月",
-            "1,436,915 95.8",
-            "44.4 97.0",
-            "3,234,127",
-            "",
-            "",
-            "",
-            "964,346 0.4",
-            "0 0.0",
-            "",
-            "",
-            "",
-            "1,500,000 3,333,333"
-          ],
-          [
-            "",
-            "実績粗利 14,278,312 率 43",
-            "実績売上",
-            "33,173,241",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "目標粗利 18,000,000 率 45",
-            "目標売上",
-            "40,000,000",
-            "累計",
-            "15,871,447 96.2",
-            "42.5 101.8",
-            "37,355,692",
-            "",
-            "",
-            "",
-            "1,299,717",
-            "1,197",
-            "",
-            "",
-            "",
-            "16,500,000 36,666,667"
-          ],
-          [
-            "",
-            "",
-            "目標在庫",
-            "1,400,000",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "シ50 元決済 +円",
-            "(株)ジュン",
-            "",
-            "",
-            "当月",
-            "7,445,009 71.0",
-            "36.7 72.1",
-            "20,258,139",
-            "",
-            "33.4",
-            "159,000 0",
-            "32,234,375 2.4",
-            "362,832 3.4",
-            "",
-            "",
-            "",
-            "10,484,250 28,083,333"
-          ],
-          [
-            "",
-            "実績粗利 129,686,062 率 35",
-            "実績売上",
-            "372,927,122",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "",
-            "目標粗利 141,500,000 率 37",
-            "目標売上",
-            "380,000,000",
-            "累計",
-            "118,838,933 91.7",
-            "36.5 93.4",
-            "325,005,928",
-            "",
-            "33.5",
-            "2,590,000 68,400",
-            "28,710,339",
-            "464,595",
-            "",
-            "",
-            "",
-            "129,574,640 347,946,867"
-          ],
-          [
-            "",
-            "",
-            "目標在庫",
-            "29,400,000",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "【大久保・関谷・金柿 円合計】",
-            "",
-            "",
-            "",
-            "当月",
-            "6,008,094 66.8",
-            "35.2 68.7",
-            "17,024,012 49.9",
-            "8,500,080 104,736",
-            "",
-            "",
-            "31,270,029 2.7",
-            "362,832 3.9",
-            "2,519,776 674,476",
-            "483 609,174",
-            "411,042 93,840",
-            "8,984,250 24,750,000"
-          ],
-          [
-            "実績粗利 115,407,750 率 34",
-            "実績売上",
-            "339,753,881",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "目標粗利 123,500,000 率 36",
-            "目標売上",
-            "340,000,000",
-            "",
-            "累計",
-            "102,967,486 91.0",
-            "35.7 34.6",
-            "287,650,236 92.4",
-            "182,124,664 63.3",
-            "1,118,068",
-            "0",
-            "27,410,622",
-            "463,398",
-            "35,835,714 10,973,554",
-            "6,601 12,086,717",
-            "5,135,954 1,881,400",
-            "113,074,640 311,280,000"
-          ],
-          [
-            "",
-            "目標在庫",
-            "28,000,000",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "【大久保・関谷・金柿 元合計】",
-            "",
-            "",
-            "",
-            "当月",
-            "1,436,915 95.7",
-            "44.4 97.0",
-            "3,234,127",
-            "",
-            "",
-            "",
-            "964,346 0.4",
-            "0 0.0",
-            "",
-            "",
-            "",
-            "1,500,000 3,333,333"
-          ],
-          [
-            "実績粗利 14,278,312 率 43",
-            "実績売上",
-            "33,173,241",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "目標粗利 18,000,000 率 45",
-            "目標売上",
-            "40,000,000",
-            "",
-            "累計",
-            "15,871,447 96.1",
-            "42.4 101.8",
-            "37,355,692",
-            "",
-            "",
-            "",
-            "1,299,717",
-            "1,197",
-            "",
-            "",
-            "",
-            "16,500,000 36,666,667"
-          ],
-          [
-            "",
-            "目標在庫",
-            "1,400,000",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "【大久保・関谷・金柿 円+元 合計】",
-            "",
-            "",
-            "",
-            "当月",
-            "7,445,009 71.0",
-            "36.7 72.1",
-            "20,258,139",
-            "",
-            "33.4",
-            "159,000 0",
-            "32,234,375 2.4",
-            "362,832 3.4",
-            "",
-            "",
-            "",
-            "10,484,250 28,083,333"
-          ],
-          [
-            "実績粗利 129,686,062 率 35",
-            "実績売上",
-            "372,927,122",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ],
-          [
-            "目標粗利 141,500,000 率 37",
-            "目標売上",
-            "380,000,000",
-            "",
-            "累計",
-            "118,838,933 91.7",
-            "36.5 93.4",
-            "325,005,928",
-            "",
-            "33.5",
-            "2,590,000 68,400",
-            "28,710,339",
-            "464,595",
-            "",
-            "",
-            "",
-            "129,574,640 347,946,867"
-          ],
-          [
-            "",
-            "目標在庫",
-            "29,400,000",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-          ]
+          {
+            "h": 20,
+            "cells": [
+              {
+                "c": 1,
+                "s": 24,
+                "v": "業務発生明細サンプルリスト",
+                "b": true,
+                "a": "right",
+                "x": false
+              }
+            ]
+          },
+          {
+            "h": 16,
+            "cells": [
+              {
+                "c": 1,
+                "s": 24,
+                "v": "",
+                "x": false
+              }
+            ]
+          },
+          {
+            "h": 18,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "ＮＯ",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 2,
+                "v": "物件名",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "棟番号",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "部屋番号",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "契約種別",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "契約開始日",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 9,
+                "s": 1,
+                "v": "契約終了日",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 10,
+                "s": 1,
+                "v": "賃料",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 11,
+                "s": 1,
+                "v": "共益費",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 12,
+                "s": 1,
+                "v": "駐車場代",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 13,
+                "s": 1,
+                "v": "その他",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 14,
+                "s": 1,
+                "v": "合計",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 15,
+                "s": 1,
+                "v": "入金額",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 16,
+                "s": 1,
+                "v": "差額",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 17,
+                "s": 1,
+                "v": "累計入金",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 18,
+                "s": 1,
+                "v": "累計差額",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 19,
+                "s": 1,
+                "v": "日計入金",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 20,
+                "s": 1,
+                "v": "日計差額",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 21,
+                "s": 1,
+                "v": "管理費",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 22,
+                "s": 1,
+                "v": "修繕費",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 23,
+                "s": 1,
+                "v": "その他費用",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 24,
+                "s": 1,
+                "v": "備考",
+                "b": true,
+                "a": "center",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 16,
+            "repeat": 10,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "",
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 2,
+                "v": "",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "",
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "",
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "",
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 9,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 10,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 11,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 12,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 13,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 14,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 15,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 16,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 17,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 18,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 19,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 20,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 21,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 22,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 23,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 24,
+                "s": 1,
+                "v": "",
+                "x": true
+              }
+            ]
+          },
+          {
+            "h": 16,
+            "cells": [
+              {
+                "c": 1,
+                "s": 2,
+                "v": "合計",
+                "b": true,
+                "a": "center",
+                "x": true
+              },
+              {
+                "c": 3,
+                "s": 2,
+                "v": "",
+                "x": true
+              },
+              {
+                "c": 5,
+                "s": 1,
+                "v": "",
+                "x": true
+              },
+              {
+                "c": 6,
+                "s": 1,
+                "v": "",
+                "x": true
+              },
+              {
+                "c": 7,
+                "s": 1,
+                "v": "",
+                "x": true
+              },
+              {
+                "c": 8,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 9,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 10,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 11,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 12,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 13,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 14,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 15,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 16,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 17,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 18,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 19,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 20,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 21,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 22,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 23,
+                "s": 1,
+                "v": "",
+                "a": "right",
+                "x": true
+              },
+              {
+                "c": 24,
+                "s": 1,
+                "v": "",
+                "x": true
+              }
+            ]
+          }
         ]
-      }
+      },
+      "html": "<table style=\"border-collapse:collapse;font-size:10px;font-family:MS Gothic;\">\n<col style=\"width:40px\"><col style=\"width:50px\"><col style=\"width:50px\"><col style=\"width:50px\"><col style=\"width:50px\"><col style=\"width:40px\"><col style=\"width:65px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\"><col style=\"width:55px\">\n<tr style=\"height:20px\"><td colspan=\"24\" style=\"text-align:right;font-weight:bold;padding-right:4px;\">業務発生明細サンプルリスト</td></tr>\n<tr style=\"height:16px\"><td colspan=\"24\"></td></tr>\n<tr style=\"height:18px;font-weight:bold;background:#CCCCCC;\">\n<td colspan=\"2\" style=\"border:1px solid #000;text-align:center;\">ＮＯ</td>\n<td colspan=\"2\" style=\"border:1px solid #000;text-align:center;\">物件名</td>\n<td style=\"border:1px solid #000;text-align:center;\">棟番号</td>\n<td style=\"border:1px solid #000;text-align:center;\">部屋番号</td>\n<td style=\"border:1px solid #000;text-align:center;\">契約種別</td>\n<td style=\"border:1px solid #000;text-align:center;\">契約開始日</td>\n<td style=\"border:1px solid #000;text-align:center;\">契約終了日</td>\n<td style=\"border:1px solid #000;text-align:center;\">賃料</td>\n<td style=\"border:1px solid #000;text-align:center;\">共益費</td>\n<td style=\"border:1px solid #000;text-align:center;\">駐車場代</td>\n<td style=\"border:1px solid #000;text-align:center;\">その他</td>\n<td style=\"border:1px solid #000;text-align:center;\">合計</td>\n<td style=\"border:1px solid #000;text-align:center;\">入金額</td>\n<td style=\"border:1px solid #000;text-align:center;\">差額</td>\n<td style=\"border:1px solid #000;text-align:center;\">累計入金</td>\n<td style=\"border:1px solid #000;text-align:center;\">累計差額</td>\n<td style=\"border:1px solid #000;text-align:center;\">日計入金</td>\n<td style=\"border:1px solid #000;text-align:center;\">日計差額</td>\n<td style=\"border:1px solid #000;text-align:center;\">管理費</td>\n<td style=\"border:1px solid #000;text-align:center;\">修繕費</td>\n<td style=\"border:1px solid #000;text-align:center;\">その他費用</td>\n<td style=\"border:1px solid #000;text-align:center;\">備考</td>\n</tr>\n<tr style=\"height:16px\"><td colspan=\"2\" style=\"border:1px solid #000;\"></td><td colspan=\"2\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:16px\"><td colspan=\"2\" style=\"border:1px solid #000;\"></td><td colspan=\"2\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:16px\"><td colspan=\"2\" style=\"border:1px solid #000;\"></td><td colspan=\"2\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n<tr style=\"height:16px;font-weight:bold;\"><td colspan=\"2\" style=\"border:1px solid #000;text-align:center;\">合計</td><td colspan=\"2\" style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td><td style=\"border:1px solid #000;\"></td></tr>\n</table>",
+      "data": [
+        {
+          "r": 1,
+          "c": 1,
+          "v": "2026年2月"
+        },
+        {
+          "r": 3,
+          "c": 1,
+          "v": "ＮＯ"
+        },
+        {
+          "r": 4,
+          "c": 1,
+          "v": "34"
+        },
+        {
+          "r": 4,
+          "c": 3,
+          "v": "(株)アシスト"
+        },
+        {
+          "r": 4,
+          "c": 8,
+          "v": "118,407,750"
+        },
+        {
+          "r": 4,
+          "c": 10,
+          "v": "14,278,312"
+        },
+        {
+          "r": 4,
+          "c": 11,
+          "v": "18,000,000"
+        },
+        {
+          "r": 4,
+          "c": 14,
+          "v": "123,500,000"
+        },
+        {
+          "r": 5,
+          "c": 1,
+          "v": "35"
+        },
+        {
+          "r": 5,
+          "c": 8,
+          "v": "126,685,062"
+        },
+        {
+          "r": 5,
+          "c": 14,
+          "v": "141,500,000"
+        },
+        {
+          "r": 6,
+          "c": 1,
+          "v": "36"
+        },
+        {
+          "r": 6,
+          "c": 8,
+          "v": "338,753,881"
+        },
+        {
+          "r": 6,
+          "c": 14,
+          "v": "123,500,000"
+        },
+        {
+          "r": 7,
+          "c": 1,
+          "v": "37"
+        },
+        {
+          "r": 7,
+          "c": 8,
+          "v": "33,173,241"
+        },
+        {
+          "r": 7,
+          "c": 14,
+          "v": "141,500,000"
+        },
+        {
+          "r": 8,
+          "c": 1,
+          "v": "43"
+        },
+        {
+          "r": 8,
+          "c": 8,
+          "v": "379,907,199"
+        },
+        {
+          "r": 8,
+          "c": 14,
+          "v": "380,000,000"
+        },
+        {
+          "r": 9,
+          "c": 1,
+          "v": "44"
+        },
+        {
+          "r": 9,
+          "c": 8,
+          "v": "338,753,881"
+        },
+        {
+          "r": 9,
+          "c": 14,
+          "v": "340,000,000"
+        },
+        {
+          "r": 10,
+          "c": 1,
+          "v": "45"
+        },
+        {
+          "r": 10,
+          "c": 8,
+          "v": "28,000,000"
+        },
+        {
+          "r": 10,
+          "c": 14,
+          "v": "28,000,000"
+        },
+        {
+          "r": 11,
+          "c": 1,
+          "v": "46"
+        },
+        {
+          "r": 11,
+          "c": 8,
+          "v": "1,400,000"
+        },
+        {
+          "r": 11,
+          "c": 14,
+          "v": "1,400,000"
+        },
+        {
+          "r": 12,
+          "c": 1,
+          "v": "合計"
+        }
+      ],
+      "filename": "IMG_9693"
     }
   ]
 }
