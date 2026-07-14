@@ -27,10 +27,10 @@ def _extract_data(page_data: dict) -> dict:
     sheet_name = _sheet_name_from_page(page_data, 0)
     cells = []
     for item in (page_data.get("data") or []):
-        row = item.get("r") or item.get("row")
-        col = item.get("c") or item.get("col")
-        val = item.get("v") or item.get("value") or ""
-        if val and row and col:
+        row = item.get("r") if item.get("r") is not None else item.get("row")
+        col = item.get("c") if item.get("c") is not None else item.get("col")
+        val = item.get("v") if item.get("v") is not None else item.get("value") or ""
+        if val and row is not None and col is not None:
             cells.append({"row": int(row), "col": int(col), "value": val})
     return {"sheet_name": sheet_name, "cells": cells}
 
