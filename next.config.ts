@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
           source: "/api/generate_excel",
           destination: "/api/py_generate_excel",
         },
+        {
+          source: "/api/save_edits",
+          destination: "/api/py_save_edits",
+        },
       ];
     } else {
       return [

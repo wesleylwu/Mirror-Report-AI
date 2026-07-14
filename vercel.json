@@ -7,6 +7,10 @@
     "api/py_generate_excel.py": {
       "maxDuration": 300,
       "includeFiles": "pipeline/**"
+    },
+    "api/py_save_edits.py": {
+      "maxDuration": 300,
+      "includeFiles": "pipeline/**"
     }
   }
 }

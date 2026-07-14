@@ -132,8 +132,26 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
         return next;
       });
       setIsDirty(true);
+
+      if (dbDocumentId) {
+        const url =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+            ? "/api/save_edits"
+            : "/api/py_save_edits";
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: dbDocumentId,
+            data: newData.data || [],
+          }),
+        }).catch((err) => console.error("Autosave failed:", err));
+      }
     },
-    [activePageIndex],
+    [activePageIndex, dbDocumentId],
   );
 
   const handleDownloadExcel = useCallback(async () => {
