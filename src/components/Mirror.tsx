@@ -154,7 +154,12 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     setIsRegenerating(true);
     try {
       if (dbDocumentId) {
-        const res = await fetch("/api/generate_excel", {
+        const fetchUrl =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+            ? "/api/generate_excel"
+            : "/api/py_generate_excel";
+        const res = await fetch(fetchUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
