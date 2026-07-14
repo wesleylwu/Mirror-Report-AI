@@ -28,9 +28,12 @@ from PIL import Image, ImageOps
 _STOP = threading.Event()
 _STOP_FILE = Path(__file__).parent / "STOP"
 
-MODEL_HAIKU  = "claude-haiku-4-5-20251001"
-MODEL_SONNET = "claude-sonnet-4-6"
-MODEL = MODEL_SONNET  # default; overridden by --haiku flag at runtime
+MODEL_HAIKU   = "claude-haiku-4-5-20251001"
+MODEL_SONNET  = "claude-sonnet-4-6"
+MODEL_SONNET5 = "claude-sonnet-5"
+MODEL_OPUS    = "claude-opus-4-6"
+MODEL_FABLE   = "claude-fable-5"
+MODEL = MODEL_SONNET  # default; overridden by flags at runtime
 
 PROMPT = """Analyze this document image and output exactly three sections. Begin each section with its marker on its own line exactly as shown. No explanation before the first marker. No markdown fences.
 
@@ -57,7 +60,10 @@ colspan/rowspan for merges, border:1px solid #000 for borders, background:#RRGGB
 <col style="width:Npx"> for widths, <tr style="height:Npx"> for heights. Pre-printed labels only.
 
 ---DATA---
-JSON array — filled-in values only (handwritten, typed, stamped — NOT pre-printed labels):
+JSON array — filled-in values only (handwritten, typed, stamped — NOT pre-printed labels).
+Coordinates MUST match the TEMPLATE exactly:
+- "r" = 0-based index of the row in the TEMPLATE rows array (after expanding any repeat rows). Row 0 is the very first row in the rows array.
+- "c" = the exact "c" value of the cell in that template row where the value belongs (the blank cell, not the label cell).
 [{"r":<row>,"c":<col>,"v":"<value>"},...]
 Omit empty cells. Output at most 30 rows — if document has more, output first 30 only."""
 
@@ -140,15 +146,29 @@ def _stream_response(client, messages: list, label: str, max_tokens: int = 16000
     while True:
         turn_num = sum(1 for m in messages if m["role"] == "user")
         chars = 0
+        _thinking_models = {MODEL_SONNET5, MODEL_OPUS, MODEL_FABLE}
+        _is_thinking = MODEL in _thinking_models
+        _budget = max_tokens * 3 if _is_thinking else max_tokens
+        _extra = {} if _is_thinking else {"temperature": 0}
+        thinking_chars = 0
         with client.messages.stream(
-            model=MODEL, max_tokens=max_tokens, temperature=0, messages=messages,
+            model=MODEL, max_tokens=_budget, messages=messages, **_extra,
         ) as stream:
-            for text in stream.text_stream:
+            for event in stream:
                 if _STOP.is_set() or _STOP_FILE.exists():
                     _STOP.set()
                     break
-                chars += len(text)
-                print(f"\r  [{label}] Turn {turn_num} — {chars:,} chars...", end="", flush=True)
+                event_type = type(event).__name__
+                if event_type == "RawContentBlockDeltaEvent":
+                    delta = getattr(event, "delta", None)
+                    if delta is None:
+                        pass
+                    elif getattr(delta, "type", None) == "thinking_delta":
+                        thinking_chars += len(getattr(delta, "thinking", "") or "")
+                        print(f"\r  [{label}] Turn {turn_num} — thinking ({thinking_chars:,} chars)...", end="", flush=True)
+                    elif getattr(delta, "type", None) == "text_delta":
+                        chars += len(getattr(delta, "text", "") or "")
+                        print(f"\r  [{label}] Turn {turn_num} — {chars:,} chars...", end="", flush=True)
             print()
             if _STOP.is_set():
                 break
@@ -159,7 +179,7 @@ def _stream_response(client, messages: list, label: str, max_tokens: int = 16000
         total_cr  += getattr(message.usage, "cache_read_input_tokens", 0) or 0
         total_cw  += getattr(message.usage, "cache_creation_input_tokens", 0) or 0
 
-        chunk = message.content[0].text if message.content else ""
+        chunk = next((b.text for b in message.content if hasattr(b, "text")), "")
         accumulated += chunk
 
         if message.stop_reason != "max_tokens":
@@ -314,10 +334,22 @@ def main():
     parser.add_argument("paths", nargs="+", help="input image/PDF paths; if last arg ends in .json it is the output path")
     parser.add_argument("--sonnet", action="store_true", help="Use claude-sonnet-4-6 (already the default)")
     parser.add_argument("--haiku", action="store_true", help="Use claude-haiku-4-5 instead of the default Sonnet")
+    parser.add_argument("--sonnet5", action="store_true", help="Use claude-sonnet-5")
+    parser.add_argument("--opus", action="store_true", help="Use claude-opus-4-6")
+    parser.add_argument("--fable", action="store_true", help="Use claude-fable-5")
     args = parser.parse_args()
 
     global MODEL
-    MODEL = MODEL_HAIKU if args.haiku else MODEL_SONNET
+    if args.haiku:
+        MODEL = MODEL_HAIKU
+    elif args.sonnet5:
+        MODEL = MODEL_SONNET5
+    elif args.opus:
+        MODEL = MODEL_OPUS
+    elif args.fable:
+        MODEL = MODEL_FABLE
+    else:
+        MODEL = MODEL_SONNET
     print(f"Using model: {MODEL}", file=sys.stderr)
 
     paths = args.paths
