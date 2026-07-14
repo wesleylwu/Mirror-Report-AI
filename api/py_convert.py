@@ -44,7 +44,7 @@ def _build_workbook(pages: list) -> bytes:
             ctr += 1
         seen.add(name)
         ws = wb.create_sheet(title=name)
-        render_sheet(tmpl, ws)
+        render_sheet(tmpl, ws, filled_data=page_data.get("data") or [])
     if len(wb.worksheets) > 1:
         wb.remove(default)
     buf = io.BytesIO()

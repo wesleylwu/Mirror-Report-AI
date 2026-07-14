@@ -26,7 +26,7 @@ _A4_PORTRAIT_COLS  = 100.0
 _A4_LANDSCAPE_COLS = 128.0
 
 
-def render_sheet(data: dict, ws) -> None:
+def render_sheet(data: dict, ws, filled_data: list | None = None) -> None:
     col_widths  = data.get("col_widths") or []
     rows        = data.get("rows") or []
     orientation = str(data.get("orientation") or "portrait").lower()
@@ -54,20 +54,17 @@ def render_sheet(data: dict, ws) -> None:
         r = row.get("r") or row.get("row") or (idx + 1)
         row_by_r[int(r)] = row
 
-    # Scale columns down to fit A4 (never scale up)
-    target_cols = _A4_LANDSCAPE_COLS if orientation == "landscape" else _A4_PORTRAIT_COLS
-    raw_col_total = sum(max(1.0, float(w)) for w in col_widths) if col_widths else 1.0
-    col_scale = target_cols / raw_col_total
-
+    # Set raw column widths (unscaled) — will be scaled to A4 after content expansion
     for i, w in enumerate(col_widths, start=1):
         try:
-            ws.column_dimensions[get_column_letter(i)].width = max(4.0, float(w) * col_scale)
+            ws.column_dimensions[get_column_letter(i)].width = max(4.0, float(w))
         except (ValueError, TypeError):
             ws.column_dimensions[get_column_letter(i)].width = 8.0
 
     def _render_cell_spec(cell_spec, row_idx):
         try:
-            col   = int(cell_spec.get("c") or cell_spec.get("col") or 1)
+            c_raw = cell_spec.get("c") if cell_spec.get("c") is not None else cell_spec.get("col")
+            col   = int(c_raw) + 1 if c_raw is not None else 1
             span  = max(1, int(cell_spec.get("s") or cell_spec.get("span") or 1))
             rspan = max(1, int(cell_spec.get("rs") or cell_spec.get("rowspan") or 1))
         except (ValueError, TypeError):
@@ -153,7 +150,8 @@ def render_sheet(data: dict, ws) -> None:
         for cell_spec in (row.get("cells") or []):
             _render_cell_spec(cell_spec, row_idx)
 
-    # Bump column widths to fit cell text (CJK chars ≈ 2 units, ASCII ≈ 1)
+    # Expand columns to fit content so no cell needs to wrap.
+    # CJK chars ≈ 2 units, ASCII ≈ 1 unit. Skip wide-span cells (they spread across columns).
     num_cols = len(col_widths)
     half_cols = num_cols // 2
     for r in range(1, num_rows + 1):
@@ -162,17 +160,61 @@ def render_sheet(data: dict, ws) -> None:
             if not cell.value or isinstance(cell, MergedCell):
                 continue
             text = str(cell.value)
-            # Skip cells that are part of a wide merge spanning more than half the columns
             mr_spans = [mr for mr in ws.merged_cells.ranges
                         if mr.min_row <= r <= mr.max_row
                         and mr.min_col <= c <= mr.max_col
                         and (mr.max_col - mr.min_col + 1) > half_cols]
             if mr_spans:
                 continue
-            needed = sum(2.0 if ord(ch) > 127 else 1.0 for ch in text) * 0.75 + 1
+            # Longest line (handles \n in data cells)
+            longest = max((sum(2.0 if ord(ch) > 127 else 1.0 for ch in line)
+                           for line in text.split("\n")), default=0)
+            needed = longest * 0.75 + 1
             current = float(ws.column_dimensions[get_column_letter(c)].width or 8.0)
             if needed > current:
-                ws.column_dimensions[get_column_letter(c)].width = min(needed, 30.0)
+                ws.column_dimensions[get_column_letter(c)].width = needed
+
+    # Scale all columns proportionally so the sheet fits the page width exactly.
+    target_cols = _A4_LANDSCAPE_COLS if orientation == "landscape" else _A4_PORTRAIT_COLS
+    total_width = sum(
+        float(ws.column_dimensions[get_column_letter(i)].width or 8.0)
+        for i in range(1, num_cols + 1)
+    )
+    if total_width > target_cols:
+        scale = target_cols / total_width
+        for i in range(1, num_cols + 1):
+            ltr = get_column_letter(i)
+            ws.column_dimensions[ltr].width = max(4.0, ws.column_dimensions[ltr].width * scale)
+
+    # Overlay filled data values (DATA section from JSONgen) onto blank template cells.
+    # DATA r is 0-based index into the expanded rows array → Excel row = r + 1.
+    # DATA c is 0-indexed → Excel col = c + 1 (matches template rendering above).
+    for entry in (filled_data or []):
+        try:
+            r_raw = entry.get("r") if entry.get("r") is not None else entry.get("row")
+            c_raw = entry.get("c") if entry.get("c") is not None else entry.get("col")
+            v = entry.get("v") if entry.get("v") is not None else entry.get("value")
+            if r_raw is None or c_raw is None or not v:
+                continue
+            excel_row = int(r_raw) + 1
+            excel_col = int(c_raw) + 1
+            cell = ws.cell(row=excel_row, column=excel_col)
+            if isinstance(cell, MergedCell):
+                continue
+            if cell.value:  # never overwrite template labels
+                continue
+            cell.value = v
+            if "\n" in str(v):
+                cell.alignment = Alignment(
+                    horizontal=cell.alignment.horizontal or "left",
+                    vertical="top",
+                    wrap_text=True,
+                )
+                lines = str(v).count("\n") + 1
+                current_h = ws.row_dimensions[excel_row].height or 15
+                ws.row_dimensions[excel_row].height = max(current_h, lines * 15)
+        except (ValueError, TypeError):
+            pass
 
     # Page setup — A4, correct orientation, fit to one page
     ws.page_setup.paperSize   = 9  # A4
@@ -220,7 +262,7 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
 
         raw_name = str(tmpl.get("sheet_name") or f"Sheet {idx + 1}")
         ws = wb.create_sheet(title=_unique_name(raw_name, seen))
-        render_sheet(tmpl, ws)
+        render_sheet(tmpl, ws, filled_data=page_data.get("data") or [])
 
     if len(wb.worksheets) > 1:
         wb.remove(default_sheet)
