@@ -19,6 +19,8 @@ import threading
 import concurrent.futures
 from pathlib import Path
 
+sys.path.append(str(Path(__file__).parent))
+
 import anthropic
 import fitz  # PyMuPDF
 from PIL import Image, ImageOps
@@ -243,6 +245,12 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
 
     result = _parse_sections(text)
     if result.get("template"):
+        if result.get("html"):
+            try:
+                from HTMLgen import populate_html_with_data
+                result["html"] = populate_html_with_data(result["html"], result.get("data") or [])
+            except Exception as pe:
+                print(f"Failed to populate HTML in OCR: {pe}", file=sys.stderr)
         return result
 
     raw_path = debug_name + ".raw_response.txt"
@@ -304,6 +312,12 @@ def extract_all(paths: list[str]) -> dict:
                 else:
                     title = raw_title
                 res_dict["filename"] = title
+                if res_dict.get("html"):
+                    try:
+                        from HTMLgen import populate_html_with_data
+                        res_dict["html"] = populate_html_with_data(res_dict["html"], res_dict.get("data") or [])
+                    except Exception as pe:
+                        print(f"Failed to populate HTML for {title}: {pe}", file=sys.stderr)
                 pages_data.append(res_dict)
         except KeyboardInterrupt:
             _STOP.set()

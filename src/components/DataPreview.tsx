@@ -171,6 +171,58 @@ const DataPreview = ({
     [extractedData, onExtractedDataChange],
   );
 
+  const handleHtmlCellBlur = useCallback(
+    (e: React.FocusEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "TD") {
+        const rowStr = target.getAttribute("data-row");
+        const colStr = target.getAttribute("data-col");
+        if (rowStr && colStr) {
+          const r = parseInt(rowStr, 10);
+          const c = parseInt(colStr, 10);
+          const val = target.textContent || "";
+
+          // Update the data array in extractedData
+          const dataList = extractedData.data || [];
+          const exists = dataList.some((item) => item.r === r && item.c === c);
+          let newDataList;
+          if (exists) {
+            newDataList = dataList.map((item) =>
+              item.r === r && item.c === c ? { ...item, v: val } : item,
+            );
+          } else {
+            newDataList = [...dataList, { r, c, v: val }];
+          }
+
+          // Also update the HTML string using DOMParser to keep it in sync
+          let newHtml = htmlContent || "";
+          if (typeof window !== "undefined" && htmlContent) {
+            try {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(htmlContent, "text/html");
+              const cell = doc.querySelector(
+                `td[data-row="${r}"][data-col="${c}"]`,
+              );
+              if (cell) {
+                cell.textContent = val;
+                newHtml = doc.body.innerHTML;
+              }
+            } catch (err) {
+              console.error("Failed to parse/update HTML content", err);
+            }
+          }
+
+          onExtractedDataChange?.({
+            ...extractedData,
+            data: newDataList,
+            html: newHtml,
+          });
+        }
+      }
+    },
+    [extractedData, htmlContent, onExtractedDataChange],
+  );
+
   const headerRows = extractedData.header || [];
   const columns = extractedData.table?.columns || [];
   const rows = extractedData.table?.rows || [];
@@ -184,6 +236,7 @@ const DataPreview = ({
           <div
             className="bg-mirror-white relative mx-auto w-full max-w-4xl overflow-auto border border-gray-300 p-4 shadow-md print:border-none print:p-0 print:shadow-none"
             dangerouslySetInnerHTML={{ __html: htmlContent }}
+            onBlur={handleHtmlCellBlur}
           />
         ) : (
           <div

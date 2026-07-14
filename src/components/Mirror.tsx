@@ -125,6 +125,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
           next[activePageIndex] = {
             ...next[activePageIndex],
             extractedData: newData,
+            htmlContent: newData.html || next[activePageIndex].htmlContent,
           };
         }
         return next;
@@ -241,7 +242,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
               errMessage = text || `HTTP error ${res.status}`;
             }
           }
-        } catch (e) {
+        } catch {
           errMessage = `HTTP error ${res.status}`;
         }
         throw new Error(errMessage);

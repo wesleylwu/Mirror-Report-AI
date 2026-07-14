@@ -17,10 +17,13 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
   const activeFile = uploadedFiles[activeIndex];
 
   const isImage = activeFile?.type.startsWith("image/");
+  const isPdf =
+    activeFile?.type === "application/pdf" ||
+    activeFile?.name.toLowerCase().endsWith(".pdf");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!activeFile || !isImage) {
+    if (!activeFile || (!isImage && !isPdf)) {
       setImageUrl(null);
       return;
     }
@@ -29,7 +32,7 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
     return () => {
       URL.revokeObjectURL(url);
     };
-  }, [activeFile, isImage]);
+  }, [activeFile, isImage, isPdf]);
 
   const formatBytes = (bytes: number, decimals = 2) => {
     if (bytes === 0) return "0 Bytes";
@@ -53,6 +56,14 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
               className="rounded-2xl object-contain shadow-md"
             />
           </div>
+        ) : activeFile && isPdf && imageUrl ? (
+          <div className="h-full w-full">
+            <iframe
+              src={imageUrl}
+              className="h-full w-full rounded-2xl border-none shadow-md"
+              title={activeFile.name}
+            />
+          </div>
         ) : (
           activeFile && (
             <div className="text-mirror-dark-blue flex flex-col items-center justify-center p-8 text-center">
@@ -60,7 +71,7 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
                 <FaFileAlt className="h-10 w-10" />
               </div>
               <p className="text-mirror-dark-blue mb-2 text-base font-bold">
-                Non-Image Source Loaded
+                Unsupported File Type Loaded
               </p>
               <div className="max-h-[25vh] w-full max-w-[25vw] overflow-auto rounded-xl border border-gray-200 bg-white p-4 text-left font-mono text-xs text-gray-800 shadow-md">
                 <p className="mb-2 border-b border-gray-100 pb-1 text-gray-400">
@@ -107,6 +118,9 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
       <div className="scrollbar-thumb-mirror-cyan/20 flex w-full scrollbar-thin scrollbar-track-transparent gap-2 overflow-x-auto pb-2">
         {uploadedFiles.map((file, idx) => {
           const fileIsImage = file.type.startsWith("image/");
+          const fileIsPdf =
+            file.type === "application/pdf" ||
+            file.name.toLowerCase().endsWith(".pdf");
           const isActive = idx === activeIndex;
           return (
             <div
@@ -127,6 +141,8 @@ const DocumentPreview = ({ uploadedFiles, onClear }: DocumentPreviewProps) => {
               >
                 {fileIsImage ? (
                   <FaCamera className="h-4 w-4" />
+                ) : fileIsPdf ? (
+                  <FaFileAlt className="h-4 w-4" />
                 ) : (
                   <FaPaperclip className="h-4 w-4" />
                 )}
