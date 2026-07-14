@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
         },
         {
           source: "/api/generate_excel",
-          destination: "/api/py_convert",
+          destination: "/api/py_generate_excel",
         },
       ];
     } else {
