@@ -12,8 +12,8 @@ import concurrent.futures
 sys.path.append(str(Path(__file__).parent.parent))
 
 from pipeline.JSONgen import extract_text_from_image
-from pipeline.XLSXgen import execute_code, render_sheet, populate_data
-from pipeline.HTMLgen import render_html, get_html_content
+from pipeline.XLSXgen import render_sheet
+from pipeline.HTMLgen import render_html
 from openpyxl import Workbook
 
 app = Flask(__name__)
@@ -44,19 +44,7 @@ def _build_workbook(pages: list) -> bytes:
             ctr += 1
         seen.add(name)
         ws = wb.create_sheet(title=name)
-        code = page_data.get("code", "")
-        if code:
-            try:
-                execute_code(code, ws)
-                populate_data(ws, page_data.get("data"))
-            except Exception as e:
-                print(f"Code execution failed for page {idx + 1}: {e}", file=sys.stderr)
-                tmpl = page_data.get("template")
-                if tmpl:
-                    render_sheet(tmpl, ws)
-        else:
-            render_sheet(page_data.get("template") or page_data, ws)
-            populate_data(ws, page_data.get("data"))
+        render_sheet(tmpl, ws, filled_data=page_data.get("data") or [])
     if len(wb.worksheets) > 1:
         wb.remove(default)
     buf = io.BytesIO()
@@ -130,10 +118,8 @@ def convert():
         m = re.match(r"^(.*)\.([a-zA-Z0-9]+)\s*(\(page \d+\))?$", raw)
         filename = f"{m.group(1)}{m.group(3) or ''}" if m else raw
         page_data["filename"] = filename
-        html = get_html_content(page_data)
-        page_data["html"] = html
+        html = page_data.get("html") or render_html(page_data.get("template") or page_data)
         pages_result.append({
-            "extractedData": page_data,
             "dataJson":    _extract_data(page_data),
             "htmlContent": html,
             "filename":    filename,
