@@ -142,9 +142,33 @@ export async function POST(req: NextRequest) {
     });
     await client.connect();
 
-    const mfgRes = await client.query(
-      "SELECT order_no, issue_date, item_name, ingredient_name, unit_requirement, total_quantity, supplier, order_content, lot_no, due_date, order_qty, control_no, completion_status, completion_date FROM internal_mfg_orders",
-    );
+    let query = "";
+    const sheetName = pageData.template?.sheet_name || "";
+
+    if (sheetName.includes("売上") || sheetName.includes("実績")) {
+      query =
+        "SELECT month, category, last_year_actual, last_year_total, achievement_rate, target, this_year_actual, this_year_total FROM sales_performance";
+    } else if (
+      (sheetName.includes("工事") ||
+        sheetName.includes("費用") ||
+        sheetName.includes("明細")) &&
+      !sheetName.includes("業務")
+    ) {
+      query =
+        "SELECT code, company_name, prev_month_balance, this_month_billed, this_month_received, this_month_adjusted, this_month_paid_construction, this_month_paid_management, this_month_balance, next_month_balance FROM construction_costs";
+    } else if (
+      sheetName.includes("業務") ||
+      sheetName.includes("賃料") ||
+      sheetName.includes("物件")
+    ) {
+      query =
+        "SELECT no, property_name, building_no, room_no, contract_type, start_date, end_date, rent, common_fee, parking_fee, other_fee, total, amount_received, difference, cumulative_received, cumulative_difference, management_fee, repair_fee, remarks FROM rent_details";
+    } else {
+      query =
+        "SELECT order_no, issue_date, item_name, ingredient_name, unit_requirement, total_quantity, supplier, order_content, lot_no, due_date, order_qty, control_no, completion_status, completion_date FROM internal_mfg_orders";
+    }
+
+    const mfgRes = await client.query(query);
     const dbRows = mfgRes.rows;
 
     interface CellData {
@@ -158,6 +182,8 @@ export async function POST(req: NextRequest) {
 
     if (dbRows.length > 0) {
       const firstRow = dbRows[0];
+      const colnames = Object.keys(firstRow);
+
       const formatDate = (val: unknown) => {
         if (val instanceof Date) {
           return val.toISOString().split("T")[0];
@@ -165,24 +191,7 @@ export async function POST(req: NextRequest) {
         return val !== null && val !== undefined ? String(val) : "";
       };
 
-      const fields = [
-        "order_no",
-        "issue_date",
-        "item_name",
-        "ingredient_name",
-        "unit_requirement",
-        "total_quantity",
-        "supplier",
-        "order_content",
-        "lot_no",
-        "due_date",
-        "order_qty",
-        "control_no",
-        "completion_status",
-        "completion_date",
-      ];
-
-      for (const field of fields) {
+      for (const field of colnames) {
         const coord = mapping[field];
         if (coord && typeof coord === "object") {
           const r = coord.r;
@@ -190,11 +199,7 @@ export async function POST(req: NextRequest) {
           const rows = coord.rows;
           if (r !== undefined && c !== undefined) {
             let val = firstRow[field];
-            if (
-              field === "issue_date" ||
-              field === "due_date" ||
-              field === "completion_date"
-            ) {
+            if (val instanceof Date) {
               val = formatDate(val);
             }
             extractedData.push({ r: Number(r), c: Number(c), v: String(val) });
@@ -202,11 +207,7 @@ export async function POST(req: NextRequest) {
             for (let idx = 0; idx < dbRows.length; idx++) {
               if (idx < rows.length) {
                 let val = dbRows[idx][field];
-                if (
-                  field === "issue_date" ||
-                  field === "due_date" ||
-                  field === "completion_date"
-                ) {
+                if (val instanceof Date) {
                   val = formatDate(val);
                 }
                 extractedData.push({

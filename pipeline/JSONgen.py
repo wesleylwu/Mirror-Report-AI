@@ -61,27 +61,76 @@ colspan/rowspan for merges, border:1px solid #000 for borders, background:#RRGGB
 
 ---MAPPING---
 JSON object mapping our internal DB schema fields to the corresponding coordinates in the TEMPLATE.
-We want to map our internal_mfg_orders table:
-- order_no: The order/arrangement number (手配No.).
-- issue_date: The date of order (発行日).
-- item_name: The item/product name (品目名).
-- ingredient_name: The ingredient name (成分名).
-- unit_requirement: The unit requirement (単位必要量).
-- total_quantity: The total quantity (合計数量).
-- supplier: The supplier/destination (手配先).
-- order_content: The arrangement details/content (手配内容).
-- lot_no: The lot number (ロットNo.).
-- due_date: The due date/delivery deadline (手配納期).
-- order_qty: The ordered quantity (発注手配数).
-- control_no: The production/control number (製番).
-- completion_status: The completion/warehousing flag (完成入庫).
-- completion_date: The completion date (完成日).
+Identify the document type and map ONLY the relevant table's fields:
+
+1. For Manufacturing Instructions (製造指図書):
+   Fields:
+   - order_no: The order number (手配No.).
+   - issue_date: The date of order (発行日).
+   - item_name: The item/product name (品目名).
+   - ingredient_name: The ingredient name (成分名).
+   - unit_requirement: The unit requirement (単位必要量 / 原単位).
+   - total_quantity: The total quantity (合計数量 / 分量).
+   - supplier: The supplier (手配先).
+   - order_content: The arrangement details (手配内容).
+   - lot_no: The lot number (ロットNo.).
+   - due_date: The due date (手配納期).
+   - order_qty: The ordered quantity (発注手配数).
+   - control_no: The production number (製番).
+   - completion_status: The completion flag (完成入庫).
+   - completion_date: The completion date (完成日).
+
+2. For Sales Performance (売上実績表 / 月別売上実績表):
+   Fields:
+   - month: The month (月 / 4月 / 5月...).
+   - category: The category (区分 / 売上額 / 粗利益).
+   - last_year_actual: Last year actual (前年実績).
+   - last_year_total: Last year total (前年累計 / 前年度累計).
+   - achievement_rate: Achievement rate (達成%).
+   - target: Target (実績目標).
+   - this_year_actual: This year actual (本年実績).
+   - this_year_total: This year total (本年累計 / 本年度累計).
+
+3. For Construction Cost Detail (工事費用明細書 / 募集工事費用明細書):
+   Fields:
+   - code: The code (コード).
+   - company_name: The company name (会社名).
+   - prev_month_balance: Previous month balance (前月繰越額).
+   - this_month_billed: This month billed (当月請求額).
+   - this_month_received: This month received (当月入金額).
+   - this_month_adjusted: This month adjusted (当月調整額).
+   - this_month_paid_construction: Construction payment (当月支払額 工事費合計).
+   - this_month_paid_management: Management payment (当月支払額 管理費合計).
+   - this_month_balance: Current balance (当月残高).
+   - next_month_balance: Next month balance (翌月繰越額).
+
+4. For Rent / Business Transaction Details (業務発生明細サンプルリスト / 賃貸):
+   Fields:
+   - no: The serial number (ＮＯ / NO).
+   - property_name: The property name (物件名).
+   - building_no: The building number (棟番号).
+   - room_no: The room number (部屋番号).
+   - contract_type: The contract type (契約種別).
+   - start_date: The start date (契約開始日).
+   - end_date: The end date (契約終了日).
+   - rent: The rent (賃料).
+   - common_fee: The common fee (共益費).
+   - parking_fee: The parking fee (駐車場代).
+   - other_fee: Other fee (その他).
+   - total: The total (合計).
+   - amount_received: Amount received (入金額).
+   - difference: The difference (差額).
+   - cumulative_received: Cumulative received (累計入金).
+   - cumulative_difference: Cumulative difference (累計差額).
+   - management_fee: The management fee (管理費).
+   - repair_fee: The repair fee (修繕費).
+   - remarks: Remarks (備考).
 
 For any field, if it appears as a single field, map it to its 0-based cell coordinates: {"r": <row>, "c": <col>}.
 If it appears as a table column, map it to its 0-based column index "c" AND a list of 0-based row indices "rows" where repeating data lines reside: {"c": <col>, "rows": [<row1>, <row2>, ...]}.
 
 Output format:
-{"order_no": {"r": <row>, "c": <col>}, "issue_date": {"r": <row>, "c": <col>}, "item_name": {"r": <row>, "c": <col>}, "ingredient_name": {"c": <col>, "rows": [<row1>, <row2>, ...]}, "unit_requirement": {"c": <col>, "rows": [<row1>, <row2>, ...]}, "total_quantity": {"c": <col>, "rows": [<row1>, <row2>, ...]}, "supplier": {"r": <row>, "c": <col>}, "order_content": {"r": <row>, "c": <col>}, "lot_no": {"r": <row>, "c": <col>}, "due_date": {"r": <row>, "c": <col>}, "order_qty": {"r": <row>, "c": <col>}, "control_no": {"r": <row>, "c": <col>}, "completion_status": {"r": <row>, "c": <col>}, "completion_date": {"r": <row>, "c": <col>}}
+{"field_name_1": {"r": <row>, "c": <col>}, "field_name_2": {"c": <col>, "rows": [<row1>, <row2>, ...]}}
 """
 
 MAX_IMAGE_PX = 2800

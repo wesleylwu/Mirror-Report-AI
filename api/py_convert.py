@@ -65,43 +65,45 @@ def convert():
             return jsonify({"error": "DATABASE_URL missing"}), 500
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
-        cur.execute("SELECT order_no, issue_date, item_name, ingredient_name, unit_requirement, total_quantity, supplier, order_content, lot_no, due_date, order_qty, control_no, completion_status, completion_date FROM internal_mfg_orders")
+
+        sheet_name = template_schema.get("sheet_name", "")
+        if "売上" in sheet_name or "実績" in sheet_name:
+            query = "SELECT month, category, last_year_actual, last_year_total, achievement_rate, target, this_year_actual, this_year_total FROM sales_performance"
+        elif ("工事" in sheet_name or "費用" in sheet_name or "明細" in sheet_name) and not "業務" in sheet_name:
+            query = "SELECT code, company_name, prev_month_balance, this_month_billed, this_month_received, this_month_adjusted, this_month_paid_construction, this_month_paid_management, this_month_balance, next_month_balance FROM construction_costs"
+        elif "業務" in sheet_name or "賃料" in sheet_name or "物件" in sheet_name:
+            query = "SELECT no, property_name, building_no, room_no, contract_type, start_date, end_date, rent, common_fee, parking_fee, other_fee, total, amount_received, difference, cumulative_received, cumulative_difference, management_fee, repair_fee, remarks FROM rent_details"
+        else:
+            query = "SELECT order_no, issue_date, item_name, ingredient_name, unit_requirement, total_quantity, supplier, order_content, lot_no, due_date, order_qty, control_no, completion_status, completion_date FROM internal_mfg_orders"
+
+        cur.execute(query)
         db_rows = cur.fetchall()
+        colnames = [desc[0] for desc in cur.description]
 
         rows_dict = []
         for r in db_rows:
-            rows_dict.append({
-                "order_no": str(r[0]),
-                "issue_date": str(r[1]),
-                "item_name": str(r[2]),
-                "ingredient_name": str(r[3]),
-                "unit_requirement": float(r[4]) if r[4] is not None else 0.0,
-                "total_quantity": float(r[5]) if r[5] is not None else 0.0,
-                "supplier": str(r[6]) if r[6] is not None else "",
-                "order_content": str(r[7]) if r[7] is not None else "",
-                "lot_no": str(r[8]) if r[8] is not None else "",
-                "due_date": str(r[9]) if r[9] is not None else "",
-                "order_qty": float(r[10]) if r[10] is not None else 0.0,
-                "control_no": str(r[11]) if r[11] is not None else "",
-                "completion_status": str(r[12]) if r[12] is not None else "",
-                "completion_date": str(r[13]) if r[13] is not None else ""
-            })
+            row_map = {}
+            for col_idx, col_name in enumerate(colnames):
+                val = r[col_idx]
+                if isinstance(val, (int, float)) or (val is not None and type(val).__name__ == 'Decimal'):
+                    row_map[col_name] = float(val)
+                elif hasattr(val, 'strftime'):
+                    row_map[col_name] = val.strftime('%Y-%m-%d')
+                else:
+                    row_map[col_name] = str(val) if val is not None else ""
+            rows_dict.append(row_map)
 
         extracted_data = []
         if rows_dict:
             first_row = rows_dict[0]
-            fields = [
-                "order_no", "issue_date", "item_name", "ingredient_name", "unit_requirement", "total_quantity",
-                "supplier", "order_content", "lot_no", "due_date", "order_qty", "control_no", "completion_status", "completion_date"
-            ]
-            for field in fields:
+            for field in colnames:
                 coord = mapping.get(field)
                 if coord and isinstance(coord, dict):
                     r_val = coord.get("r")
                     c_val = coord.get("c")
                     row_list = coord.get("rows")
                     if r_val is not None and c_val is not None:
-                        extracted_data.append({"r": int(r_val), "c": int(c_val), "v": first_row[field]})
+                        extracted_data.append({"r": int(r_val), "c": int(c_val), "v": str(first_row[field])})
                     elif c_val is not None and isinstance(row_list, list):
                         for idx, row_data in enumerate(rows_dict):
                             if idx < len(row_list):
