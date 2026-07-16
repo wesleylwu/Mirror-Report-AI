@@ -59,20 +59,36 @@ Rules:
 colspan/rowspan for merges, border:1px solid #000 for borders, background:#RRGGBB for shading.
 <col style="width:Npx"> for widths, <tr style="height:Npx"> for heights. Pre-printed labels only.
 
----DATA---
-JSON array — filled-in values only (handwritten, typed, stamped — NOT pre-printed labels).
-Coordinates MUST match the TEMPLATE exactly:
-- "r" = 0-based index of the row in the TEMPLATE rows array (after expanding any repeat rows). Row 0 is the very first row in the rows array.
-- "c" = the exact "c" value of the cell in that template row where the value belongs (the blank cell, not the label cell).
-[{"r":<row>,"c":<col>,"v":"<value>"},...]
-Omit empty cells. Output at most 30 rows — if document has more, output first 30 only."""
+---MAPPING---
+JSON object mapping our internal DB schema fields to the corresponding coordinates in the TEMPLATE.
+We want to map our internal_mfg_orders table:
+- order_no: The order/arrangement number (手配No.).
+- issue_date: The date of order (発行日).
+- item_name: The item/product name (品目名).
+- ingredient_name: The ingredient name (成分名).
+- unit_requirement: The unit requirement (単位必要量).
+- total_quantity: The total quantity (合計数量).
+- supplier: The supplier/destination (手配先).
+- order_content: The arrangement details/content (手配内容).
+- lot_no: The lot number (ロットNo.).
+- due_date: The due date/delivery deadline (手配納期).
+- order_qty: The ordered quantity (発注手配数).
+- control_no: The production/control number (製番).
+- completion_status: The completion/warehousing flag (完成入庫).
+- completion_date: The completion date (完成日).
+
+For any field, if it appears as a single field, map it to its 0-based cell coordinates: {"r": <row>, "c": <col>}.
+If it appears as a table column, map it to its 0-based column index "c" AND a list of 0-based row indices "rows" where repeating data lines reside: {"c": <col>, "rows": [<row1>, <row2>, ...]}.
+
+Output format:
+{"order_no": {"r": <row>, "c": <col>}, "issue_date": {"r": <row>, "c": <col>}, "item_name": {"r": <row>, "c": <col>}, "ingredient_name": {"c": <col>, "rows": [<row1>, <row2>, ...]}, "unit_requirement": {"c": <col>, "rows": [<row1>, <row2>, ...]}, "total_quantity": {"c": <col>, "rows": [<row1>, <row2>, ...]}, "supplier": {"r": <row>, "c": <col>}, "order_content": {"r": <row>, "c": <col>}, "lot_no": {"r": <row>, "c": <col>}, "due_date": {"r": <row>, "c": <col>}, "order_qty": {"r": <row>, "c": <col>}, "control_no": {"r": <row>, "c": <col>}, "completion_status": {"r": <row>, "c": <col>}, "completion_date": {"r": <row>, "c": <col>}}
+"""
 
 MAX_IMAGE_PX = 2800
 
 
 def _try_json(s: str):
     s = s.strip()
-    # Fix common model error: "key">value  →  "key":value
     s = re.sub(r'"(\w+)">', r'"\1":', s)
     try:
         return json.loads(s)
@@ -89,18 +105,16 @@ def _try_json(s: str):
 
 
 def _parse_sections(raw: str) -> dict:
-    """Split ---TEMPLATE--- / ---HTML--- / ---DATA--- sections from a combined response."""
-    # Use the LAST occurrence of each marker — model sometimes self-restarts mid-output
     def _last(pattern):
         matches = list(re.finditer(pattern, raw))
         return matches[-1] if matches else None
 
     m_tmpl = _last(r'---TEMPLATE---\s*')
     m_html = _last(r'---HTML---\s*')
-    m_data = _last(r'---DATA---\s*')
+    m_data = _last(r'---MAPPING---\s*')
 
     markers = sorted(
-        [(m, name) for m, name in [(m_tmpl, 'template'), (m_html, 'html'), (m_data, 'data')] if m],
+        [(m, name) for m, name in [(m_tmpl, 'template'), (m_html, 'html'), (m_data, 'mapping')] if m],
         key=lambda x: x[0].start(),
     )
 
@@ -111,24 +125,19 @@ def _parse_sections(raw: str) -> dict:
 
     template_text = sections.get('template', '')
     html = sections.get('html', '')
-    data_text = sections.get('data', '')
+    data_text = sections.get('mapping', '')
 
-    # Fallback: if no ---TEMPLATE--- marker but raw starts with '{', treat whole
-    # pre-HTML block as the template (model forgot the marker)
     if not template_text and not sections:
         html_start = m_html.start() if m_html else len(raw)
         candidate = re.sub(r'```[a-z]*\n?|```', '', raw[:html_start]).strip()
-        # strip any leading prose line (e.g. "JSON object describing...")
         first_brace = candidate.find('{')
         if first_brace != -1:
             template_text = candidate[first_brace:]
 
     template = _try_json(template_text) if template_text else None
-    data = _try_json(data_text) if data_text else []
-    if not isinstance(data, list):
-        data = []
+    data = _try_json(data_text) if data_text else {}
 
-    return {"template": template, "html": html, "data": data}
+    return {"template": template, "html": html, "mapping": data}
 
 
 MAX_CONTINUATIONS = 2  # max extra turns after the first; 3 total turns max

@@ -40,6 +40,26 @@ async function runPython(cwd: string, args: string[]): Promise<void> {
   });
 }
 
+async function getHtmlFromPython(jsonPath: string): Promise<string> {
+  const pythonCmd = await getPythonCommand();
+  return new Promise((resolve, reject) => {
+    const proc = spawn(pythonCmd, [
+      "-c",
+      "import sys, json; sys.path.append('pipeline'); from HTMLgen import get_html_content; data=json.load(open(sys.argv[1], encoding='utf-8')); print(get_html_content(data['pages'][0]))",
+      jsonPath,
+    ]);
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+    proc.stdout.on("data", (d: Buffer) => stdout.push(d.toString()));
+    proc.stderr.on("data", (d: Buffer) => stderr.push(d.toString()));
+    proc.on("close", (code: number) => {
+      if (code === 0) resolve(stdout.join(""));
+      else
+        reject(new Error(stderr.join("") || `Python exited with code ${code}`));
+    });
+  });
+}
+
 export async function POST(req: NextRequest) {
   const contentType = req.headers.get("content-type") || "";
 
@@ -106,9 +126,9 @@ export async function POST(req: NextRequest) {
     ]);
 
     const jsonContent = await readFile(jsonPath, "utf-8");
-    const extractedData = JSON.parse(jsonContent);
+    const parsedData = JSON.parse(jsonContent);
 
-    const pagesList = extractedData.pages || [];
+    const pagesList = parsedData.pages || [];
     const pageData = pagesList[0];
     if (!pageData) {
       return NextResponse.json(
@@ -121,12 +141,91 @@ export async function POST(req: NextRequest) {
       connectionString: process.env.DATABASE_URL,
     });
     await client.connect();
+
+    const mfgRes = await client.query(
+      "SELECT order_no, issue_date, item_name, ingredient_name, unit_requirement, total_quantity, supplier, order_content, lot_no, due_date, order_qty, control_no, completion_status, completion_date FROM internal_mfg_orders",
+    );
+    const dbRows = mfgRes.rows;
+
+    const mapping = pageData.mapping || {};
+    const extractedData: any[] = [];
+
+    if (dbRows.length > 0) {
+      const firstRow = dbRows[0];
+      const formatDate = (val: any) => {
+        if (val instanceof Date) {
+          return val.toISOString().split("T")[0];
+        }
+        return String(val);
+      };
+
+      const fields = [
+        "order_no",
+        "issue_date",
+        "item_name",
+        "ingredient_name",
+        "unit_requirement",
+        "total_quantity",
+        "supplier",
+        "order_content",
+        "lot_no",
+        "due_date",
+        "order_qty",
+        "control_no",
+        "completion_status",
+        "completion_date",
+      ];
+
+      for (const field of fields) {
+        const coord = mapping[field];
+        if (coord && typeof coord === "object") {
+          const r = coord.r;
+          const c = coord.c;
+          const rows = coord.rows;
+          if (r !== undefined && c !== undefined) {
+            let val = firstRow[field];
+            if (
+              field === "issue_date" ||
+              field === "due_date" ||
+              field === "completion_date"
+            ) {
+              val = formatDate(val);
+            }
+            extractedData.push({ r: Number(r), c: Number(c), v: String(val) });
+          } else if (c !== undefined && Array.isArray(rows)) {
+            for (let idx = 0; idx < dbRows.length; idx++) {
+              if (idx < rows.length) {
+                let val = dbRows[idx][field];
+                if (
+                  field === "issue_date" ||
+                  field === "due_date" ||
+                  field === "completion_date"
+                ) {
+                  val = formatDate(val);
+                }
+                extractedData.push({
+                  r: Number(rows[idx]),
+                  c: Number(c),
+                  v: String(val),
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    pageData.data = extractedData;
+    await writeFile(jsonPath, JSON.stringify(parsedData), "utf-8");
+
+    const html = await getHtmlFromPython(jsonPath);
+
     const dbRes = await client.query(
       "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) VALUES ($1, $2, $3, $4) RETURNING id",
       [
         pageData.filename || "document",
         JSON.stringify(pageData.template || {}),
-        JSON.stringify(pageData.data || []),
+        JSON.stringify(extractedData),
         pageData.code || "",
       ],
     );
@@ -137,7 +236,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         id: docId,
-        html: pageData.html,
+        html: html,
       },
       { status: 200 },
     );
