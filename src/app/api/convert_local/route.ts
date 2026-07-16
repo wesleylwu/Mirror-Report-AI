@@ -147,16 +147,22 @@ export async function POST(req: NextRequest) {
     );
     const dbRows = mfgRes.rows;
 
+    interface CellData {
+      r: number;
+      c: number;
+      v: string;
+    }
+
     const mapping = pageData.mapping || {};
-    const extractedData: any[] = [];
+    const extractedData: CellData[] = [];
 
     if (dbRows.length > 0) {
       const firstRow = dbRows[0];
-      const formatDate = (val: any) => {
+      const formatDate = (val: unknown) => {
         if (val instanceof Date) {
           return val.toISOString().split("T")[0];
         }
-        return String(val);
+        return val !== null && val !== undefined ? String(val) : "";
       };
 
       const fields = [
