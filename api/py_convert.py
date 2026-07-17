@@ -129,7 +129,7 @@ def convert():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    html = get_html_content({"template": template_schema, "data": extracted_data})
+    html = get_html_content({"template": template_schema, "data": extracted_data, "html": page_data.get("html")})
 
     return jsonify({
         "id": str(doc_id),
