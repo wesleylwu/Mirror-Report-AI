@@ -163,6 +163,13 @@ export async function POST(req: NextRequest) {
     ) {
       query =
         "SELECT no, property_name, building_no, room_no, contract_type, start_date, end_date, rent, common_fee, parking_fee, other_fee, total, amount_received, difference, cumulative_received, cumulative_difference, management_fee, repair_fee, remarks FROM rent_details";
+    } else if (
+      sheetName.includes("取引") ||
+      sheetName.includes("伝票") ||
+      sheetName.includes("一覧")
+    ) {
+      query =
+        "SELECT transaction_date, slip_no, item_code, item_name, packaging, quantity, unit_price, amount FROM transaction_data_list";
     } else {
       query =
         "SELECT order_no, issue_date, item_name, ingredient_name, unit_requirement, total_quantity, supplier, order_content, lot_no, due_date, order_qty, control_no, completion_status, completion_date FROM internal_mfg_orders";

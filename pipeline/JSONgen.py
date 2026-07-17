@@ -126,6 +126,17 @@ Identify the document type and map ONLY the relevant table's fields:
    - repair_fee: The repair fee (修繕費).
    - remarks: Remarks (備考).
 
+5. For Transaction Data List (取引データ一覧表 / 伝票):
+   Fields:
+   - transaction_date: Transaction date (取引日).
+   - slip_no: Slip number (伝票番号).
+   - item_code: Item code (品目ｺｰﾄﾞ / 品目コード).
+   - item_name: Item name (品目名).
+   - packaging: Packaging / case size (荷姿).
+   - quantity: Sales quantity (売上数量).
+   - unit_price: Sales unit price (売上単価).
+   - amount: Sales amount (売上金額).
+
 For any field, if it appears as a single field, map it to its 0-based cell coordinates: {"r": <row>, "c": <col>}.
 If it appears as a table column, map it to its 0-based column index "c" AND a list of 0-based row indices "rows" where repeating data lines reside: {"c": <col>, "rows": [<row1>, <row2>, ...]}.
 

@@ -73,6 +73,8 @@ def convert():
             query = "SELECT code, company_name, prev_month_balance, this_month_billed, this_month_received, this_month_adjusted, this_month_paid_construction, this_month_paid_management, this_month_balance, next_month_balance FROM construction_costs"
         elif "業務" in sheet_name or "賃料" in sheet_name or "物件" in sheet_name:
             query = "SELECT no, property_name, building_no, room_no, contract_type, start_date, end_date, rent, common_fee, parking_fee, other_fee, total, amount_received, difference, cumulative_received, cumulative_difference, management_fee, repair_fee, remarks FROM rent_details"
+        elif "取引" in sheet_name or "伝票" in sheet_name or "一覧" in sheet_name:
+            query = "SELECT transaction_date, slip_no, item_code, item_name, packaging, quantity, unit_price, amount FROM transaction_data_list"
         else:
             query = "SELECT order_no, issue_date, item_name, ingredient_name, unit_requirement, total_quantity, supplier, order_content, lot_no, due_date, order_qty, control_no, completion_status, completion_date FROM internal_mfg_orders"
 
