@@ -2,7 +2,7 @@ import json
 import sys
 import os
 from flask import Flask, request, jsonify
-import psycopg2
+import pymssql
 
 app = Flask(__name__)
 
@@ -17,12 +17,14 @@ def save_edits():
     if data is None:
         return jsonify({"error": "Missing data"}), 400
 
-    db_url = os.environ.get("DATABASE_URL")
-    if not db_url:
-        return jsonify({"error": "DATABASE_URL environment variable is missing"}), 500
-
     try:
-        conn = psycopg2.connect(db_url)
+        conn = pymssql.connect(
+            server=os.environ.get("DB_HOST"),
+            port=int(os.environ.get("DB_PORT", 51399)),
+            user=os.environ.get("DB_USER"),
+            password=os.environ.get("DB_PASSWORD"),
+            database=os.environ.get("DB_NAME")
+        )
         cur = conn.cursor()
         cur.execute(
             "UPDATE parsed_documents SET extracted_data = %s WHERE id = %s",

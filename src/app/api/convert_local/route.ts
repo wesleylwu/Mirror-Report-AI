@@ -3,7 +3,19 @@ import { spawn } from "child_process";
 import { writeFile, readFile, unlink, stat } from "fs/promises";
 import path from "path";
 import os from "os";
-import { Client } from "pg";
+import sql from "mssql";
+
+const config: sql.config = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_HOST || "",
+  port: parseInt(process.env.DB_PORT || "51399"),
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: false,
+    trustServerCertificate: true,
+  },
+};
 
 export const maxDuration = 120;
 
@@ -137,10 +149,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const client = new Client({
-      connectionString: process.env.DATABASE_URL,
-    });
-    await client.connect();
+    const pool = await sql.connect(config);
 
     let query = "";
     const sheetName = pageData.template?.sheet_name || "";
@@ -175,8 +184,8 @@ export async function POST(req: NextRequest) {
         "SELECT order_no, issue_date, item_code, item_name, process_seq, order_qty, due_date, supplier, order_content, lot_no, control_no, completion_status, completion_date, ingredient_name, unit_requirement, total_quantity, weighed_by, material_lot, checked_by FROM internal_mfg_orders";
     }
 
-    const mfgRes = await client.query(query);
-    const dbRows = mfgRes.rows;
+    const mfgRes = await pool.request().query(query);
+    const dbRows = mfgRes.recordset;
 
     interface CellData {
       r: number;
@@ -234,18 +243,17 @@ export async function POST(req: NextRequest) {
 
     const html = await getHtmlFromPython(jsonPath);
 
-    const dbRes = await client.query(
-      "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) VALUES ($1, $2, $3, $4) RETURNING id",
-      [
-        pageData.filename || "document",
-        JSON.stringify(pageData.template || {}),
-        JSON.stringify(extractedData),
-        pageData.code || "",
-      ],
-    );
-    await client.end();
+    const dbRes = await pool
+      .request()
+      .input("filename", sql.NVarChar(512), pageData.filename || "document")
+      .input("template", sql.NVarChar(sql.MAX), JSON.stringify(pageData.template || {}))
+      .input("extracted", sql.NVarChar(sql.MAX), JSON.stringify(extractedData))
+      .input("code", sql.NVarChar(sql.MAX), pageData.code || "")
+      .query(
+        "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) OUTPUT INSERTED.id VALUES (@filename, @template, @extracted, @code)"
+      );
 
-    const docId = dbRes.rows[0].id;
+    const docId = dbRes.recordset[0].id;
 
     return NextResponse.json(
       {

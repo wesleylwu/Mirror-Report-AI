@@ -3,7 +3,19 @@ import { spawn } from "child_process";
 import { writeFile, readFile, unlink, stat } from "fs/promises";
 import path from "path";
 import os from "os";
-import { Client } from "pg";
+import sql from "mssql";
+
+const config: sql.config = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_HOST || "",
+  port: parseInt(process.env.DB_PORT || "51399"),
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: false,
+    trustServerCertificate: true,
+  },
+};
 
 export const maxDuration = 120;
 
@@ -48,18 +60,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing ID" }, { status: 400 });
     }
 
-    const client = new Client({
-      connectionString: process.env.DATABASE_URL,
-    });
-    await client.connect();
+    const pool = await sql.connect(config);
 
     if (extractedData) {
-      const selectRes = await client.query(
-        "SELECT extracted_data FROM parsed_documents WHERE id = $1",
-        [id],
-      );
-      if (selectRes.rows.length > 0) {
-        const currentData = selectRes.rows[0].extracted_data || [];
+      const selectRes = await pool
+        .request()
+        .input("id", sql.UniqueIdentifier, id)
+        .query("SELECT extracted_data FROM parsed_documents WHERE id = @id");
+      if (selectRes.recordset.length > 0) {
+        let currentData = selectRes.recordset[0].extracted_data || [];
+        if (typeof currentData === "string") {
+          currentData = JSON.parse(currentData);
+        }
         const edits = extractedData.data || [];
         const mergedMap = new Map();
         for (const item of currentData) {
@@ -75,32 +87,35 @@ export async function POST(req: NextRequest) {
           mergedMap.set(`${r}_${c}`, { r, c, v });
         }
         const mergedData = Array.from(mergedMap.values());
-        await client.query(
-          "UPDATE parsed_documents SET extracted_data = $1 WHERE id = $2",
-          [JSON.stringify(mergedData), id],
-        );
+        await pool
+          .request()
+          .input("data", sql.NVarChar(sql.MAX), JSON.stringify(mergedData))
+          .input("id", sql.UniqueIdentifier, id)
+          .query("UPDATE parsed_documents SET extracted_data = @data WHERE id = @id");
       }
     }
 
-    const dbRes = await client.query(
-      "SELECT template_schema, extracted_data, code FROM parsed_documents WHERE id = $1",
-      [id],
-    );
-    await client.end();
+    const dbRes = await pool
+      .request()
+      .input("id", sql.UniqueIdentifier, id)
+      .query("SELECT template_schema, extracted_data, code FROM parsed_documents WHERE id = @id");
 
-    if (dbRes.rows.length === 0) {
+    if (dbRes.recordset.length === 0) {
       return NextResponse.json(
         { error: "Document not found" },
         { status: 404 },
       );
     }
 
-    const row = dbRes.rows[0];
+    const row = dbRes.recordset[0];
+    const templateSchema = typeof row.template_schema === "string" ? JSON.parse(row.template_schema) : row.template_schema;
+    const extractedDataObj = typeof row.extracted_data === "string" ? JSON.parse(row.extracted_data) : row.extracted_data;
+
     const payload = {
       pages: [
         {
-          template: row.template_schema,
-          data: row.extracted_data,
+          template: templateSchema,
+          data: extractedDataObj,
           code: row.code,
         },
       ],

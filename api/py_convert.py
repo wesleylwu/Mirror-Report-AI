@@ -9,7 +9,7 @@ from pathlib import Path
 from flask import Flask, request, jsonify
 from PIL import Image
 import fitz
-import psycopg2
+import pymssql
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -60,10 +60,13 @@ def convert():
     code = page_data.get("code") or ""
 
     try:
-        db_url = os.environ.get("DATABASE_URL")
-        if not db_url:
-            return jsonify({"error": "DATABASE_URL missing"}), 500
-        conn = psycopg2.connect(db_url)
+        conn = pymssql.connect(
+            server=os.environ.get("DB_HOST"),
+            port=int(os.environ.get("DB_PORT", 51399)),
+            user=os.environ.get("DB_USER"),
+            password=os.environ.get("DB_PASSWORD"),
+            database=os.environ.get("DB_NAME")
+        )
         cur = conn.cursor()
 
         sheet_name = template_schema.get("sheet_name", "")
@@ -119,7 +122,7 @@ def convert():
         print(f"[DEBUG py_convert] Extracted data size: {len(extracted_data)}", file=sys.stderr)
 
         cur.execute(
-            "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) VALUES (%s, %s, %s, %s) RETURNING id",
+            "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) OUTPUT INSERTED.id VALUES (%s, %s, %s, %s)",
             (filename, json.dumps(template_schema), json.dumps(extracted_data), code)
         )
         doc_id = cur.fetchone()[0]

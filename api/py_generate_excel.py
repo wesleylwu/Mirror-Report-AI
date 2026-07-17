@@ -6,7 +6,7 @@ import sys
 import os
 from pathlib import Path
 from flask import Flask, request, jsonify
-import psycopg2
+import pymssql
 from openpyxl import Workbook
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -29,13 +29,15 @@ def generate_excel():
     if not doc_id:
         return jsonify({"error": "Missing ID"}), 400
 
-    db_url = os.environ.get("DATABASE_URL")
-    if not db_url:
-        return jsonify({"error": "DATABASE_URL environment variable is missing"}), 500
-
     try:
         print(f"[Excel Gen] Starting for doc_id: {doc_id}", file=sys.stderr)
-        conn = psycopg2.connect(db_url)
+        conn = pymssql.connect(
+            server=os.environ.get("DB_HOST"),
+            port=int(os.environ.get("DB_PORT", 51399)),
+            user=os.environ.get("DB_USER"),
+            password=os.environ.get("DB_PASSWORD"),
+            database=os.environ.get("DB_NAME")
+        )
         cur = conn.cursor()
 
         if extracted_data:

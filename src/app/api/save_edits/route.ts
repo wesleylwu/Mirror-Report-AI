@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
+import sql from "mssql";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.DATABASE_URL?.includes("supabase.co") ||
-    process.env.DATABASE_URL?.includes("pooler.supabase.com")
-      ? { rejectUnauthorized: false }
-      : undefined,
-});
+const config: sql.config = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_HOST || "",
+  port: parseInt(process.env.DB_PORT || "51399"),
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: false,
+    trustServerCertificate: true,
+  },
+};
 
 export async function POST(request: Request) {
   try {
@@ -20,10 +23,13 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    await pool.query(
-      "UPDATE parsed_documents SET extracted_data = $1 WHERE id = $2",
-      [JSON.stringify(data), id],
-    );
+    const pool = await sql.connect(config);
+    await pool
+      .request()
+      .input("data", sql.NVarChar(sql.MAX), JSON.stringify(data))
+      .input("id", sql.UniqueIdentifier, id)
+      .query("UPDATE parsed_documents SET extracted_data = @data WHERE id = @id");
+
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error("Autosave error:", error);
@@ -31,3 +37,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
