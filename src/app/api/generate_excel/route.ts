@@ -47,8 +47,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing ID" }, { status: 400 });
     }
 
+    interface DBDoc {
+      id: string;
+      filename: string;
+      template_schema: unknown;
+      extracted_data: Array<{
+        r?: number;
+        c?: number;
+        row?: number;
+        col?: number;
+        v?: string | number;
+        value?: string | number;
+      }>;
+      code: string;
+    }
+
     const localDbPath = path.join(process.cwd(), "parsed_documents.json");
-    let docs: any = {};
+    let docs: Record<string, DBDoc> = {};
     try {
       const existing = await readFile(localDbPath, "utf-8");
       docs = JSON.parse(existing);
@@ -86,8 +101,14 @@ export async function POST(req: NextRequest) {
       await writeFile(localDbPath, JSON.stringify(docs, null, 2), "utf-8");
     }
 
-    const templateSchema = typeof row.template_schema === "string" ? JSON.parse(row.template_schema) : row.template_schema;
-    const extractedDataObj = typeof row.extracted_data === "string" ? JSON.parse(row.extracted_data) : row.extracted_data;
+    const templateSchema =
+      typeof row.template_schema === "string"
+        ? JSON.parse(row.template_schema)
+        : row.template_schema;
+    const extractedDataObj =
+      typeof row.extracted_data === "string"
+        ? JSON.parse(row.extracted_data)
+        : row.extracted_data;
 
     const payload = {
       pages: [

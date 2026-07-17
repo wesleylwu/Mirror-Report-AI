@@ -157,7 +157,14 @@ export async function POST(req: NextRequest) {
 
     const colsToQuery = Object.keys(fieldsMapping);
     if (colsToQuery.length === 0) {
-      colsToQuery.push("伝票日付", "伝票Ｎｏ", "商品名", "数量", "単価", "金額");
+      colsToQuery.push(
+        "伝票日付",
+        "伝票Ｎｏ",
+        "商品名",
+        "数量",
+        "単価",
+        "金額",
+      );
     }
     const colsStr = colsToQuery.map((c) => `[${c}]`).join(", ");
     const query = `SELECT ${colsStr} FROM ${matchedTable}`;
@@ -220,15 +227,30 @@ export async function POST(req: NextRequest) {
 
     const html = await getHtmlFromPython(jsonPath);
 
+    interface DBDoc {
+      id: string;
+      filename: string;
+      template_schema: unknown;
+      extracted_data: Array<{
+        r?: number;
+        c?: number;
+        row?: number;
+        col?: number;
+        v?: string | number;
+        value?: string | number;
+      }>;
+      code: string;
+    }
+
     // Save to local JSON database instead of writing to SQL Server
     const docId = `mirror_doc_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const localDbPath = path.join(process.cwd(), "parsed_documents.json");
-    let docs: any = {};
+    let docs: Record<string, DBDoc> = {};
     try {
       const existing = await readFile(localDbPath, "utf-8");
       docs = JSON.parse(existing);
     } catch {}
-    
+
     docs[docId] = {
       id: docId,
       filename: pageData.filename || "document",

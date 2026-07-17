@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     const localDbPath = path.join(process.cwd(), "parsed_documents.json");
-    let docs: any = {};
+    let docs: Record<string, { extracted_data: unknown }> = {};
     try {
       const existing = await fs.readFile(localDbPath, "utf-8");
       docs = JSON.parse(existing);
@@ -36,4 +36,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
