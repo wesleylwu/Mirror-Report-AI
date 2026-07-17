@@ -133,6 +133,9 @@ We dynamically scanned the database and found the following tables and columns:
 {schemas_str}
 
 Identify the best matching table and map ONLY the relevant columns to their 0-based coordinates in the TEMPLATE.
+- IMPORTANT: You MUST ONLY map to the EXACT column names listed in the database schema for the matched table. Do NOT hallucinate or use column names from the document if they do not exist in the schema. For example, if the document says "売上金額" but the schema column is "金額" or "amount", you MUST use the schema's exact column name ("金額" or "amount").
+- Do not output any columns that are not present in the matched table's schema.
+
 If a column appears as a single field, map it to its cell coordinates: {{"r": <row>, "c": <col>}}.
 If it appears as a table column, map it to its column index "c" AND a list of row indices "rows" where repeating data lines reside: {{"c": <col>, "rows": [<row1>, <row2>, ...]}}
 
