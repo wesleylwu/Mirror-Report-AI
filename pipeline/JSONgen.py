@@ -27,6 +27,7 @@ import fitz  # PyMuPDF
 from PIL import Image, ImageOps
 
 _STOP = threading.Event()
+import pymssql
 _STOP_FILE = Path(__file__).parent / "STOP"
 
 MODEL_HAIKU   = os.environ.get("MODEL_HAIKU",   "claude-haiku-4-5-20251001")
@@ -34,7 +35,7 @@ MODEL_SONNET  = os.environ.get("MODEL_SONNET",  "claude-sonnet-4-6")
 MODEL_SONNET5 = os.environ.get("MODEL_SONNET5", "claude-sonnet-5")
 MODEL_OPUS    = os.environ.get("MODEL_OPUS",    "claude-opus-4-6")
 MODEL_FABLE   = os.environ.get("MODEL_FABLE",   "claude-fable-5")
-MODEL = MODEL_OPUS  # default; overridden by flags at runtime
+MODEL = MODEL_SONNET  # default; overridden by flags at runtime
 
 def get_db_schemas():
     env_path = Path(__file__).parent.parent / ".env"
