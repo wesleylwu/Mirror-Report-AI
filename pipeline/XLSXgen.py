@@ -25,6 +25,12 @@ _BORDER_NONE = Border()
 _A4_PORTRAIT_COLS  = 100.0
 _A4_LANDSCAPE_COLS = 128.0
 
+# A4 usable row height in Excel points (0.5" margins top+bottom)
+# Portrait:  (297mm - 25.4mm) / 0.353mm/pt ≈ 770 pt
+# Landscape: (210mm - 25.4mm) / 0.353mm/pt ≈ 523 pt
+_A4_PORTRAIT_ROWS  = 770.0
+_A4_LANDSCAPE_ROWS = 523.0
+
 
 def render_sheet(data: dict, ws, filled_data: list | None = None) -> None:
     col_widths  = data.get("col_widths") or []
@@ -150,43 +156,7 @@ def render_sheet(data: dict, ws, filled_data: list | None = None) -> None:
         for cell_spec in (row.get("cells") or []):
             _render_cell_spec(cell_spec, row_idx)
 
-    # Expand columns to fit content so no cell needs to wrap.
-    # CJK chars ≈ 2 units, ASCII ≈ 1 unit. Skip wide-span cells (they spread across columns).
-    num_cols = len(col_widths)
-    half_cols = num_cols // 2
-    for r in range(1, num_rows + 1):
-        for c in range(1, num_cols + 1):
-            cell = ws.cell(row=r, column=c)
-            if not cell.value or isinstance(cell, MergedCell):
-                continue
-            text = str(cell.value)
-            mr_spans = [mr for mr in ws.merged_cells.ranges
-                        if mr.min_row <= r <= mr.max_row
-                        and mr.min_col <= c <= mr.max_col
-                        and (mr.max_col - mr.min_col + 1) > half_cols]
-            if mr_spans:
-                continue
-            # Longest line (handles \n in data cells)
-            longest = max((sum(2.0 if ord(ch) > 127 else 1.0 for ch in line)
-                           for line in text.split("\n")), default=0)
-            needed = longest * 0.75 + 1
-            current = float(ws.column_dimensions[get_column_letter(c)].width or 8.0)
-            if needed > current:
-                ws.column_dimensions[get_column_letter(c)].width = needed
-
-    # Scale all columns proportionally so the sheet fits the page width exactly.
-    target_cols = _A4_LANDSCAPE_COLS if orientation == "landscape" else _A4_PORTRAIT_COLS
-    total_width = sum(
-        float(ws.column_dimensions[get_column_letter(i)].width or 8.0)
-        for i in range(1, num_cols + 1)
-    )
-    if total_width > target_cols:
-        scale = target_cols / total_width
-        for i in range(1, num_cols + 1):
-            ltr = get_column_letter(i)
-            ws.column_dimensions[ltr].width = max(4.0, ws.column_dimensions[ltr].width * scale)
-
-    # Overlay filled data values (DATA section from JSONgen) onto blank template cells.
+    # Overlay filled data values first so they're included in column sizing below.
     # DATA r is 0-based index into the expanded rows array → Excel row = r + 1.
     # DATA c is 0-indexed → Excel col = c + 1 (matches template rendering above).
     for entry in (filled_data or []):
@@ -204,17 +174,66 @@ def render_sheet(data: dict, ws, filled_data: list | None = None) -> None:
             if cell.value:  # never overwrite template labels
                 continue
             cell.value = v
-            if "\n" in str(v):
+        except (ValueError, TypeError):
+            pass
+
+    # Expand columns and rows to fit all content (template labels + data values).
+    # CJK chars ≈ 2 units, ASCII ≈ 1 unit. Skip wide-span cells (spread across many columns).
+    num_cols = len(col_widths)
+    half_cols = num_cols // 2
+    for r in range(1, num_rows + 1):
+        max_lines_in_row = 1
+        for c in range(1, num_cols + 1):
+            cell = ws.cell(row=r, column=c)
+            if not cell.value or isinstance(cell, MergedCell):
+                continue
+            text = str(cell.value)
+            mr_spans = [mr for mr in ws.merged_cells.ranges
+                        if mr.min_row <= r <= mr.max_row
+                        and mr.min_col <= c <= mr.max_col
+                        and (mr.max_col - mr.min_col + 1) > half_cols]
+            if mr_spans:
+                continue
+            lines = text.split("\n")
+            max_lines_in_row = max(max_lines_in_row, len(lines))
+            if len(lines) > 1:
                 cell.alignment = Alignment(
                     horizontal=cell.alignment.horizontal or "left",
                     vertical="top",
                     wrap_text=True,
                 )
-                lines = str(v).count("\n") + 1
-                current_h = ws.row_dimensions[excel_row].height or 15
-                ws.row_dimensions[excel_row].height = max(current_h, lines * 15)
-        except (ValueError, TypeError):
-            pass
+            longest = max(sum(2.0 if ord(ch) > 127 else 1.0 for ch in line)
+                          for line in lines)
+            needed = longest * 0.75 + 1
+            current = float(ws.column_dimensions[get_column_letter(c)].width or 8.0)
+            if needed > current:
+                ws.column_dimensions[get_column_letter(c)].width = needed
+        if max_lines_in_row > 1:
+            current_h = ws.row_dimensions[r].height or 15
+            ws.row_dimensions[r].height = max(current_h, max_lines_in_row * 15)
+
+    # Scale up columns and rows to fill A4 — never scale down (would break content fit).
+    target_cols = _A4_LANDSCAPE_COLS if orientation == "landscape" else _A4_PORTRAIT_COLS
+    target_rows = _A4_LANDSCAPE_ROWS if orientation == "landscape" else _A4_PORTRAIT_ROWS
+
+    total_width = sum(
+        float(ws.column_dimensions[get_column_letter(i)].width or 8.0)
+        for i in range(1, num_cols + 1)
+    )
+    if total_width < target_cols:
+        col_scale = target_cols / total_width
+        for i in range(1, num_cols + 1):
+            ltr = get_column_letter(i)
+            ws.column_dimensions[ltr].width = ws.column_dimensions[ltr].width * col_scale
+
+    total_height = sum(
+        float(ws.row_dimensions[r].height or 15.0)
+        for r in range(1, num_rows + 1)
+    )
+    if total_height < target_rows:
+        row_scale = target_rows / total_height
+        for r in range(1, num_rows + 1):
+            ws.row_dimensions[r].height = (ws.row_dimensions[r].height or 15.0) * row_scale
 
     # Page setup — A4, correct orientation, fit to one page
     ws.page_setup.paperSize   = 9  # A4

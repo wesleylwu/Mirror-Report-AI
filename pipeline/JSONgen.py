@@ -12,6 +12,7 @@ Requires the ANTHROPIC_API_KEY environment variable to be set.
 import base64
 import io
 import json
+import os
 import re
 import sys
 import time
@@ -28,11 +29,11 @@ from PIL import Image, ImageOps
 _STOP = threading.Event()
 _STOP_FILE = Path(__file__).parent / "STOP"
 
-MODEL_HAIKU   = "claude-haiku-4-5-20251001"
-MODEL_SONNET  = "claude-sonnet-4-6"
-MODEL_SONNET5 = "claude-sonnet-5"
-MODEL_OPUS    = "claude-opus-4-6"
-MODEL_FABLE   = "claude-fable-5"
+MODEL_HAIKU   = os.environ.get("MODEL_HAIKU",   "claude-haiku-4-5-20251001")
+MODEL_SONNET  = os.environ.get("MODEL_SONNET",  "claude-sonnet-4-6")
+MODEL_SONNET5 = os.environ.get("MODEL_SONNET5", "claude-sonnet-5")
+MODEL_OPUS    = os.environ.get("MODEL_OPUS",    "claude-opus-4-6")
+MODEL_FABLE   = os.environ.get("MODEL_FABLE",   "claude-fable-5")
 MODEL = MODEL_SONNET  # default; overridden by flags at runtime
 
 PROMPT = """Analyze this document image and output exactly three sections. Begin each section with its marker on its own line exactly as shown. No explanation before the first marker. No markdown fences.
