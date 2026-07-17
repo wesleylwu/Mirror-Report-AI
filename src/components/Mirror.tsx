@@ -96,6 +96,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [xlsxBlob, setXlsxBlob] = useState<Blob | null>(null);
   const [xlsxName, setXlsxName] = useState("");
+  const [dbDocumentId, setDbDocumentId] = useState<string | null>(null);
 
   const [pages, setPages] = useState<PageResult[]>([]);
   const [activePageIndex, setActivePageIndex] = useState(0);
@@ -131,8 +132,26 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
         return next;
       });
       setIsDirty(true);
+
+      if (dbDocumentId) {
+        const url =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+            ? "/api/save_edits"
+            : "/api/py_save_edits";
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: dbDocumentId,
+            data: newData.data || [],
+          }),
+        }).catch((err) => console.error("Autosave failed:", err));
+      }
     },
-    [activePageIndex],
+    [activePageIndex, dbDocumentId],
   );
 
   const handleDownloadExcel = useCallback(async () => {
@@ -152,6 +171,47 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
 
     setIsRegenerating(true);
     try {
+      if (dbDocumentId) {
+        const fetchUrl =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+            ? "/api/generate_excel"
+            : "/api/py_generate_excel";
+        const res = await fetch(fetchUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: dbDocumentId,
+            extractedData: isDirty
+              ? pages[activePageIndex].extractedData
+              : undefined,
+          }),
+        });
+        if (!res.ok) throw new Error("Excel generation failed");
+        const result = await res.json();
+        const binaryString = window.atob(result.xlsx);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        setXlsxBlob(blob);
+        setIsDirty(false);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = xlsxName || "export.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        return;
+      }
+
       const res = await fetch("/api/convert", {
         method: "POST",
         headers: {
@@ -189,7 +249,15 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     } finally {
       setIsRegenerating(false);
     }
-  }, [pages, isRegenerating, xlsxName, isDirty, xlsxBlob]);
+  }, [
+    pages,
+    isRegenerating,
+    xlsxName,
+    isDirty,
+    xlsxBlob,
+    dbDocumentId,
+    activePageIndex,
+  ]);
 
   const handleGenerate = useCallback(async () => {
     if (uploadedFiles.length === 0) return;
@@ -249,6 +317,27 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       }
 
       const result = await res.json();
+      if (result.id) {
+        setDbDocumentId(result.id);
+        const cleanedPages = [
+          {
+            extractedData: {
+              html: result.html,
+            },
+            htmlContent: result.html,
+            filename: processedFiles[0]?.name || "document",
+          },
+        ];
+        setPages(cleanedPages);
+        const name = processedFiles[0]?.name || "export";
+        const lastDot = name.lastIndexOf(".");
+        const baseName = lastDot !== -1 ? name.substring(0, lastDot) : name;
+        setXlsxName(`${baseName}.xlsx`);
+        setXlsxBlob(null);
+        setStatus("done");
+        return;
+      }
+
       const binaryString = window.atob(result.xlsx);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
@@ -301,6 +390,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     setPages([]);
     setActivePageIndex(0);
     setErrorMsg(null);
+    setDbDocumentId(null);
 
     return () => {
       document.title = "Mirror Report AI";

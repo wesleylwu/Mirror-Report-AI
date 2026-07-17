@@ -34,7 +34,7 @@ MODEL_SONNET  = os.environ.get("MODEL_SONNET",  "claude-sonnet-4-6")
 MODEL_SONNET5 = os.environ.get("MODEL_SONNET5", "claude-sonnet-5")
 MODEL_OPUS    = os.environ.get("MODEL_OPUS",    "claude-opus-4-6")
 MODEL_FABLE   = os.environ.get("MODEL_FABLE",   "claude-fable-5")
-MODEL = MODEL_SONNET  # default; overridden by flags at runtime
+MODEL = MODEL_OPUS  # default; overridden by flags at runtime
 
 PROMPT = """Analyze this document image and output exactly three sections. Begin each section with its marker on its own line exactly as shown. No explanation before the first marker. No markdown fences.
 
@@ -60,20 +60,101 @@ Rules:
 colspan/rowspan for merges, border:1px solid #000 for borders, background:#RRGGBB for shading.
 <col style="width:Npx"> for widths, <tr style="height:Npx"> for heights. Pre-printed labels only.
 
----DATA---
-JSON array — filled-in values only (handwritten, typed, stamped — NOT pre-printed labels).
-Coordinates MUST match the TEMPLATE exactly:
-- "r" = 0-based index of the row in the TEMPLATE rows array (after expanding any repeat rows). Row 0 is the very first row in the rows array.
-- "c" = the exact "c" value of the cell in that template row where the value belongs (the blank cell, not the label cell).
-[{"r":<row>,"c":<col>,"v":"<value>"},...]
-Omit empty cells. Output at most 30 rows — if document has more, output first 30 only."""
+---MAPPING---
+JSON object mapping our internal DB schema fields to the corresponding coordinates in the TEMPLATE.
+Identify the document type and map ONLY the relevant table's fields:
+
+1. For Manufacturing Instructions (製造指図書):
+   Fields:
+   - order_no: The order number (手配No.).
+   - issue_date: The date of order (発行日).
+   - item_code: The item/product code (品目CD).
+   - item_name: The item/product name (品目名).
+   - process_seq: The process sequence / routing (工順).
+   - ingredient_name: The ingredient name (成分名).
+   - unit_requirement: The unit requirement (単位必要量 / 原単位).
+   - total_quantity: The total quantity (合計数量 / 分量).
+   - supplier: The supplier (手配先).
+   - order_content: The arrangement details (手配内容).
+   - lot_no: The lot number (ロットNo.).
+   - due_date: The due date (手配納期).
+   - order_qty: The ordered quantity (発注手配数).
+   - control_no: The production number (製番).
+   - completion_status: The completion flag (完成入庫).
+   - completion_date: The completion date (完成日).
+   - weighed_by: The weigher (秤量者).
+   - material_lot: The raw material lot (原料ロット).
+   - checked_by: The checker / supervisor (確認者).
+
+2. For Sales Performance (売上実績表 / 月別売上実績表):
+   Fields:
+   - month: The month (月 / 4月 / 5月...).
+   - category: The category (区分 / 売上額 / 粗利益).
+   - last_year_actual: Last year actual (前年実績).
+   - last_year_total: Last year total (前年累計 / 前年度累計).
+   - achievement_rate: Achievement rate (達成%).
+   - target: Target (実績目標).
+   - this_year_actual: This year actual (本年実績).
+   - this_year_total: This year total (本年累計 / 本年度累計).
+
+3. For Construction Cost Detail (工事費用明細書 / 募集工事費用明細書):
+   Fields:
+   - code: The code (コード).
+   - company_name: The company name (会社名).
+   - prev_month_balance: Previous month balance (前月繰越額).
+   - this_month_billed: This month billed (当月請求額).
+   - this_month_received: This month received (当月入金額).
+   - this_month_adjusted: This month adjusted (当月調整額).
+   - this_month_paid_construction: Construction payment (当月支払額 工事費合計).
+   - this_month_paid_management: Management payment (当月支払額 管理費合計).
+   - this_month_balance: Current balance (当月残高).
+   - next_month_balance: Next month balance (翌月繰越額).
+
+4. For Rent / Business Transaction Details (業務発生明細サンプルリスト / 賃貸):
+   Fields:
+   - no: The serial number (ＮＯ / NO).
+   - property_name: The property name (物件名).
+   - building_no: The building number (棟番号).
+   - room_no: The room number (部屋番号).
+   - contract_type: The contract type (契約種別).
+   - start_date: The start date (契約開始日).
+   - end_date: The end date (契約終了日).
+   - rent: The rent (賃料).
+   - common_fee: The common fee (共益費).
+   - parking_fee: The parking fee (駐車場代).
+   - other_fee: Other fee (その他).
+   - total: The total (合計).
+   - amount_received: Amount received (入金額).
+   - difference: The difference (差額).
+   - cumulative_received: Cumulative received (累計入金).
+   - cumulative_difference: Cumulative difference (累計差額).
+   - management_fee: The management fee (管理費).
+   - repair_fee: The repair fee (修繕費).
+   - remarks: Remarks (備考).
+
+5. For Transaction Data List (取引データ一覧表 / 伝票):
+   Fields:
+   - transaction_date: Transaction date (取引日).
+   - slip_no: Slip number (伝票番号).
+   - item_code: Item code (品目ｺｰﾄﾞ / 品目コード).
+   - item_name: Item name (品目名).
+   - packaging: Packaging / case size (荷姿).
+   - quantity: Sales quantity (売上数量).
+   - unit_price: Sales unit price (売上単価).
+   - amount: Sales amount (売上金額).
+
+For any field, if it appears as a single field, map it to its 0-based cell coordinates: {"r": <row>, "c": <col>}.
+If it appears as a table column, map it to its 0-based column index "c" AND a list of 0-based row indices "rows" where repeating data lines reside: {"c": <col>, "rows": [<row1>, <row2>, ...]}.
+
+Output format:
+{"field_name_1": {"r": <row>, "c": <col>}, "field_name_2": {"c": <col>, "rows": [<row1>, <row2>, ...]}}
+"""
 
 MAX_IMAGE_PX = 2800
 
 
 def _try_json(s: str):
     s = s.strip()
-    # Fix common model error: "key">value  →  "key":value
     s = re.sub(r'"(\w+)">', r'"\1":', s)
     try:
         return json.loads(s)
@@ -90,18 +171,16 @@ def _try_json(s: str):
 
 
 def _parse_sections(raw: str) -> dict:
-    """Split ---TEMPLATE--- / ---HTML--- / ---DATA--- sections from a combined response."""
-    # Use the LAST occurrence of each marker — model sometimes self-restarts mid-output
     def _last(pattern):
         matches = list(re.finditer(pattern, raw))
         return matches[-1] if matches else None
 
     m_tmpl = _last(r'---TEMPLATE---\s*')
     m_html = _last(r'---HTML---\s*')
-    m_data = _last(r'---DATA---\s*')
+    m_data = _last(r'---MAPPING---\s*')
 
     markers = sorted(
-        [(m, name) for m, name in [(m_tmpl, 'template'), (m_html, 'html'), (m_data, 'data')] if m],
+        [(m, name) for m, name in [(m_tmpl, 'template'), (m_html, 'html'), (m_data, 'mapping')] if m],
         key=lambda x: x[0].start(),
     )
 
@@ -112,24 +191,19 @@ def _parse_sections(raw: str) -> dict:
 
     template_text = sections.get('template', '')
     html = sections.get('html', '')
-    data_text = sections.get('data', '')
+    data_text = sections.get('mapping', '')
 
-    # Fallback: if no ---TEMPLATE--- marker but raw starts with '{', treat whole
-    # pre-HTML block as the template (model forgot the marker)
     if not template_text and not sections:
         html_start = m_html.start() if m_html else len(raw)
         candidate = re.sub(r'```[a-z]*\n?|```', '', raw[:html_start]).strip()
-        # strip any leading prose line (e.g. "JSON object describing...")
         first_brace = candidate.find('{')
         if first_brace != -1:
             template_text = candidate[first_brace:]
 
     template = _try_json(template_text) if template_text else None
-    data = _try_json(data_text) if data_text else []
-    if not isinstance(data, list):
-        data = []
+    data = _try_json(data_text) if data_text else {}
 
-    return {"template": template, "html": html, "data": data}
+    return {"template": template, "html": html, "mapping": data}
 
 
 MAX_CONTINUATIONS = 2  # max extra turns after the first; 3 total turns max
@@ -282,7 +356,7 @@ def extract_all(paths: list[str]) -> dict:
                 doc = fitz.open(p)
                 for page_idx in range(len(doc)):
                     page = doc.load_page(page_idx)
-                    pix = page.get_pixmap(dpi=150)
+                    pix = page.get_pixmap(dpi=200)
                     img_data = pix.tobytes("jpeg")
                     img = Image.open(io.BytesIO(img_data))
                     tasks.append((img, f"{orig_name} (page {page_idx + 1})"))

@@ -417,12 +417,6 @@ const DataPreview = ({
           )}
           Excel
         </button>
-        <button
-          onClick={() => window.print()}
-          className="bg-mirror-dark-blue hover:bg-mirror-cyan text-mirror-white flex cursor-pointer items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold shadow-sm transition-colors duration-200"
-        >
-          Print
-        </button>
       </div>
     </div>
   );

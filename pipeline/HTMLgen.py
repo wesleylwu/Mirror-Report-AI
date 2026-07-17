@@ -19,8 +19,8 @@ PX_PER_PT   = 1.33  # approximate px height per point row height
 MIN_COL_PX  = 28.0
 MIN_ROW_PX  = 16.0
 FONT_PX     = 11
-CELL_PAD_H  = 4     # horizontal padding (px) inside a cell
-CELL_PAD_V  = 2     # vertical padding (px) inside a cell
+CELL_PAD_H  = 10
+CELL_PAD_V  = 5
 
 
 def render_html(data: dict) -> str:
@@ -93,6 +93,7 @@ def render_html(data: dict) -> str:
                 "vertical-align: middle",
                 "overflow: hidden",
                 "white-space: nowrap",
+                "text-overflow: ellipsis",
             ]
             if bold:
                 styles.append("font-weight: bold")
@@ -123,9 +124,9 @@ class HTMLPopulator(HTMLParser):
         super().__init__()
         self.data_map = {}
         for item in (data_list or []):
-            r = item.get("r") or item.get("row")
-            c = item.get("c") or item.get("col")
-            v = item.get("v") or item.get("value")
+            r = item.get("r") if item.get("r") is not None else item.get("row")
+            c = item.get("c") if item.get("c") is not None else item.get("col")
+            v = item.get("v") if item.get("v") is not None else item.get("value")
             if r is not None and c is not None and v is not None:
                 self.data_map[(int(r), int(c))] = str(v)
         
@@ -166,13 +167,12 @@ class HTMLPopulator(HTMLParser):
                     except ValueError:
                         pass
             
-            val = self.data_map.get((self.current_row, self.current_col))
+            val = self.data_map.get((self.current_row - 1, self.current_col - 1))
             if val is not None:
                 content_str = _html.escape(val).replace("\n", "<br>")
             else:
                 content_str = "".join(self.td_content)
                 
-            # Add contenteditable, data-row and data-col to attributes for frontend editing
             new_attrs = []
             has_editable = False
             for name, val in self.td_attrs:
@@ -182,8 +182,8 @@ class HTMLPopulator(HTMLParser):
             
             if not has_editable:
                 new_attrs.append(("contenteditable", "true"))
-            new_attrs.append(("data-row", str(self.current_row)))
-            new_attrs.append(("data-col", str(self.current_col)))
+            new_attrs.append(("data-row", str(self.current_row - 1)))
+            new_attrs.append(("data-col", str(self.current_col - 1)))
             
             attr_str = self._render_attrs(new_attrs)
             self.output.append(f"<td{attr_str}>{content_str}</td>")
