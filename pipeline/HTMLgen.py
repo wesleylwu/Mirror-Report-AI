@@ -19,8 +19,8 @@ PX_PER_PT   = 1.33  # approximate px height per point row height
 MIN_COL_PX  = 28.0
 MIN_ROW_PX  = 16.0
 FONT_PX     = 11
-CELL_PAD_H  = 4     # horizontal padding (px) inside a cell
-CELL_PAD_V  = 2     # vertical padding (px) inside a cell
+CELL_PAD_H  = 8
+CELL_PAD_V  = 5
 
 
 def render_html(data: dict) -> str:
