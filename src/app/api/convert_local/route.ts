@@ -151,38 +151,16 @@ export async function POST(req: NextRequest) {
 
     const pool = await sql.connect(config);
 
-    let query = "";
-    const sheetName = pageData.template?.sheet_name || "";
+    const mapping = pageData.mapping || {};
+    const matchedTable = mapping.matched_table || "取引データ";
+    const fieldsMapping = mapping.fields || mapping;
 
-    if (sheetName.includes("売上") || sheetName.includes("実績")) {
-      query =
-        "SELECT month, category, last_year_actual, last_year_total, achievement_rate, target, this_year_actual, this_year_total FROM sales_performance";
-    } else if (
-      (sheetName.includes("工事") ||
-        sheetName.includes("費用") ||
-        sheetName.includes("明細")) &&
-      !sheetName.includes("業務")
-    ) {
-      query =
-        "SELECT code, company_name, prev_month_balance, this_month_billed, this_month_received, this_month_adjusted, this_month_paid_construction, this_month_paid_management, this_month_balance, next_month_balance FROM construction_costs";
-    } else if (
-      sheetName.includes("業務") ||
-      sheetName.includes("賃料") ||
-      sheetName.includes("物件")
-    ) {
-      query =
-        "SELECT no, property_name, building_no, room_no, contract_type, start_date, end_date, rent, common_fee, parking_fee, other_fee, total, amount_received, difference, cumulative_received, cumulative_difference, management_fee, repair_fee, remarks FROM rent_details";
-    } else if (
-      sheetName.includes("取引") ||
-      sheetName.includes("伝票") ||
-      sheetName.includes("一覧")
-    ) {
-      query =
-        "SELECT transaction_date, slip_no, item_code, item_name, packaging, quantity, unit_price, amount FROM transaction_data_list";
-    } else {
-      query =
-        "SELECT order_no, issue_date, item_code, item_name, process_seq, order_qty, due_date, supplier, order_content, lot_no, control_no, completion_status, completion_date, ingredient_name, unit_requirement, total_quantity, weighed_by, material_lot, checked_by FROM internal_mfg_orders";
+    const colsToQuery = Object.keys(fieldsMapping);
+    if (colsToQuery.length === 0) {
+      colsToQuery.push("伝票日付", "伝票Ｎｏ", "商品名", "数量", "単価", "金額");
     }
+    const colsStr = colsToQuery.map((c) => `[${c}]`).join(", ");
+    const query = `SELECT ${colsStr} FROM ${matchedTable}`;
 
     const mfgRes = await pool.request().query(query);
     const dbRows = mfgRes.recordset;
@@ -193,7 +171,6 @@ export async function POST(req: NextRequest) {
       v: string;
     }
 
-    const mapping = pageData.mapping || {};
     const extractedData: CellData[] = [];
 
     if (dbRows.length > 0) {
@@ -208,7 +185,7 @@ export async function POST(req: NextRequest) {
       };
 
       for (const field of colnames) {
-        const coord = mapping[field];
+        const coord = fieldsMapping[field];
         if (coord && typeof coord === "object") {
           const r = coord.r;
           const c = coord.c;
@@ -243,17 +220,23 @@ export async function POST(req: NextRequest) {
 
     const html = await getHtmlFromPython(jsonPath);
 
-    const dbRes = await pool
-      .request()
-      .input("filename", sql.NVarChar(512), pageData.filename || "document")
-      .input("template", sql.NVarChar(sql.MAX), JSON.stringify(pageData.template || {}))
-      .input("extracted", sql.NVarChar(sql.MAX), JSON.stringify(extractedData))
-      .input("code", sql.NVarChar(sql.MAX), pageData.code || "")
-      .query(
-        "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) OUTPUT INSERTED.id VALUES (@filename, @template, @extracted, @code)"
-      );
-
-    const docId = dbRes.recordset[0].id;
+    // Save to local JSON database instead of writing to SQL Server
+    const docId = `mirror_doc_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const localDbPath = path.join(process.cwd(), "parsed_documents.json");
+    let docs: any = {};
+    try {
+      const existing = await readFile(localDbPath, "utf-8");
+      docs = JSON.parse(existing);
+    } catch {}
+    
+    docs[docId] = {
+      id: docId,
+      filename: pageData.filename || "document",
+      template_schema: pageData.template || {},
+      extracted_data: extractedData,
+      code: pageData.code || "",
+    };
+    await writeFile(localDbPath, JSON.stringify(docs, null, 2), "utf-8");
 
     return NextResponse.json(
       {

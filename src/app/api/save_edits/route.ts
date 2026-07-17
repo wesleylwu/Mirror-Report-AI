@@ -1,17 +1,6 @@
 import { NextResponse } from "next/server";
-import sql from "mssql";
-
-const config: sql.config = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  server: process.env.DB_HOST || "",
-  port: parseInt(process.env.DB_PORT || "51399"),
-  database: process.env.DB_NAME,
-  options: {
-    encrypt: false,
-    trustServerCertificate: true,
-  },
-};
+import { promises as fs } from "fs";
+import path from "path";
 
 export async function POST(request: Request) {
   try {
@@ -23,14 +12,24 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const pool = await sql.connect(config);
-    await pool
-      .request()
-      .input("data", sql.NVarChar(sql.MAX), JSON.stringify(data))
-      .input("id", sql.UniqueIdentifier, id)
-      .query("UPDATE parsed_documents SET extracted_data = @data WHERE id = @id");
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    const localDbPath = path.join(process.cwd(), "parsed_documents.json");
+    let docs: any = {};
+    try {
+      const existing = await fs.readFile(localDbPath, "utf-8");
+      docs = JSON.parse(existing);
+    } catch {}
+
+    if (docs[id]) {
+      docs[id].extracted_data = data;
+      await fs.writeFile(localDbPath, JSON.stringify(docs, null, 2), "utf-8");
+      return NextResponse.json({ success: true }, { status: 200 });
+    } else {
+      return NextResponse.json(
+        { error: "Document not found locally" },
+        { status: 404 },
+      );
+    }
   } catch (error) {
     console.error("Autosave error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";

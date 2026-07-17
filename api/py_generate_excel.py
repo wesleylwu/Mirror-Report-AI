@@ -6,7 +6,6 @@ import sys
 import os
 from pathlib import Path
 from flask import Flask, request, jsonify
-import pymssql
 from openpyxl import Workbook
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -14,6 +13,21 @@ sys.path.append(str(Path(__file__).parent.parent))
 from pipeline.XLSXgen import render_sheet
 
 app = Flask(__name__)
+
+DB_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "parsed_documents.json")
+
+def read_docs():
+    if not os.path.exists(DB_FILE):
+        return {}
+    try:
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return {}
+
+def write_docs(docs):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(docs, f, ensure_ascii=False, indent=2)
 
 def _sheet_name_from_page(page_data: dict, idx: int) -> str:
     tmpl = page_data.get("template") or {}
@@ -31,54 +45,36 @@ def generate_excel():
 
     try:
         print(f"[Excel Gen] Starting for doc_id: {doc_id}", file=sys.stderr)
-        conn = pymssql.connect(
-            server=os.environ.get("DB_HOST"),
-            port=int(os.environ.get("DB_PORT", 51399)),
-            user=os.environ.get("DB_USER"),
-            password=os.environ.get("DB_PASSWORD"),
-            database=os.environ.get("DB_NAME")
-        )
-        cur = conn.cursor()
-
-        if extracted_data:
-            print("[Excel Gen] Merging client edits...", file=sys.stderr)
-            cur.execute("SELECT extracted_data FROM parsed_documents WHERE id = %s", (doc_id,))
-            row = cur.fetchone()
-            if row:
-                current_data = row[0] or []
-                if isinstance(current_data, str):
-                    current_data = json.loads(current_data)
-                edits = extracted_data.get("data") or []
-                merged_map = {}
-                for item in current_data:
-                    r = item.get("r") if item.get("r") is not None else item.get("row")
-                    c = item.get("c") if item.get("c") is not None else item.get("col")
-                    v = item.get("v") if item.get("v") is not None else item.get("value")
-                    merged_map[f"{r}_{c}"] = {"r": r, "c": c, "v": v}
-                for item in edits:
-                    r = item.get("r") if item.get("r") is not None else item.get("row")
-                    c = item.get("c") if item.get("c") is not None else item.get("col")
-                    v = item.get("v") if item.get("v") is not None else item.get("value")
-                    merged_map[f"{r}_{c}"] = {"r": r, "c": c, "v": v}
-                merged_data = list(merged_map.values())
-                cur.execute(
-                    "UPDATE parsed_documents SET extracted_data = %s WHERE id = %s",
-                    (json.dumps(merged_data), doc_id)
-                )
-                print("[Excel Gen] Client edits merged successfully", file=sys.stderr)
-
-        print("[Excel Gen] Fetching template and data from DB...", file=sys.stderr)
-        cur.execute("SELECT template_schema, extracted_data FROM parsed_documents WHERE id = %s", (doc_id,))
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-
+        docs = read_docs()
+        row = docs.get(str(doc_id))
         if not row:
             print(f"[Excel Gen] Document {doc_id} not found", file=sys.stderr)
             return jsonify({"error": "Document not found"}), 404
 
-        template_schema = row[0]
-        extracted_data = row[1]
+        if extracted_data:
+            print("[Excel Gen] Merging client edits...", file=sys.stderr)
+            current_data = row.get("extracted_data") or []
+            if isinstance(current_data, str):
+                current_data = json.loads(current_data)
+            edits = extracted_data.get("data") or []
+            merged_map = {}
+            for item in current_data:
+                r = item.get("r") if item.get("r") is not None else item.get("row")
+                c = item.get("c") if item.get("c") is not None else item.get("col")
+                v = item.get("v") if item.get("v") is not None else item.get("value")
+                merged_map[f"{r}_{c}"] = {"r": r, "c": c, "v": v}
+            for item in edits:
+                r = item.get("r") if item.get("r") is not None else item.get("row")
+                c = item.get("c") if item.get("c") is not None else item.get("col")
+                v = item.get("v") if item.get("v") is not None else item.get("value")
+                merged_map[f"{r}_{c}"] = {"r": r, "c": c, "v": v}
+            merged_data = list(merged_map.values())
+            row["extracted_data"] = merged_data
+            write_docs(docs)
+            print("[Excel Gen] Client edits merged successfully", file=sys.stderr)
+
+        template_schema = row.get("template_schema")
+        extracted_data = row.get("extracted_data")
 
         if isinstance(template_schema, str):
             template_schema = json.loads(template_schema)
