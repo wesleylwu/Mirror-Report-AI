@@ -34,7 +34,7 @@ MODEL_SONNET  = os.environ.get("MODEL_SONNET",  "claude-sonnet-4-6")
 MODEL_SONNET5 = os.environ.get("MODEL_SONNET5", "claude-sonnet-5")
 MODEL_OPUS    = os.environ.get("MODEL_OPUS",    "claude-opus-4-6")
 MODEL_FABLE   = os.environ.get("MODEL_FABLE",   "claude-fable-5")
-MODEL = MODEL_SONNET5  # default; overridden by flags at runtime
+MODEL = MODEL_OPUS  # default; overridden by flags at runtime
 
 PROMPT = """Analyze this document image and output exactly three sections. Begin each section with its marker on its own line exactly as shown. No explanation before the first marker. No markdown fences.
 
@@ -68,7 +68,9 @@ Identify the document type and map ONLY the relevant table's fields:
    Fields:
    - order_no: The order number (手配No.).
    - issue_date: The date of order (発行日).
+   - item_code: The item/product code (品目CD).
    - item_name: The item/product name (品目名).
+   - process_seq: The process sequence / routing (工順).
    - ingredient_name: The ingredient name (成分名).
    - unit_requirement: The unit requirement (単位必要量 / 原単位).
    - total_quantity: The total quantity (合計数量 / 分量).
@@ -80,6 +82,9 @@ Identify the document type and map ONLY the relevant table's fields:
    - control_no: The production number (製番).
    - completion_status: The completion flag (完成入庫).
    - completion_date: The completion date (完成日).
+   - weighed_by: The weigher (秤量者).
+   - material_lot: The raw material lot (原料ロット).
+   - checked_by: The checker / supervisor (確認者).
 
 2. For Sales Performance (売上実績表 / 月別売上実績表):
    Fields:

@@ -76,7 +76,7 @@ def convert():
         elif "取引" in sheet_name or "伝票" in sheet_name or "一覧" in sheet_name:
             query = "SELECT transaction_date, slip_no, item_code, item_name, packaging, quantity, unit_price, amount FROM transaction_data_list"
         else:
-            query = "SELECT order_no, issue_date, item_name, ingredient_name, unit_requirement, total_quantity, supplier, order_content, lot_no, due_date, order_qty, control_no, completion_status, completion_date FROM internal_mfg_orders"
+            query = "SELECT order_no, issue_date, item_code, item_name, process_seq, order_qty, due_date, supplier, order_content, lot_no, control_no, completion_status, completion_date, ingredient_name, unit_requirement, total_quantity, weighed_by, material_lot, checked_by FROM internal_mfg_orders"
 
         cur.execute(query)
         db_rows = cur.fetchall()
