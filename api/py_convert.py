@@ -67,6 +67,7 @@ def convert():
         cur = conn.cursor()
 
         sheet_name = template_schema.get("sheet_name", "")
+        print(f"[DEBUG py_convert] Detected sheet name: {sheet_name}", file=sys.stderr)
         if "売上" in sheet_name or "実績" in sheet_name:
             query = "SELECT month, category, last_year_actual, last_year_total, achievement_rate, target, this_year_actual, this_year_total FROM sales_performance"
         elif ("工事" in sheet_name or "費用" in sheet_name or "明細" in sheet_name) and not "業務" in sheet_name:
@@ -78,9 +79,11 @@ def convert():
         else:
             query = "SELECT order_no, issue_date, item_code, item_name, process_seq, order_qty, due_date, supplier, order_content, lot_no, control_no, completion_status, completion_date, ingredient_name, unit_requirement, total_quantity, weighed_by, material_lot, checked_by FROM internal_mfg_orders"
 
+        print(f"[DEBUG py_convert] Executing query: {query}", file=sys.stderr)
         cur.execute(query)
         db_rows = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
+        print(f"[DEBUG py_convert] Columns: {colnames}, Rows fetched: {len(db_rows)}", file=sys.stderr)
 
         rows_dict = []
         for r in db_rows:
@@ -94,6 +97,8 @@ def convert():
                 else:
                     row_map[col_name] = str(val) if val is not None else ""
             rows_dict.append(row_map)
+
+        print(f"[DEBUG py_convert] Mapping keys from Claude: {list(mapping.keys())}", file=sys.stderr)
 
         extracted_data = []
         if rows_dict:
@@ -110,6 +115,8 @@ def convert():
                         for idx, row_data in enumerate(rows_dict):
                             if idx < len(row_list):
                                 extracted_data.append({"r": int(row_list[idx]), "c": int(c_val), "v": str(row_data[field])})
+
+        print(f"[DEBUG py_convert] Extracted data size: {len(extracted_data)}", file=sys.stderr)
 
         cur.execute(
             "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) VALUES (%s, %s, %s, %s) RETURNING id",
