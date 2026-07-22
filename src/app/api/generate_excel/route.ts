@@ -3,7 +3,6 @@ import { spawn } from "child_process";
 import { writeFile, readFile, unlink, stat } from "fs/promises";
 import path from "path";
 import os from "os";
-import { Client } from "pg";
 
 export const maxDuration = 120;
 
@@ -48,59 +47,74 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing ID" }, { status: 400 });
     }
 
-    const client = new Client({
-      connectionString: process.env.DATABASE_URL,
-    });
-    await client.connect();
-
-    if (extractedData) {
-      const selectRes = await client.query(
-        "SELECT extracted_data FROM parsed_documents WHERE id = $1",
-        [id],
-      );
-      if (selectRes.rows.length > 0) {
-        const currentData = selectRes.rows[0].extracted_data || [];
-        const edits = extractedData.data || [];
-        const mergedMap = new Map();
-        for (const item of currentData) {
-          const r = item.r !== undefined ? item.r : item.row;
-          const c = item.c !== undefined ? item.c : item.col;
-          const v = item.v !== undefined ? item.v : item.value;
-          mergedMap.set(`${r}_${c}`, { r, c, v });
-        }
-        for (const item of edits) {
-          const r = item.r !== undefined ? item.r : item.row;
-          const c = item.c !== undefined ? item.c : item.col;
-          const v = item.v !== undefined ? item.v : item.value;
-          mergedMap.set(`${r}_${c}`, { r, c, v });
-        }
-        const mergedData = Array.from(mergedMap.values());
-        await client.query(
-          "UPDATE parsed_documents SET extracted_data = $1 WHERE id = $2",
-          [JSON.stringify(mergedData), id],
-        );
-      }
+    interface DBDoc {
+      id: string;
+      filename: string;
+      template_schema: unknown;
+      extracted_data: Array<{
+        r?: number;
+        c?: number;
+        row?: number;
+        col?: number;
+        v?: string | number;
+        value?: string | number;
+      }>;
+      code: string;
     }
 
-    const dbRes = await client.query(
-      "SELECT template_schema, extracted_data, code FROM parsed_documents WHERE id = $1",
-      [id],
-    );
-    await client.end();
+    const localDbPath = path.join(process.cwd(), "parsed_documents.json");
+    let docs: Record<string, DBDoc> = {};
+    try {
+      const existing = await readFile(localDbPath, "utf-8");
+      docs = JSON.parse(existing);
+    } catch {}
 
-    if (dbRes.rows.length === 0) {
+    const row = docs[id];
+    if (!row) {
       return NextResponse.json(
-        { error: "Document not found" },
+        { error: "Document not found locally" },
         { status: 404 },
       );
     }
 
-    const row = dbRes.rows[0];
+    if (extractedData) {
+      let currentData = row.extracted_data || [];
+      if (typeof currentData === "string") {
+        currentData = JSON.parse(currentData);
+      }
+      const edits = extractedData.data || [];
+      const mergedMap = new Map();
+      for (const item of currentData) {
+        const r = item.r !== undefined ? item.r : item.row;
+        const c = item.c !== undefined ? item.c : item.col;
+        const v = item.v !== undefined ? item.v : item.value;
+        mergedMap.set(`${r}_${c}`, { r, c, v });
+      }
+      for (const item of edits) {
+        const r = item.r !== undefined ? item.r : item.row;
+        const c = item.c !== undefined ? item.c : item.col;
+        const v = item.v !== undefined ? item.v : item.value;
+        mergedMap.set(`${r}_${c}`, { r, c, v });
+      }
+      const mergedData = Array.from(mergedMap.values());
+      row.extracted_data = mergedData;
+      await writeFile(localDbPath, JSON.stringify(docs, null, 2), "utf-8");
+    }
+
+    const templateSchema =
+      typeof row.template_schema === "string"
+        ? JSON.parse(row.template_schema)
+        : row.template_schema;
+    const extractedDataObj =
+      typeof row.extracted_data === "string"
+        ? JSON.parse(row.extracted_data)
+        : row.extracted_data;
+
     const payload = {
       pages: [
         {
-          template: row.template_schema,
-          data: row.extracted_data,
+          template: templateSchema,
+          data: extractedDataObj,
           code: row.code,
         },
       ],

@@ -5,7 +5,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Python](https://img.shields.io/badge/Python_3-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![MS SQL Server](https://img.shields.io/badge/MS_SQL_Server-CC292B?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)
 ![OpenPyXL](https://img.shields.io/badge/OpenPyXL-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)
 ![Claude](https://img.shields.io/badge/Claude_API-D97757?style=for-the-badge&logo=anthropic&logoColor=white)
 
@@ -17,7 +17,7 @@ An enterprise document verification dashboard that creates a high-fidelity digit
 
 - **Dual-Pane Verification:** Side-by-side desktop layout comparing physical source images with extracted data.
 - **LLM-Powered OCR:** Uses Claude API to parse images into structured datasets.
-- **Two-Step Database Architecture:** Persists parsed document schemas, cell data coordinates, and layout-generation Python codes to a PostgreSQL database on upload, returning lightweight rendering specs to the browser.
+- **Dynamic Database Schema Discovery:** Discovers database table schemas dynamically from MS SQL Server and maps extracted document data to matching tables.
 - **Interactive Browser Editing:** Directly modify text headers, product tags, data cells, and table rows within the high-fidelity preview pane.
 - **Merged Excel Export:** Modifying cell values in the browser updates database records, triggering the Next.js server to fetch records, merge browser edits, and invoke Python's openpyxl compiler to build spreadsheets.
 - **High-Fidelity UI:** Responsive modular layouts styled entirely with Tailwind CSS that visually mirror the original paper documents.
@@ -30,7 +30,7 @@ An enterprise document verification dashboard that creates a high-fidelity digit
 | :--------------------- | :---------------------------------------- |
 | **Frontend**           | React, Next.js (App Router), Tailwind CSS |
 | **Backend**            | Python, OpenPyXL                          |
-| **Database**           | PostgreSQL (pg / psycopg2-binary)         |
+| **Database**           | MS SQL Server (`pymssql`)                 |
 | **Type Safety**        | TypeScript                                |
 | **AI / OCR Engine**    | Claude API (Anthropic SDK)                |
 | **Document Rendering** | Dynamic CSS Grid, HTML Tables             |
@@ -43,23 +43,12 @@ An enterprise document verification dashboard that creates a high-fidelity digit
 
 - Node.js 20+
 - Python 3.10+
-- A running PostgreSQL database (e.g., Supabase, Neon, or local Postgres)
+- Access to MS SQL Server (e.g., Tokyo office SQL Server)
 - Anthropic API Key (`ANTHROPIC_API_KEY`)
 
 ### Database Setup
 
-Run the following SQL script in your database to initialize the document table:
-
-```sql
-CREATE TABLE parsed_documents (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    filename TEXT NOT NULL,
-    template_schema JSONB NOT NULL,
-    extracted_data JSONB NOT NULL,
-    code TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-```
+The backend connects directly to MS SQL Server and performs dynamic schema discovery via `INFORMATION_SCHEMA.COLUMNS` to auto-detect base tables and map document fields. Ensure your SQL Server instance is reachable with appropriate table permissions.
 
 ### Installation
 
@@ -69,7 +58,11 @@ CREATE TABLE parsed_documents (
 
 ```env
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
-DATABASE_URL=postgresql://username:password@hostname:port/database_name?sslmode=require
+DB_HOST=172.16.0.206
+DB_PORT=51399
+DB_USER=sa
+DB_PASSWORD=your_password_here
+DB_NAME=PW7_47
 ```
 
 3. Install frontend dependencies:

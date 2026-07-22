@@ -27,6 +27,7 @@ import fitz  # PyMuPDF
 from PIL import Image, ImageOps
 
 _STOP = threading.Event()
+import pymssql
 _STOP_FILE = Path(__file__).parent / "STOP"
 
 MODEL_HAIKU   = os.environ.get("MODEL_HAIKU",   "claude-haiku-4-5-20251001")
@@ -36,12 +37,83 @@ MODEL_OPUS    = os.environ.get("MODEL_OPUS",    "claude-opus-4-6")
 MODEL_FABLE   = os.environ.get("MODEL_FABLE",   "claude-fable-5")
 MODEL = MODEL_OPUS  # default; overridden by flags at runtime
 
-PROMPT = """Analyze this document image and output exactly three sections. Begin each section with its marker on its own line exactly as shown. No explanation before the first marker. No markdown fences.
+def get_db_schemas():
+    env_path = Path(__file__).parent.parent / ".env"
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    os.environ[k.strip()] = v.strip()
+
+    host = os.environ.get("DB_HOST")
+    port = os.environ.get("DB_PORT", "51399")
+    user = os.environ.get("DB_USER")
+    password = os.environ.get("DB_PASSWORD")
+    database = os.environ.get("DB_NAME")
+
+    if not all([host, user, password, database]):
+        print("[Schema Discovery] Database config missing in env.", file=sys.stderr)
+        return {}
+
+    try:
+        conn = pymssql.connect(
+            server=host,
+            port=int(port),
+            user=user,
+            password=password,
+            database=database
+        )
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT TABLE_NAME, COLUMN_NAME 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME IN (
+                SELECT TABLE_NAME 
+                FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_TYPE = 'BASE TABLE'
+                AND TABLE_NAME NOT LIKE '%ログ'
+                AND TABLE_NAME NOT LIKE '%ワーク'
+                AND TABLE_NAME NOT LIKE '%履歴'
+                AND TABLE_NAME NOT LIKE '%変換'
+                AND TABLE_NAME NOT LIKE 'WK_%'
+                AND TABLE_NAME NOT LIKE 'TAX%'
+            )
+            ORDER BY TABLE_NAME, ORDINAL_POSITION
+        """)
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        schemas = {}
+        for tname, cname in rows:
+            if tname not in schemas:
+                schemas[tname] = []
+            schemas[tname].append(cname)
+        print(f"[Schema Discovery] Successfully loaded {len(schemas)} table schemas from SQL Server.", file=sys.stderr)
+        return schemas
+    except Exception as e:
+        print(f"[Schema Discovery] Failed to load schemas: {e}", file=sys.stderr)
+        return {}
+
+def format_schemas(schemas):
+    lines = []
+    if not schemas or not isinstance(schemas, dict):
+        return ""
+    for tname, cols in schemas.items():
+        if not cols:
+            continue
+        cols_str = ", ".join(str(c) for c in cols if c is not None)
+        lines.append(f"- Table name: \"{tname}\"\n  Columns: {cols_str}")
+    return "\n\n".join(lines)
+
+BASE_PROMPT = """Analyze this document image and output exactly three sections. Begin each section with its marker on its own line exactly as shown. No explanation before the first marker. No markdown fences.
 
 ---TEMPLATE---
 JSON object describing the blank form structure. Pre-printed labels and structure only — no filled-in values.
 Read every character exactly — ン vs ソ, サ vs セ, 両 vs 吋.
-{"sheet_name":"<name>","orientation":"portrait|landscape","col_widths":[<float>,...],"data_rows":<count of repeating data rows in original>,"rows":[{"h":<height>,"cells":[{"c":<col>,"s":<colspan>,"rs":<rowspan>,"v":"<label>","b":<bold>,"a":"left|center|right","x":<border>,"f":"<RRGGBB>"}]}]}
+{{"sheet_name":"<name>","orientation":"portrait|landscape","col_widths":[<float>,...],"data_rows":<count of repeating data rows in original>,"rows":[{{"h":<height>,"cells":[{{"c":<col>,"s":<colspan>,"rs":<rowspan>,"v":"<label>","b":<bold>,"a":"left|center|right","x":<border>,"f":"<RRGGBB>"}}]}}]}}
 Rules:
 - Before writing anything, count the columns by tracing each vertical line from top to bottom. Write the count in col_widths — one entry per column, no more, no less.
 - col_widths in Excel character units: narrow=4-6, standard=8-12, wide=15-25. Never use pixel values.
@@ -50,7 +122,7 @@ Rules:
 - Count the exact number of repeating data rows visible in the image and set "data_rows" to that count.
 - In "rows": include ALL rows — headers, labels, AND all blank data rows in their correct positions.
 - Blank data rows MUST have "v":"" (empty string) on every cell — NEVER put handwritten, typed, or stamped values in the template. Those go in DATA only.
-- For runs of identical blank data rows (same height, same column pattern, no labels), use the compact form: {"h":<height>,"repeat":<count>,"cells":[...one row's cells...]} instead of repeating each row individually. This saves tokens.
+- For runs of identical blank data rows (same height, same column pattern, no labels), use the compact form: {{"h":<height>,"repeat":<count>,"cells":[...one row's cells...]}} instead of repeating each row individually. This saves tokens.
 - "x": REQUIRED on every cell with any visible border. true/"tlbr" = all sides, "b" = bottom only, "tb" = top+bottom, "lr" = left+right. Omit only for cells with zero visible borders.
 - Every cell inside a ruled table, grid, or bordered box must have "x" set — including full-width title/section rows that span all columns. If the section is enclosed by any outer border at all, set "x": true.
 - "f": hex only for visibly shaded cells, omit for white.
@@ -61,93 +133,29 @@ colspan/rowspan for merges, border:1px solid #000 for borders, background:#RRGGB
 <col style="width:Npx"> for widths, <tr style="height:Npx"> for heights. Pre-printed labels only.
 
 ---MAPPING---
-JSON object mapping our internal DB schema fields to the corresponding coordinates in the TEMPLATE.
-Identify the document type and map ONLY the relevant table's fields:
+Identify which database table matches this document type and map the document cells to the exact database column names of that matched table.
+We dynamically scanned the database and found the following tables and columns:
+{schemas_str}
 
-1. For Manufacturing Instructions (製造指図書):
-   Fields:
-   - order_no: The order number (手配No.).
-   - issue_date: The date of order (発行日).
-   - item_code: The item/product code (品目CD).
-   - item_name: The item/product name (品目名).
-   - process_seq: The process sequence / routing (工順).
-   - ingredient_name: The ingredient name (成分名).
-   - unit_requirement: The unit requirement (単位必要量 / 原単位).
-   - total_quantity: The total quantity (合計数量 / 分量).
-   - supplier: The supplier (手配先).
-   - order_content: The arrangement details (手配内容).
-   - lot_no: The lot number (ロットNo.).
-   - due_date: The due date (手配納期).
-   - order_qty: The ordered quantity (発注手配数).
-   - control_no: The production number (製番).
-   - completion_status: The completion flag (完成入庫).
-   - completion_date: The completion date (完成日).
-   - weighed_by: The weigher (秤量者).
-   - material_lot: The raw material lot (原料ロット).
-   - checked_by: The checker / supervisor (確認者).
+Identify the best matching table and map ONLY the relevant columns to their 0-based coordinates in the TEMPLATE.
+- IMPORTANT: You MUST ONLY map to the EXACT column names listed in the database schema for the matched table. Do NOT hallucinate or use column names from the document if they do not exist in the schema. For example, if the document says "売上金額" but the schema column is "金額" or "amount", you MUST use the schema's exact column name ("金額" or "amount").
+- Functional Semantic Matching: Document field labels often use localized logistics terms, abbreviations, or packaging jargon that differ from database column names. Map document fields to database columns based on their functional business role rather than requiring exact string similarity:
+  • Physical packaging or container style labels (e.g. 荷姿, 包装, 梱包) should be mapped to the closest functional unit/packaging category column available in the database schema (e.g. 単位, 単位名, 単位区分).
+  • Prefix/suffix variations (e.g. 売上数量 vs. 数量, 伝票番号 vs. 伝票No) should map to the core functional attribute in the schema.
+  • Event/transaction dates (e.g. 取引日, 納品日) should map to the corresponding posting/system date column (e.g. 計上日, 処理日).
+- Do not output any columns that are not present in the matched table's schema.
 
-2. For Sales Performance (売上実績表 / 月別売上実績表):
-   Fields:
-   - month: The month (月 / 4月 / 5月...).
-   - category: The category (区分 / 売上額 / 粗利益).
-   - last_year_actual: Last year actual (前年実績).
-   - last_year_total: Last year total (前年累計 / 前年度累計).
-   - achievement_rate: Achievement rate (達成%).
-   - target: Target (実績目標).
-   - this_year_actual: This year actual (本年実績).
-   - this_year_total: This year total (本年累計 / 本年度累計).
+If a column appears as a single field, map it to its cell coordinates: {{"r": <row>, "c": <col>}}.
+If it appears as a table column, map it to its column index "c" AND a list of row indices "rows" where repeating data lines reside: {{"c": <col>, "rows": [<row1>, <row2>, ...]}}
 
-3. For Construction Cost Detail (工事費用明細書 / 募集工事費用明細書):
-   Fields:
-   - code: The code (コード).
-   - company_name: The company name (会社名).
-   - prev_month_balance: Previous month balance (前月繰越額).
-   - this_month_billed: This month billed (当月請求額).
-   - this_month_received: This month received (当月入金額).
-   - this_month_adjusted: This month adjusted (当月調整額).
-   - this_month_paid_construction: Construction payment (当月支払額 工事費合計).
-   - this_month_paid_management: Management payment (当月支払額 管理費合計).
-   - this_month_balance: Current balance (当月残高).
-   - next_month_balance: Next month balance (翌月繰越額).
-
-4. For Rent / Business Transaction Details (業務発生明細サンプルリスト / 賃貸):
-   Fields:
-   - no: The serial number (ＮＯ / NO).
-   - property_name: The property name (物件名).
-   - building_no: The building number (棟番号).
-   - room_no: The room number (部屋番号).
-   - contract_type: The contract type (契約種別).
-   - start_date: The start date (契約開始日).
-   - end_date: The end date (契約終了日).
-   - rent: The rent (賃料).
-   - common_fee: The common fee (共益費).
-   - parking_fee: The parking fee (駐車場代).
-   - other_fee: Other fee (その他).
-   - total: The total (合計).
-   - amount_received: Amount received (入金額).
-   - difference: The difference (差額).
-   - cumulative_received: Cumulative received (累計入金).
-   - cumulative_difference: Cumulative difference (累計差額).
-   - management_fee: The management fee (管理費).
-   - repair_fee: The repair fee (修繕費).
-   - remarks: Remarks (備考).
-
-5. For Transaction Data List (取引データ一覧表 / 伝票):
-   Fields:
-   - transaction_date: Transaction date (取引日).
-   - slip_no: Slip number (伝票番号).
-   - item_code: Item code (品目ｺｰﾄﾞ / 品目コード).
-   - item_name: Item name (品目名).
-   - packaging: Packaging / case size (荷姿).
-   - quantity: Sales quantity (売上数量).
-   - unit_price: Sales unit price (売上単価).
-   - amount: Sales amount (売上金額).
-
-For any field, if it appears as a single field, map it to its 0-based cell coordinates: {"r": <row>, "c": <col>}.
-If it appears as a table column, map it to its 0-based column index "c" AND a list of 0-based row indices "rows" where repeating data lines reside: {"c": <col>, "rows": [<row1>, <row2>, ...]}.
-
-Output format:
-{"field_name_1": {"r": <row>, "c": <col>}, "field_name_2": {"c": <col>, "rows": [<row1>, <row2>, ...]}}
+Output format MUST be a single JSON object with two fields:
+{{
+  "matched_table": "<exact_database_table_name>",
+  "fields": {{
+    "<column_name_1>": {{"r": <row>, "c": <col>}},
+    "<column_name_2>": {{"c": <col>, "rows": [<row1>, <row2>, ...]}}
+  }}
+}}
 """
 
 MAX_IMAGE_PX = 2800
@@ -292,6 +300,10 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
     image_data = base64.standard_b64encode(buf.getvalue()).decode("utf-8")
     print(f"[{debug_name}] Image size: {img.size[0]}×{img.size[1]}px  JPEG: {len(buf.getvalue())//1024}KB", file=sys.stderr)
 
+    schemas = get_db_schemas()
+    schemas_str = format_schemas(schemas)
+    prompt = BASE_PROMPT.format(schemas_str=schemas_str)
+
     client = anthropic.Anthropic()
     messages = [{
         "role": "user",
@@ -301,7 +313,7 @@ def extract_text_from_image(img: Image.Image, debug_name: str = "image") -> dict
                 "source": {"type": "base64", "media_type": "image/jpeg", "data": image_data},
                 "cache_control": {"type": "ephemeral"},
             },
-            {"type": "text", "text": PROMPT, "cache_control": {"type": "ephemeral"}},
+            {"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}},
         ],
     }]
 

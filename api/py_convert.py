@@ -9,7 +9,7 @@ from pathlib import Path
 from flask import Flask, request, jsonify
 from PIL import Image
 import fitz
-import psycopg2
+import pymssql
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -53,81 +53,121 @@ def convert():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    page_data = pages_data[0]
+    page_data = pages_data[0] if pages_data else {}
     filename = page_data.get("filename") or "document"
     template_schema = page_data.get("template") or {}
     mapping = page_data.get("mapping") or {}
     code = page_data.get("code") or ""
+    extracted_data = page_data.get("data") or []
+
+    # Local storage file operations
+    DB_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "parsed_documents.json")
+    
+    def read_docs():
+        if not os.path.exists(DB_FILE):
+            return {}
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                return json.load(f) or {}
+        except Exception:
+            return {}
+
+    def write_docs(docs):
+        try:
+            with open(DB_FILE, "w", encoding="utf-8") as f:
+                json.dump(docs, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[DEBUG py_convert] write_docs failed: {e}", file=sys.stderr)
+
+    import time
+    import random
+    doc_id = f"mirror_doc_{int(time.time())}_{random.randint(1000, 9999)}"
+
+    db_host = os.environ.get("DB_HOST")
+    if db_host:
+        try:
+            conn = pymssql.connect(
+                server=db_host,
+                port=int(os.environ.get("DB_PORT", 51399)),
+                user=os.environ.get("DB_USER"),
+                password=os.environ.get("DB_PASSWORD"),
+                database=os.environ.get("DB_NAME"),
+                login_timeout=3
+            )
+            cur = conn.cursor()
+
+            matched_table = mapping.get("matched_table") if isinstance(mapping, dict) else None
+            raw_fields = mapping.get("fields") if isinstance(mapping, dict) else None
+            if not raw_fields or not isinstance(raw_fields, dict):
+                raw_fields = mapping if isinstance(mapping, dict) else {}
+
+            fields_mapping = {k: v for k, v in raw_fields.items() if k != "matched_table" and isinstance(v, dict)}
+
+            if not matched_table:
+                matched_table = "取引データ"
+
+            cols_to_query = list(fields_mapping.keys())
+            if not cols_to_query:
+                cols_to_query = ["伝票日付", "伝票Ｎｏ", "商品名", "数量", "単価", "金額"]
+            
+            cols_str = ", ".join(f"[{col}]" for col in cols_to_query)
+            query = f"SELECT {cols_str} FROM [{matched_table}]"
+
+            print(f"[DEBUG py_convert] Executing dynamic query: {query}", file=sys.stderr)
+            cur.execute(query)
+            db_rows = cur.fetchall() or []
+            colnames = [desc[0] for desc in cur.description] if cur.description else []
+            print(f"[DEBUG py_convert] Columns: {colnames}, Rows fetched: {len(db_rows)}", file=sys.stderr)
+
+            rows_dict = []
+            for r in db_rows:
+                row_map = {}
+                for col_idx, col_name in enumerate(colnames):
+                    val = r[col_idx]
+                    if isinstance(val, (int, float)) or (val is not None and type(val).__name__ == 'Decimal'):
+                        row_map[col_name] = float(val)
+                    elif hasattr(val, 'strftime'):
+                        row_map[col_name] = val.strftime('%Y-%m-%d')
+                    else:
+                        row_map[col_name] = str(val) if val is not None else ""
+                rows_dict.append(row_map)
+
+            db_extracted_data = []
+            if rows_dict:
+                first_row = rows_dict[0]
+                for field in colnames:
+                    coord = fields_mapping.get(field)
+                    if coord and isinstance(coord, dict):
+                        r_val = coord.get("r")
+                        c_val = coord.get("c")
+                        row_list = coord.get("rows")
+                        if r_val is not None and c_val is not None:
+                            db_extracted_data.append({"r": int(r_val), "c": int(c_val), "v": str(first_row[field])})
+                        elif c_val is not None and isinstance(row_list, list):
+                            for idx, row_data in enumerate(rows_dict):
+                                if idx < len(row_list) and row_list[idx] is not None:
+                                    db_extracted_data.append({"r": int(row_list[idx]), "c": int(c_val), "v": str(row_data[field])})
+
+            if db_extracted_data:
+                extracted_data = db_extracted_data
+
+            cur.close()
+            conn.close()
+        except Exception as e:
+            print(f"[DEBUG py_convert] Database query skipped/failed (falling back to extracted_data): {e}", file=sys.stderr)
 
     try:
-        db_url = os.environ.get("DATABASE_URL")
-        if not db_url:
-            return jsonify({"error": "DATABASE_URL missing"}), 500
-        conn = psycopg2.connect(db_url)
-        cur = conn.cursor()
-
-        sheet_name = template_schema.get("sheet_name", "")
-        print(f"[DEBUG py_convert] Detected sheet name: {sheet_name}", file=sys.stderr)
-        if "売上" in sheet_name or "実績" in sheet_name:
-            query = "SELECT month, category, last_year_actual, last_year_total, achievement_rate, target, this_year_actual, this_year_total FROM sales_performance"
-        elif ("工事" in sheet_name or "費用" in sheet_name or "明細" in sheet_name) and not "業務" in sheet_name:
-            query = "SELECT code, company_name, prev_month_balance, this_month_billed, this_month_received, this_month_adjusted, this_month_paid_construction, this_month_paid_management, this_month_balance, next_month_balance FROM construction_costs"
-        elif "業務" in sheet_name or "賃料" in sheet_name or "物件" in sheet_name:
-            query = "SELECT no, property_name, building_no, room_no, contract_type, start_date, end_date, rent, common_fee, parking_fee, other_fee, total, amount_received, difference, cumulative_received, cumulative_difference, management_fee, repair_fee, remarks FROM rent_details"
-        elif "取引" in sheet_name or "伝票" in sheet_name or "一覧" in sheet_name:
-            query = "SELECT transaction_date, slip_no, item_code, item_name, packaging, quantity, unit_price, amount FROM transaction_data_list"
-        else:
-            query = "SELECT order_no, issue_date, item_code, item_name, process_seq, order_qty, due_date, supplier, order_content, lot_no, control_no, completion_status, completion_date, ingredient_name, unit_requirement, total_quantity, weighed_by, material_lot, checked_by FROM internal_mfg_orders"
-
-        print(f"[DEBUG py_convert] Executing query: {query}", file=sys.stderr)
-        cur.execute(query)
-        db_rows = cur.fetchall()
-        colnames = [desc[0] for desc in cur.description]
-        print(f"[DEBUG py_convert] Columns: {colnames}, Rows fetched: {len(db_rows)}", file=sys.stderr)
-
-        rows_dict = []
-        for r in db_rows:
-            row_map = {}
-            for col_idx, col_name in enumerate(colnames):
-                val = r[col_idx]
-                if isinstance(val, (int, float)) or (val is not None and type(val).__name__ == 'Decimal'):
-                    row_map[col_name] = float(val)
-                elif hasattr(val, 'strftime'):
-                    row_map[col_name] = val.strftime('%Y-%m-%d')
-                else:
-                    row_map[col_name] = str(val) if val is not None else ""
-            rows_dict.append(row_map)
-
-        print(f"[DEBUG py_convert] Mapping keys from Claude: {list(mapping.keys())}", file=sys.stderr)
-
-        extracted_data = []
-        if rows_dict:
-            first_row = rows_dict[0]
-            for field in colnames:
-                coord = mapping.get(field)
-                if coord and isinstance(coord, dict):
-                    r_val = coord.get("r")
-                    c_val = coord.get("c")
-                    row_list = coord.get("rows")
-                    if r_val is not None and c_val is not None:
-                        extracted_data.append({"r": int(r_val), "c": int(c_val), "v": str(first_row[field])})
-                    elif c_val is not None and isinstance(row_list, list):
-                        for idx, row_data in enumerate(rows_dict):
-                            if idx < len(row_list):
-                                extracted_data.append({"r": int(row_list[idx]), "c": int(c_val), "v": str(row_data[field])})
-
-        print(f"[DEBUG py_convert] Extracted data size: {len(extracted_data)}", file=sys.stderr)
-
-        cur.execute(
-            "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) VALUES (%s, %s, %s, %s) RETURNING id",
-            (filename, json.dumps(template_schema), json.dumps(extracted_data), code)
-        )
-        doc_id = cur.fetchone()[0]
-        conn.commit()
-        cur.close()
-        conn.close()
+        docs = read_docs()
+        docs[doc_id] = {
+            "id": doc_id,
+            "filename": filename,
+            "template_schema": template_schema,
+            "extracted_data": extracted_data,
+            "code": code
+        }
+        write_docs(docs)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"[DEBUG py_convert] Saving doc locally skipped/failed: {e}", file=sys.stderr)
 
     html = get_html_content({"template": template_schema, "data": extracted_data, "html": page_data.get("html")})
 

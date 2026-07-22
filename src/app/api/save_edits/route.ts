@@ -1,14 +1,6 @@
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.DATABASE_URL?.includes("supabase.co") ||
-    process.env.DATABASE_URL?.includes("pooler.supabase.com")
-      ? { rejectUnauthorized: false }
-      : undefined,
-});
+import { promises as fs } from "fs";
+import path from "path";
 
 export async function POST(request: Request) {
   try {
@@ -20,11 +12,24 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    await pool.query(
-      "UPDATE parsed_documents SET extracted_data = $1 WHERE id = $2",
-      [JSON.stringify(data), id],
-    );
-    return NextResponse.json({ success: true }, { status: 200 });
+
+    const localDbPath = path.join(process.cwd(), "parsed_documents.json");
+    let docs: Record<string, { extracted_data: unknown }> = {};
+    try {
+      const existing = await fs.readFile(localDbPath, "utf-8");
+      docs = JSON.parse(existing);
+    } catch {}
+
+    if (docs[id]) {
+      docs[id].extracted_data = data;
+      await fs.writeFile(localDbPath, JSON.stringify(docs, null, 2), "utf-8");
+      return NextResponse.json({ success: true }, { status: 200 });
+    } else {
+      return NextResponse.json(
+        { error: "Document not found locally" },
+        { status: 404 },
+      );
+    }
   } catch (error) {
     console.error("Autosave error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";

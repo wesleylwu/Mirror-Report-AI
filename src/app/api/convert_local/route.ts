@@ -3,7 +3,19 @@ import { spawn } from "child_process";
 import { writeFile, readFile, unlink, stat } from "fs/promises";
 import path from "path";
 import os from "os";
-import { Client } from "pg";
+import sql from "mssql";
+
+const config: sql.config = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_HOST || "",
+  port: parseInt(process.env.DB_PORT || "51399"),
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: false,
+    trustServerCertificate: true,
+  },
+};
 
 export const maxDuration = 120;
 
@@ -137,96 +149,102 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const client = new Client({
-      connectionString: process.env.DATABASE_URL,
-    });
-    await client.connect();
-
-    let query = "";
-    const sheetName = pageData.template?.sheet_name || "";
-
-    if (sheetName.includes("売上") || sheetName.includes("実績")) {
-      query =
-        "SELECT month, category, last_year_actual, last_year_total, achievement_rate, target, this_year_actual, this_year_total FROM sales_performance";
-    } else if (
-      (sheetName.includes("工事") ||
-        sheetName.includes("費用") ||
-        sheetName.includes("明細")) &&
-      !sheetName.includes("業務")
-    ) {
-      query =
-        "SELECT code, company_name, prev_month_balance, this_month_billed, this_month_received, this_month_adjusted, this_month_paid_construction, this_month_paid_management, this_month_balance, next_month_balance FROM construction_costs";
-    } else if (
-      sheetName.includes("業務") ||
-      sheetName.includes("賃料") ||
-      sheetName.includes("物件")
-    ) {
-      query =
-        "SELECT no, property_name, building_no, room_no, contract_type, start_date, end_date, rent, common_fee, parking_fee, other_fee, total, amount_received, difference, cumulative_received, cumulative_difference, management_fee, repair_fee, remarks FROM rent_details";
-    } else if (
-      sheetName.includes("取引") ||
-      sheetName.includes("伝票") ||
-      sheetName.includes("一覧")
-    ) {
-      query =
-        "SELECT transaction_date, slip_no, item_code, item_name, packaging, quantity, unit_price, amount FROM transaction_data_list";
-    } else {
-      query =
-        "SELECT order_no, issue_date, item_code, item_name, process_seq, order_qty, due_date, supplier, order_content, lot_no, control_no, completion_status, completion_date, ingredient_name, unit_requirement, total_quantity, weighed_by, material_lot, checked_by FROM internal_mfg_orders";
-    }
-
-    const mfgRes = await client.query(query);
-    const dbRows = mfgRes.rows;
-
     interface CellData {
       r: number;
       c: number;
       v: string;
     }
 
-    const mapping = pageData.mapping || {};
-    const extractedData: CellData[] = [];
+    let extractedData: CellData[] = [];
 
-    if (dbRows.length > 0) {
-      const firstRow = dbRows[0];
-      const colnames = Object.keys(firstRow);
+    try {
+      const pool = await sql.connect(config);
 
-      const formatDate = (val: unknown) => {
-        if (val instanceof Date) {
-          return val.toISOString().split("T")[0];
+      const mapping = pageData.mapping || {};
+      const matchedTable = mapping.matched_table || "取引データ";
+      const rawFieldsMapping =
+        mapping.fields && typeof mapping.fields === "object"
+          ? mapping.fields
+          : mapping;
+
+      const fieldsMapping: Record<
+        string,
+        { r?: number; c?: number; rows?: number[] }
+      > = {};
+      for (const [k, v] of Object.entries(rawFieldsMapping || {})) {
+        if (k !== "matched_table" && v && typeof v === "object") {
+          fieldsMapping[k] = v as { r?: number; c?: number; rows?: number[] };
         }
-        return val !== null && val !== undefined ? String(val) : "";
-      };
+      }
 
-      for (const field of colnames) {
-        const coord = mapping[field];
-        if (coord && typeof coord === "object") {
-          const r = coord.r;
-          const c = coord.c;
-          const rows = coord.rows;
-          if (r !== undefined && c !== undefined) {
-            let val = firstRow[field];
-            if (val instanceof Date) {
-              val = formatDate(val);
-            }
-            extractedData.push({ r: Number(r), c: Number(c), v: String(val) });
-          } else if (c !== undefined && Array.isArray(rows)) {
-            for (let idx = 0; idx < dbRows.length; idx++) {
-              if (idx < rows.length) {
-                let val = dbRows[idx][field];
-                if (val instanceof Date) {
-                  val = formatDate(val);
+      const colsToQuery = Object.keys(fieldsMapping);
+      if (colsToQuery.length === 0) {
+        colsToQuery.push(
+          "伝票日付",
+          "伝票Ｎｏ",
+          "商品名",
+          "数量",
+          "単価",
+          "金額",
+        );
+      }
+      const colsStr = colsToQuery.map((c) => `[${c}]`).join(", ");
+      const query = `SELECT ${colsStr} FROM [${matchedTable}]`;
+
+      const mfgRes = await pool.request().query(query);
+      const dbRows = mfgRes.recordset || [];
+
+      if (dbRows.length > 0) {
+        const firstRow = dbRows[0];
+        const colnames = Object.keys(firstRow);
+
+        const formatDate = (val: unknown) => {
+          if (val instanceof Date) {
+            return val.toISOString().split("T")[0];
+          }
+          return val !== null && val !== undefined ? String(val) : "";
+        };
+
+        for (const field of colnames) {
+          const coord = fieldsMapping[field];
+          if (coord && typeof coord === "object") {
+            const r = coord.r;
+            const c = coord.c;
+            const rows = coord.rows;
+            if (r !== undefined && c !== undefined) {
+              let val = firstRow[field];
+              if (val instanceof Date) {
+                val = formatDate(val);
+              }
+              extractedData.push({
+                r: Number(r),
+                c: Number(c),
+                v: String(val),
+              });
+            } else if (c !== undefined && Array.isArray(rows)) {
+              for (let idx = 0; idx < dbRows.length; idx++) {
+                if (idx < rows.length) {
+                  let val = dbRows[idx][field];
+                  if (val instanceof Date) {
+                    val = formatDate(val);
+                  }
+                  extractedData.push({
+                    r: Number(rows[idx]),
+                    c: Number(c),
+                    v: String(val),
+                  });
                 }
-                extractedData.push({
-                  r: Number(rows[idx]),
-                  c: Number(c),
-                  v: String(val),
-                });
               }
             }
           }
         }
       }
+    } catch (dbErr) {
+      console.warn(
+        "SQL Server query skipped/failed (falling back to extracted data):",
+        dbErr,
+      );
+      extractedData = Array.isArray(pageData.data) ? pageData.data : [];
     }
 
     pageData.data = extractedData;
@@ -234,18 +252,38 @@ export async function POST(req: NextRequest) {
 
     const html = await getHtmlFromPython(jsonPath);
 
-    const dbRes = await client.query(
-      "INSERT INTO parsed_documents (filename, template_schema, extracted_data, code) VALUES ($1, $2, $3, $4) RETURNING id",
-      [
-        pageData.filename || "document",
-        JSON.stringify(pageData.template || {}),
-        JSON.stringify(extractedData),
-        pageData.code || "",
-      ],
-    );
-    await client.end();
+    interface DBDoc {
+      id: string;
+      filename: string;
+      template_schema: unknown;
+      extracted_data: Array<{
+        r?: number;
+        c?: number;
+        row?: number;
+        col?: number;
+        v?: string | number;
+        value?: string | number;
+      }>;
+      code: string;
+    }
 
-    const docId = dbRes.rows[0].id;
+    // Save to local JSON database instead of writing to SQL Server
+    const docId = `mirror_doc_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const localDbPath = path.join(process.cwd(), "parsed_documents.json");
+    let docs: Record<string, DBDoc> = {};
+    try {
+      const existing = await readFile(localDbPath, "utf-8");
+      docs = JSON.parse(existing);
+    } catch {}
+
+    docs[docId] = {
+      id: docId,
+      filename: pageData.filename || "document",
+      template_schema: pageData.template || {},
+      extracted_data: extractedData,
+      code: pageData.code || "",
+    };
+    await writeFile(localDbPath, JSON.stringify(docs, null, 2), "utf-8");
 
     return NextResponse.json(
       {

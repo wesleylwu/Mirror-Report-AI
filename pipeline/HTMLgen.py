@@ -24,6 +24,8 @@ CELL_PAD_V  = 5
 
 
 def render_html(data: dict) -> str:
+    if not data or not isinstance(data, dict):
+        return "<table style=\"border-collapse: collapse;\"></table>"
     col_widths = data.get("col_widths") or []
     rows_raw   = data.get("rows") or []
     num_cols   = int(data.get("num_cols") or len(col_widths) or 1)
@@ -35,7 +37,9 @@ def render_html(data: dict) -> str:
 
     # Build lookup: explicit row number → row dict (supports sparse rows)
     row_by_r: dict[int, dict] = {}
-    for idx, row in enumerate(rows_raw):
+    for idx, row in enumerate(rows_raw or []):
+        if not row or not isinstance(row, dict):
+            continue
         r = row.get("r") or row.get("row") or (idx + 1)
         row_by_r[int(r)] = row
 
@@ -55,7 +59,9 @@ def render_html(data: dict) -> str:
         parts.append(f'<col style="width: {w:.0f}px"/>')
     parts.append("</colgroup>")
 
-    for r_idx, row in enumerate(rows, start=1):
+    for r_idx, row in enumerate(rows or [], start=1):
+        if not row or not isinstance(row, dict):
+            continue
         try:
             rh = max(MIN_ROW_PX, float(row.get("h") or row.get("height") or 15) * PX_PER_PT)
         except (ValueError, TypeError):
@@ -72,7 +78,9 @@ def render_html(data: dict) -> str:
             colspan_attr = f' colspan="{n}"' if n > 1 else ""
             parts.append(f'<td{colspan_attr} style="padding:0;border:none"></td>')
 
-        for cell in cells:
+        for cell in (cells or []):
+            if not cell or not isinstance(cell, dict):
+                continue
             try:
                 col  = int(cell.get("c") or cell.get("col") or col_cursor)
                 span = max(1, int(cell.get("s") or cell.get("span") or 1))
@@ -88,26 +96,41 @@ def render_html(data: dict) -> str:
             border_val = "all" if cell.get("x") else (cell.get("border") or "none")
 
             styles = [
-                f"padding: {CELL_PAD_V}px {CELL_PAD_H}px",
                 f"text-align: {align}",
                 "vertical-align: middle",
-                "overflow: hidden",
-                "white-space: nowrap",
-                "text-overflow: ellipsis",
+                "box-sizing: border-box",
             ]
             if bold:
                 styles.append("font-weight: bold")
             if fill_hex:
-                styles.append(f"background-color: {fill_hex}")
-            if border_val == "all":
-                styles.append("border: 1px solid #888888")
+                hex_val = str(fill_hex).lstrip("#")
+                if len(hex_val) == 6:
+                    styles.append(f"background-color: #{hex_val}")
+
+            if border_val == "all" or border_val is True:
+                styles.append("border: 1px solid #000")
+            elif border_val == "tlbr":
+                styles.append("border: 1px solid #000")
+            elif border_val == "b":
+                styles.append("border-bottom: 1px solid #000")
+            elif border_val == "tb":
+                styles.append("border-top: 1px solid #000; border-bottom: 1px solid #000")
+            elif border_val == "lr":
+                styles.append("border-left: 1px solid #000; border-right: 1px solid #000")
             else:
                 styles.append("border: none")
 
-            colspan_attr = f' colspan="{span}"' if span > 1 else ""
-            parts.append(
-                f'<td{colspan_attr} contenteditable="true" data-row="{r_idx}" data-col="{col}" style="{"; ".join(styles)}">{_html.escape(value)}</td>'
-            )
+            attrs = []
+            if span > 1:
+                attrs.append(f'colspan="{span}"')
+            rspan = max(1, int(cell.get("rs") or cell.get("rowspan") or 1))
+            if rspan > 1:
+                attrs.append(f'rowspan="{rspan}"')
+
+            attr_str = f" {' '.join(attrs)}" if attrs else ""
+            style_str = "; ".join(styles)
+
+            parts.append(f'<td{attr_str} style="{style_str}">{_html.escape(value)}</td>')
             col_cursor = col + span
 
         # Fill any trailing gap at the end of the row
@@ -124,6 +147,8 @@ class HTMLPopulator(HTMLParser):
         super().__init__()
         self.data_map = {}
         for item in (data_list or []):
+            if not item or not isinstance(item, dict):
+                continue
             r = item.get("r") if item.get("r") is not None else item.get("row")
             c = item.get("c") if item.get("c") is not None else item.get("col")
             v = item.get("v") if item.get("v") is not None else item.get("value")
@@ -239,16 +264,30 @@ def get_html_content(page_data: dict) -> str:
     return render_html(tmpl)
 
 
+def get_html_content(page_data: dict) -> str:
+    if not page_data or not isinstance(page_data, dict):
+        return "<table style=\"border-collapse: collapse;\"></table>"
+    raw_html = page_data.get("html")
+    data_list = page_data.get("data") or []
+    if raw_html:
+        return populate_html_with_data(raw_html, data_list)
+    tmpl = page_data.get("template") or page_data
+    return render_html(tmpl)
+
+
 def json_to_html(json_path: str, html_path: str) -> None:
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
+
+    if not data or not isinstance(data, dict):
+        return
 
     pages = data.get("pages")
     if pages is None:
         pages = [data]
 
-    for idx, page_data in enumerate(pages):
-        if "error" in page_data:
+    for idx, page_data in enumerate(pages or []):
+        if not page_data or not isinstance(page_data, dict) or "error" in page_data:
             continue
 
         if len(pages) == 1:

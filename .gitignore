@@ -47,4 +47,5 @@ next-env.d.ts
 # python
 __pycache__/
 *.pyc
-*.pyo
+*.pyotest_out.*
+parsed_documents.json
