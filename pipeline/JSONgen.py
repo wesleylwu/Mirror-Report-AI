@@ -135,6 +135,10 @@ We dynamically scanned the database and found the following tables and columns:
 
 Identify the best matching table and map ONLY the relevant columns to their 0-based coordinates in the TEMPLATE.
 - IMPORTANT: You MUST ONLY map to the EXACT column names listed in the database schema for the matched table. Do NOT hallucinate or use column names from the document if they do not exist in the schema. For example, if the document says "売上金額" but the schema column is "金額" or "amount", you MUST use the schema's exact column name ("金額" or "amount").
+- Functional Semantic Matching: Document field labels often use localized logistics terms, abbreviations, or packaging jargon that differ from database column names. Map document fields to database columns based on their functional business role rather than requiring exact string similarity:
+  • Physical packaging or container style labels (e.g. 荷姿, 包装, 梱包) should be mapped to the closest functional unit/packaging category column available in the database schema (e.g. 単位, 単位名, 単位区分).
+  • Prefix/suffix variations (e.g. 売上数量 vs. 数量, 伝票番号 vs. 伝票No) should map to the core functional attribute in the schema.
+  • Event/transaction dates (e.g. 取引日, 納品日) should map to the corresponding posting/system date column (e.g. 計上日, 処理日).
 - Do not output any columns that are not present in the matched table's schema.
 
 If a column appears as a single field, map it to its cell coordinates: {{"r": <row>, "c": <col>}}.
