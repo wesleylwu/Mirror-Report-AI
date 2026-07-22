@@ -53,11 +53,12 @@ def convert():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    page_data = pages_data[0]
+    page_data = pages_data[0] if pages_data else {}
     filename = page_data.get("filename") or "document"
     template_schema = page_data.get("template") or {}
     mapping = page_data.get("mapping") or {}
     code = page_data.get("code") or ""
+    extracted_data = page_data.get("data") or []
 
     # Local storage file operations
     DB_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "parsed_documents.json")
@@ -67,86 +68,95 @@ def convert():
             return {}
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except:
+                return json.load(f) or {}
+        except Exception:
             return {}
 
     def write_docs(docs):
-        with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(docs, f, ensure_ascii=False, indent=2)
+        try:
+            with open(DB_FILE, "w", encoding="utf-8") as f:
+                json.dump(docs, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[DEBUG py_convert] write_docs failed: {e}", file=sys.stderr)
+
+    import time
+    import random
+    doc_id = f"mirror_doc_{int(time.time())}_{random.randint(1000, 9999)}"
+
+    db_host = os.environ.get("DB_HOST")
+    if db_host:
+        try:
+            conn = pymssql.connect(
+                server=db_host,
+                port=int(os.environ.get("DB_PORT", 51399)),
+                user=os.environ.get("DB_USER"),
+                password=os.environ.get("DB_PASSWORD"),
+                database=os.environ.get("DB_NAME"),
+                login_timeout=3
+            )
+            cur = conn.cursor()
+
+            matched_table = mapping.get("matched_table") if isinstance(mapping, dict) else None
+            raw_fields = mapping.get("fields") if isinstance(mapping, dict) else None
+            if not raw_fields or not isinstance(raw_fields, dict):
+                raw_fields = mapping if isinstance(mapping, dict) else {}
+
+            fields_mapping = {k: v for k, v in raw_fields.items() if k != "matched_table" and isinstance(v, dict)}
+
+            if not matched_table:
+                matched_table = "取引データ"
+
+            cols_to_query = list(fields_mapping.keys())
+            if not cols_to_query:
+                cols_to_query = ["伝票日付", "伝票Ｎｏ", "商品名", "数量", "単価", "金額"]
+            
+            cols_str = ", ".join(f"[{col}]" for col in cols_to_query)
+            query = f"SELECT {cols_str} FROM [{matched_table}]"
+
+            print(f"[DEBUG py_convert] Executing dynamic query: {query}", file=sys.stderr)
+            cur.execute(query)
+            db_rows = cur.fetchall() or []
+            colnames = [desc[0] for desc in cur.description] if cur.description else []
+            print(f"[DEBUG py_convert] Columns: {colnames}, Rows fetched: {len(db_rows)}", file=sys.stderr)
+
+            rows_dict = []
+            for r in db_rows:
+                row_map = {}
+                for col_idx, col_name in enumerate(colnames):
+                    val = r[col_idx]
+                    if isinstance(val, (int, float)) or (val is not None and type(val).__name__ == 'Decimal'):
+                        row_map[col_name] = float(val)
+                    elif hasattr(val, 'strftime'):
+                        row_map[col_name] = val.strftime('%Y-%m-%d')
+                    else:
+                        row_map[col_name] = str(val) if val is not None else ""
+                rows_dict.append(row_map)
+
+            db_extracted_data = []
+            if rows_dict:
+                first_row = rows_dict[0]
+                for field in colnames:
+                    coord = fields_mapping.get(field)
+                    if coord and isinstance(coord, dict):
+                        r_val = coord.get("r")
+                        c_val = coord.get("c")
+                        row_list = coord.get("rows")
+                        if r_val is not None and c_val is not None:
+                            db_extracted_data.append({"r": int(r_val), "c": int(c_val), "v": str(first_row[field])})
+                        elif c_val is not None and isinstance(row_list, list):
+                            for idx, row_data in enumerate(rows_dict):
+                                if idx < len(row_list) and row_list[idx] is not None:
+                                    db_extracted_data.append({"r": int(row_list[idx]), "c": int(c_val), "v": str(row_data[field])})
+
+            if db_extracted_data:
+                extracted_data = db_extracted_data
+
+            cur.close()
+            conn.close()
+        except Exception as e:
+            print(f"[DEBUG py_convert] Database query skipped/failed (falling back to extracted_data): {e}", file=sys.stderr)
 
     try:
-        conn = pymssql.connect(
-            server=os.environ.get("DB_HOST"),
-            port=int(os.environ.get("DB_PORT", 51399)),
-            user=os.environ.get("DB_USER"),
-            password=os.environ.get("DB_PASSWORD"),
-            database=os.environ.get("DB_NAME")
-        )
-        cur = conn.cursor()
-
-        # Parse dynamic mapping from Claude
-        matched_table = mapping.get("matched_table")
-        fields_mapping = mapping.get("fields") or {}
-        
-        # Revert to root keys if fields structure is absent
-        if not matched_table:
-            # Fallback if Claude returned flat mappings
-            matched_table = "取引データ"
-            fields_mapping = mapping
-
-        # Build dynamic select query safely
-        cols_to_query = list(fields_mapping.keys())
-        if not cols_to_query:
-            # Fallback if no columns mapped
-            cols_to_query = ["伝票日付", "伝票Ｎｏ", "商品名", "数量", "単価", "金額"]
-        
-        cols_str = ", ".join(f"[{col}]" for col in cols_to_query)
-        query = f"SELECT {cols_str} FROM {matched_table}"
-
-        print(f"[DEBUG py_convert] Executing dynamic query: {query}", file=sys.stderr)
-        cur.execute(query)
-        db_rows = cur.fetchall()
-        colnames = [desc[0] for desc in cur.description]
-        print(f"[DEBUG py_convert] Columns: {colnames}, Rows fetched: {len(db_rows)}", file=sys.stderr)
-
-        rows_dict = []
-        for r in db_rows:
-            row_map = {}
-            for col_idx, col_name in enumerate(colnames):
-                val = r[col_idx]
-                if isinstance(val, (int, float)) or (val is not None and type(val).__name__ == 'Decimal'):
-                    row_map[col_name] = float(val)
-                elif hasattr(val, 'strftime'):
-                    row_map[col_name] = val.strftime('%Y-%m-%d')
-                else:
-                    row_map[col_name] = str(val) if val is not None else ""
-            rows_dict.append(row_map)
-
-        print(f"[DEBUG py_convert] Mapping keys from Claude: {list(fields_mapping.keys())}", file=sys.stderr)
-
-        extracted_data = []
-        if rows_dict:
-            first_row = rows_dict[0]
-            for field in colnames:
-                coord = fields_mapping.get(field)
-                if coord and isinstance(coord, dict):
-                    r_val = coord.get("r")
-                    c_val = coord.get("c")
-                    row_list = coord.get("rows")
-                    if r_val is not None and c_val is not None:
-                        extracted_data.append({"r": int(r_val), "c": int(c_val), "v": str(first_row[field])})
-                    elif c_val is not None and isinstance(row_list, list):
-                        for idx, row_data in enumerate(rows_dict):
-                            if idx < len(row_list):
-                                extracted_data.append({"r": int(row_list[idx]), "c": int(c_val), "v": str(row_data[field])})
-
-        print(f"[DEBUG py_convert] Extracted data size: {len(extracted_data)}", file=sys.stderr)
-
-        # Generate a unique document id and save locally (no SQL Server writes!)
-        import time
-        import random
-        doc_id = f"mirror_doc_{int(time.time())}_{random.randint(1000, 9999)}"
         docs = read_docs()
         docs[doc_id] = {
             "id": doc_id,
@@ -156,10 +166,8 @@ def convert():
             "code": code
         }
         write_docs(docs)
-        cur.close()
-        conn.close()
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"[DEBUG py_convert] Saving doc locally skipped/failed: {e}", file=sys.stderr)
 
     html = get_html_content({"template": template_schema, "data": extracted_data, "html": page_data.get("html")})
 
