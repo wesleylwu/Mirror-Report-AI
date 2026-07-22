@@ -149,77 +149,99 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const pool = await sql.connect(config);
-
-    const mapping = pageData.mapping || {};
-    const matchedTable = mapping.matched_table || "取引データ";
-    const fieldsMapping = mapping.fields || mapping;
-
-    const colsToQuery = Object.keys(fieldsMapping);
-    if (colsToQuery.length === 0) {
-      colsToQuery.push(
-        "伝票日付",
-        "伝票Ｎｏ",
-        "商品名",
-        "数量",
-        "単価",
-        "金額",
-      );
-    }
-    const colsStr = colsToQuery.map((c) => `[${c}]`).join(", ");
-    const query = `SELECT ${colsStr} FROM ${matchedTable}`;
-
-    const mfgRes = await pool.request().query(query);
-    const dbRows = mfgRes.recordset;
-
     interface CellData {
       r: number;
       c: number;
       v: string;
     }
 
-    const extractedData: CellData[] = [];
+    let extractedData: CellData[] = [];
 
-    if (dbRows.length > 0) {
-      const firstRow = dbRows[0];
-      const colnames = Object.keys(firstRow);
+    try {
+      const pool = await sql.connect(config);
 
-      const formatDate = (val: unknown) => {
-        if (val instanceof Date) {
-          return val.toISOString().split("T")[0];
+      const mapping = pageData.mapping || {};
+      const matchedTable = mapping.matched_table || "取引データ";
+      const rawFieldsMapping =
+        mapping.fields && typeof mapping.fields === "object"
+          ? mapping.fields
+          : mapping;
+
+      const fieldsMapping: Record<string, any> = {};
+      for (const [k, v] of Object.entries(rawFieldsMapping || {})) {
+        if (k !== "matched_table" && v && typeof v === "object") {
+          fieldsMapping[k] = v;
         }
-        return val !== null && val !== undefined ? String(val) : "";
-      };
+      }
 
-      for (const field of colnames) {
-        const coord = fieldsMapping[field];
-        if (coord && typeof coord === "object") {
-          const r = coord.r;
-          const c = coord.c;
-          const rows = coord.rows;
-          if (r !== undefined && c !== undefined) {
-            let val = firstRow[field];
-            if (val instanceof Date) {
-              val = formatDate(val);
-            }
-            extractedData.push({ r: Number(r), c: Number(c), v: String(val) });
-          } else if (c !== undefined && Array.isArray(rows)) {
-            for (let idx = 0; idx < dbRows.length; idx++) {
-              if (idx < rows.length) {
-                let val = dbRows[idx][field];
-                if (val instanceof Date) {
-                  val = formatDate(val);
+      const colsToQuery = Object.keys(fieldsMapping);
+      if (colsToQuery.length === 0) {
+        colsToQuery.push(
+          "伝票日付",
+          "伝票Ｎｏ",
+          "商品名",
+          "数量",
+          "単価",
+          "金額",
+        );
+      }
+      const colsStr = colsToQuery.map((c) => `[${c}]`).join(", ");
+      const query = `SELECT ${colsStr} FROM [${matchedTable}]`;
+
+      const mfgRes = await pool.request().query(query);
+      const dbRows = mfgRes.recordset || [];
+
+      if (dbRows.length > 0) {
+        const firstRow = dbRows[0];
+        const colnames = Object.keys(firstRow);
+
+        const formatDate = (val: unknown) => {
+          if (val instanceof Date) {
+            return val.toISOString().split("T")[0];
+          }
+          return val !== null && val !== undefined ? String(val) : "";
+        };
+
+        for (const field of colnames) {
+          const coord = fieldsMapping[field];
+          if (coord && typeof coord === "object") {
+            const r = coord.r;
+            const c = coord.c;
+            const rows = coord.rows;
+            if (r !== undefined && c !== undefined) {
+              let val = firstRow[field];
+              if (val instanceof Date) {
+                val = formatDate(val);
+              }
+              extractedData.push({
+                r: Number(r),
+                c: Number(c),
+                v: String(val),
+              });
+            } else if (c !== undefined && Array.isArray(rows)) {
+              for (let idx = 0; idx < dbRows.length; idx++) {
+                if (idx < rows.length) {
+                  let val = dbRows[idx][field];
+                  if (val instanceof Date) {
+                    val = formatDate(val);
+                  }
+                  extractedData.push({
+                    r: Number(rows[idx]),
+                    c: Number(c),
+                    v: String(val),
+                  });
                 }
-                extractedData.push({
-                  r: Number(rows[idx]),
-                  c: Number(c),
-                  v: String(val),
-                });
               }
             }
           }
         }
       }
+    } catch (dbErr) {
+      console.warn(
+        "SQL Server query skipped/failed (falling back to extracted data):",
+        dbErr,
+      );
+      extractedData = Array.isArray(pageData.data) ? pageData.data : [];
     }
 
     pageData.data = extractedData;

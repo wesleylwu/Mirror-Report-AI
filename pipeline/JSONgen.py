@@ -99,8 +99,12 @@ def get_db_schemas():
 
 def format_schemas(schemas):
     lines = []
+    if not schemas or not isinstance(schemas, dict):
+        return ""
     for tname, cols in schemas.items():
-        cols_str = ", ".join(cols)
+        if not cols:
+            continue
+        cols_str = ", ".join(str(c) for c in cols if c is not None)
         lines.append(f"- Table name: \"{tname}\"\n  Columns: {cols_str}")
     return "\n\n".join(lines)
 
