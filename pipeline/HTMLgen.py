@@ -264,16 +264,30 @@ def get_html_content(page_data: dict) -> str:
     return render_html(tmpl)
 
 
+def get_html_content(page_data: dict) -> str:
+    if not page_data or not isinstance(page_data, dict):
+        return "<table style=\"border-collapse: collapse;\"></table>"
+    raw_html = page_data.get("html")
+    data_list = page_data.get("data") or []
+    if raw_html:
+        return populate_html_with_data(raw_html, data_list)
+    tmpl = page_data.get("template") or page_data
+    return render_html(tmpl)
+
+
 def json_to_html(json_path: str, html_path: str) -> None:
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
+
+    if not data or not isinstance(data, dict):
+        return
 
     pages = data.get("pages")
     if pages is None:
         pages = [data]
 
-    for idx, page_data in enumerate(pages):
-        if "error" in page_data:
+    for idx, page_data in enumerate(pages or []):
+        if not page_data or not isinstance(page_data, dict) or "error" in page_data:
             continue
 
         if len(pages) == 1:

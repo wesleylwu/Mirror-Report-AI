@@ -262,6 +262,9 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
 
+    if not data or not isinstance(data, dict):
+        return
+
     wb = Workbook()
     default_sheet = wb.active
     seen: set = set()
@@ -270,8 +273,8 @@ def json_to_xlsx(json_path: str, xlsx_path: str) -> None:
     if pages is None:
         pages = [data]
 
-    for idx, page_data in enumerate(pages):
-        if "error" in page_data:
+    for idx, page_data in enumerate(pages or []):
+        if not page_data or not isinstance(page_data, dict) or "error" in page_data:
             continue
 
         tmpl = page_data.get("template")
