@@ -167,10 +167,13 @@ export async function POST(req: NextRequest) {
           ? mapping.fields
           : mapping;
 
-      const fieldsMapping: Record<string, any> = {};
+      const fieldsMapping: Record<
+        string,
+        { r?: number; c?: number; rows?: number[] }
+      > = {};
       for (const [k, v] of Object.entries(rawFieldsMapping || {})) {
         if (k !== "matched_table" && v && typeof v === "object") {
-          fieldsMapping[k] = v;
+          fieldsMapping[k] = v as { r?: number; c?: number; rows?: number[] };
         }
       }
 
