@@ -5,17 +5,30 @@ import path from "path";
 import os from "os";
 import sql from "mssql";
 
-const config: sql.config = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  server: process.env.DB_HOST || "",
-  port: parseInt(process.env.DB_PORT || "51399"),
-  database: process.env.DB_NAME,
-  options: {
-    encrypt: false,
-    trustServerCertificate: true,
-  },
-};
+function getDbConfig(req: NextRequest): sql.config {
+  const urlStr = req.headers.get("x-database-url") || process.env.DATABASE_URL;
+  if (urlStr) {
+    try {
+      const parsed = new URL(urlStr);
+      return {
+        user: decodeURIComponent(parsed.username),
+        password: decodeURIComponent(parsed.password),
+        server: parsed.hostname,
+        port: parseInt(parsed.port || "1433"),
+        database: parsed.pathname.slice(1),
+        options: { encrypt: false, trustServerCertificate: true },
+      };
+    } catch {}
+  }
+  return {
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    server: process.env.DB_HOST || "",
+    port: parseInt(process.env.DB_PORT || "51399"),
+    database: process.env.DB_NAME,
+    options: { encrypt: false, trustServerCertificate: true },
+  };
+}
 
 export const maxDuration = 120;
 
@@ -158,7 +171,7 @@ export async function POST(req: NextRequest) {
     let extractedData: CellData[] = [];
 
     try {
-      const pool = await sql.connect(config);
+      const pool = await sql.connect(getDbConfig(req));
 
       const mapping = pageData.mapping || {};
       const matchedTable = mapping.matched_table || "取引データ";

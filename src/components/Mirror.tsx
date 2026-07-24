@@ -11,6 +11,7 @@ interface MirrorProps {
   uploadedFiles: File[];
   onClear: () => void;
   onFilesSelect: (files: File[]) => void;
+  dbUrl?: string;
 }
 
 interface PageResult {
@@ -91,7 +92,12 @@ const compressImage = async (file: File): Promise<File> => {
   });
 };
 
-const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
+const Mirror = ({
+  uploadedFiles,
+  onClear,
+  onFilesSelect,
+  dbUrl,
+}: MirrorProps) => {
   const [status, setStatus] = useState<ConvertStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [xlsxBlob, setXlsxBlob] = useState<Blob | null>(null);
@@ -139,11 +145,13 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
           window.location.hostname === "127.0.0.1"
             ? "/api/save_edits"
             : "/api/py_save_edits";
+        const saveHeaders: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (dbUrl) saveHeaders["x-database-url"] = dbUrl;
         fetch(url, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: saveHeaders,
           body: JSON.stringify({
             id: dbDocumentId,
             data: newData.data || [],
@@ -151,7 +159,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
         }).catch((err) => console.error("Autosave failed:", err));
       }
     },
-    [activePageIndex, dbDocumentId],
+    [activePageIndex, dbDocumentId, dbUrl],
   );
 
   const handleDownloadExcel = useCallback(async () => {
@@ -177,11 +185,13 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
           window.location.hostname === "127.0.0.1"
             ? "/api/generate_excel"
             : "/api/py_generate_excel";
+        const excelHeaders: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (dbUrl) excelHeaders["x-database-url"] = dbUrl;
         const res = await fetch(fetchUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: excelHeaders,
           body: JSON.stringify({
             id: dbDocumentId,
             extractedData: isDirty
@@ -257,6 +267,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
     xlsxBlob,
     dbDocumentId,
     activePageIndex,
+    dbUrl,
   ]);
 
   const handleGenerate = useCallback(async () => {
@@ -285,7 +296,13 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       processedFiles.forEach((file) => {
         form.append("file", file);
       });
-      const res = await fetch("/api/convert", { method: "POST", body: form });
+      const convertHeaders: Record<string, string> = {};
+      if (dbUrl) convertHeaders["x-database-url"] = dbUrl;
+      const res = await fetch("/api/convert", {
+        method: "POST",
+        headers: convertHeaders,
+        body: form,
+      });
 
       if (!res.ok) {
         let errMessage = "Conversion failed";
@@ -381,7 +398,7 @@ const Mirror = ({ uploadedFiles, onClear, onFilesSelect }: MirrorProps) => {
       setErrorMsg(err instanceof Error ? err.message : "Unknown error");
       setStatus("error");
     }
-  }, [uploadedFiles]);
+  }, [uploadedFiles, dbUrl]);
 
   useEffect(() => {
     setStatus("idle");
