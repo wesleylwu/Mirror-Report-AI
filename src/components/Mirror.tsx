@@ -92,7 +92,12 @@ const compressImage = async (file: File): Promise<File> => {
   });
 };
 
-const Mirror = ({ uploadedFiles, onClear, onFilesSelect, dbUrl }: MirrorProps) => {
+const Mirror = ({
+  uploadedFiles,
+  onClear,
+  onFilesSelect,
+  dbUrl,
+}: MirrorProps) => {
   const [status, setStatus] = useState<ConvertStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [xlsxBlob, setXlsxBlob] = useState<Blob | null>(null);

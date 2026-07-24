@@ -1,7 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FaPaperclip, FaCamera, FaBars, FaTimes, FaDatabase } from "react-icons/fa";
+import {
+  FaPaperclip,
+  FaCamera,
+  FaBars,
+  FaTimes,
+  FaDatabase,
+} from "react-icons/fa";
 import { motion, AnimatePresence } from "motion/react";
 
 interface NavBarProps {
@@ -11,7 +17,12 @@ interface NavBarProps {
   onDbUrlChange: (url: string) => void;
 }
 
-const NavBar = ({ onFilesSelect, onCaptureClick, dbUrl, onDbUrlChange }: NavBarProps) => {
+const NavBar = ({
+  onFilesSelect,
+  onCaptureClick,
+  dbUrl,
+  onDbUrlChange,
+}: NavBarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDbPanelOpen, setIsDbPanelOpen] = useState(false);
@@ -66,7 +77,7 @@ const NavBar = ({ onFilesSelect, onCaptureClick, dbUrl, onDbUrlChange }: NavBarP
 
   return (
     <div className="text-mirror-white bg-mirror-dark-blue relative z-50 flex h-16 w-full flex-col items-center shadow-md select-none md:h-20 print:hidden">
-      <div className="flex w-full items-center justify-between px-6 md:px-12 h-16 md:h-20">
+      <div className="flex h-16 w-full items-center justify-between px-6 md:h-20 md:px-12">
         <div className="flex shrink-0 cursor-pointer items-center">
           <p className="text-mirror-white text-lg font-bold md:text-xl">
             smartNexus® | Mirror Report AI
@@ -120,14 +131,16 @@ const NavBar = ({ onFilesSelect, onCaptureClick, dbUrl, onDbUrlChange }: NavBarP
               transition={{ duration: 0.15 }}
               className="bg-mirror-dark-blue border-mirror-white/15 absolute top-full right-6 z-50 mt-1 flex w-96 flex-col gap-3 rounded-xl border p-4 shadow-2xl md:right-12"
             >
-              <p className="text-mirror-white text-sm font-semibold">Database Connection</p>
+              <p className="text-mirror-white text-sm font-semibold">
+                Database Connection
+              </p>
               <input
                 type="text"
                 value={dbUrlInput}
                 onChange={(e) => setDbUrlInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleDbConnect()}
                 placeholder="mssql://user:password@host:port/database"
-                className="bg-mirror-black/30 border-mirror-white/15 text-mirror-white placeholder-mirror-white/30 w-full rounded-lg border px-3 py-2 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-mirror-cyan"
+                className="bg-mirror-black/30 border-mirror-white/15 text-mirror-white placeholder-mirror-white/30 focus:ring-mirror-cyan w-full rounded-lg border px-3 py-2 font-mono text-xs focus:ring-1 focus:outline-none"
               />
               <div className="flex items-center gap-2">
                 <button
@@ -138,7 +151,11 @@ const NavBar = ({ onFilesSelect, onCaptureClick, dbUrl, onDbUrlChange }: NavBarP
                 </button>
                 {isConnected && (
                   <button
-                    onClick={() => { onDbUrlChange(""); setDbUrlInput(""); setIsDbPanelOpen(false); }}
+                    onClick={() => {
+                      onDbUrlChange("");
+                      setDbUrlInput("");
+                      setIsDbPanelOpen(false);
+                    }}
                     className="text-mirror-white/50 hover:text-mirror-white cursor-pointer rounded-lg px-3 py-1.5 text-sm transition-colors focus:outline-none"
                   >
                     Disconnect
@@ -146,7 +163,9 @@ const NavBar = ({ onFilesSelect, onCaptureClick, dbUrl, onDbUrlChange }: NavBarP
                 )}
               </div>
               {isConnected && (
-                <p className="text-mirror-white/40 truncate text-xs font-mono">{dbUrl}</p>
+                <p className="text-mirror-white/40 truncate font-mono text-xs">
+                  {dbUrl}
+                </p>
               )}
             </motion.div>
           </>
@@ -209,10 +228,16 @@ const NavBar = ({ onFilesSelect, onCaptureClick, dbUrl, onDbUrlChange }: NavBarP
 
                 <div className="border-mirror-white/5 flex flex-col gap-2 rounded-lg border p-3">
                   <div className="flex items-center gap-3">
-                    <FaDatabase className={`h-5 w-5 shrink-0 ${isConnected ? "text-mirror-cyan" : "text-mirror-white"}`} />
-                    <p className="text-mirror-white text-base font-medium">Database</p>
+                    <FaDatabase
+                      className={`h-5 w-5 shrink-0 ${isConnected ? "text-mirror-cyan" : "text-mirror-white"}`}
+                    />
+                    <p className="text-mirror-white text-base font-medium">
+                      Database
+                    </p>
                     {isConnected && (
-                      <span className="text-mirror-cyan ml-auto text-xs font-semibold">Connected</span>
+                      <span className="text-mirror-cyan ml-auto text-xs font-semibold">
+                        Connected
+                      </span>
                     )}
                   </div>
                   <input
@@ -220,7 +245,7 @@ const NavBar = ({ onFilesSelect, onCaptureClick, dbUrl, onDbUrlChange }: NavBarP
                     value={dbUrlInput}
                     onChange={(e) => setDbUrlInput(e.target.value)}
                     placeholder="mssql://user:pass@host/db"
-                    className="bg-mirror-black/30 border-mirror-white/10 text-mirror-white placeholder-mirror-white/30 w-full rounded-lg border px-3 py-2 text-xs font-mono focus:outline-none"
+                    className="bg-mirror-black/30 border-mirror-white/10 text-mirror-white placeholder-mirror-white/30 w-full rounded-lg border px-3 py-2 font-mono text-xs focus:outline-none"
                   />
                   <div className="flex gap-2">
                     <button
@@ -231,7 +256,11 @@ const NavBar = ({ onFilesSelect, onCaptureClick, dbUrl, onDbUrlChange }: NavBarP
                     </button>
                     {isConnected && (
                       <button
-                        onClick={() => { onDbUrlChange(""); setDbUrlInput(""); setIsMenuOpen(false); }}
+                        onClick={() => {
+                          onDbUrlChange("");
+                          setDbUrlInput("");
+                          setIsMenuOpen(false);
+                        }}
                         className="text-mirror-white/50 hover:text-mirror-white cursor-pointer rounded-lg px-3 py-1.5 text-sm focus:outline-none"
                       >
                         Clear

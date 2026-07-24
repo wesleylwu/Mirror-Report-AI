@@ -6,8 +6,7 @@ import os from "os";
 import sql from "mssql";
 
 function getDbConfig(req: NextRequest): sql.config {
-  const urlStr =
-    req.headers.get("x-database-url") || process.env.DATABASE_URL;
+  const urlStr = req.headers.get("x-database-url") || process.env.DATABASE_URL;
   if (urlStr) {
     try {
       const parsed = new URL(urlStr);
