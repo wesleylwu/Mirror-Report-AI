@@ -6,6 +6,7 @@ import sys
 import os
 import concurrent.futures
 from pathlib import Path
+from urllib.parse import urlparse, unquote
 from flask import Flask, request, jsonify
 from PIL import Image
 import fitz
@@ -83,15 +84,41 @@ def convert():
     import random
     doc_id = f"mirror_doc_{int(time.time())}_{random.randint(1000, 9999)}"
 
-    db_host = os.environ.get("DB_HOST")
-    if db_host:
+    url_str = request.headers.get("X-Database-Url") or os.environ.get("DATABASE_URL")
+    if url_str:
+        try:
+            _p = urlparse(url_str)
+            db_params = {
+                "server": _p.hostname,
+                "port": _p.port or 51399,
+                "user": unquote(_p.username or ""),
+                "password": unquote(_p.password or ""),
+                "database": (_p.path or "").lstrip("/"),
+            }
+        except Exception:
+            db_params = None
+    else:
+        db_params = None
+
+    if db_params is None:
+        _host = os.environ.get("DB_HOST")
+        if _host:
+            db_params = {
+                "server": _host,
+                "port": int(os.environ.get("DB_PORT", 51399)),
+                "user": os.environ.get("DB_USER"),
+                "password": os.environ.get("DB_PASSWORD"),
+                "database": os.environ.get("DB_NAME"),
+            }
+
+    if db_params and db_params.get("server"):
         try:
             conn = pymssql.connect(
-                server=db_host,
-                port=int(os.environ.get("DB_PORT", 51399)),
-                user=os.environ.get("DB_USER"),
-                password=os.environ.get("DB_PASSWORD"),
-                database=os.environ.get("DB_NAME"),
+                server=db_params["server"],
+                port=db_params["port"],
+                user=db_params["user"],
+                password=db_params["password"],
+                database=db_params["database"],
                 login_timeout=3
             )
             cur = conn.cursor()
